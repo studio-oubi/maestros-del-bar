@@ -53,9 +53,12 @@ export function Home() {
       <div className="relative mt-4 w-full flex-1">
         <ShaderBotellas imagenes={BOTELLAS} intervaloMs={6000} className="h-full w-full" />
 
-        {/* Logo neón: fijo delante. Posición y animación en capas separadas
-            para que el translate de centrado no choque con las animaciones. */}
-        <div className="pointer-events-none absolute left-1/2 top-[64%] w-[64%] max-w-[300px] -translate-x-1/2">
+        {/* Logo neón: fijo delante, grande (cruza sobre el tercio inferior de
+            la botella como en los mocks). Posición y animación en capas
+            separadas para que el translate de centrado no choque con las
+            animaciones. El texto neón ocupa el 93% del PNG y está centrado,
+            así que basta con centrar la caja. */}
+        <div className="pointer-events-none absolute left-1/2 top-[62%] w-[106%] max-w-[400px] -translate-x-1/2">
           <div className="mix-flotar">
             <div className="mix-tiltear">
               {/* eslint-disable-next-line @next/next/no-img-element */}
