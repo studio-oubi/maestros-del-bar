@@ -7,7 +7,7 @@ export function TimerHud({ formato, critico }: { formato: string; critico: boole
   return (
     <div className="pointer-events-none absolute inset-x-0 top-[3.2cqh] z-30 flex justify-end px-[6cqw]">
       <span
-        className={`font-titulo text-[2.6cqh] font-600 tabular-nums transition-colors duration-300 ${
+        className={`font-titulo text-[1.9cqh] font-medium uppercase tabular-nums transition-colors duration-300 ${
           critico ? "text-red-400 [animation:timer-pulso_.9s_ease-in-out_infinite]" : "text-white"
         }`}
       >

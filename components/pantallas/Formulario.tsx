@@ -83,12 +83,8 @@ export function Formulario() {
         className="h-auto w-[42cqw] max-w-[220px] drop-shadow-[0_3px_12px_rgba(0,0,0,0.6)]"
       />
 
-      <h1 className="mt-[4cqh] text-center font-titulo text-[clamp(26px,8cqw,40px)] font-semibold uppercase tracking-wide text-white">
-        Únete al challenge
-      </h1>
-      <p className="mt-[0.8cqh] text-center font-cuerpo text-[clamp(11px,2.8cqw,13px)] font-medium uppercase tracking-[0.25em] text-oro">
-        Llena tus datos para continuar
-      </p>
+      <h1 className="texto-titulo mt-[4cqh] text-center">Únete al challenge</h1>
+      <p className="texto-sub mt-[0.8cqh] text-center">Llena tus datos para continuar</p>
 
       <form onSubmit={enviar} autoComplete="off" className="mt-[3.5cqh] w-full max-w-[480px]">
         <div className="flex flex-col gap-[1.6cqh]">
@@ -137,7 +133,7 @@ export function Formulario() {
 
         <button
           type="submit"
-          className="mt-[3cqh] w-full rounded-full bg-linear-to-r from-oro-claro to-oro py-[1.8cqh] font-titulo text-[clamp(15px,4cqw,19px)] font-semibold uppercase tracking-wide text-navy shadow-[0_16px_34px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]"
+          className="texto-boton mt-[3cqh] w-full rounded-full bg-linear-to-r from-oro-claro to-oro py-[0.55cqh] leading-none shadow-[0_16px_34px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]"
         >
           Continuar
         </button>
@@ -187,9 +183,7 @@ function Campo({
 
   return (
     <label className="block">
-      <span className="mb-[0.7cqh] block font-cuerpo text-[clamp(10px,2.6cqw,12px)] font-medium uppercase tracking-[0.28em] text-oro">
-        {etiqueta}
-      </span>
+      <span className="texto-label mb-[0.7cqh] block">{etiqueta}</span>
       <input
         ref={inputRef}
         type={type}
@@ -198,7 +192,7 @@ function Campo({
         value={valor}
         onChange={manejarCambio}
         placeholder={placeholder}
-        className="w-full rounded-full border border-oro/25 bg-black/40 px-[5cqw] py-[1.6cqh] font-cuerpo text-[clamp(14px,3.6cqw,17px)] text-crema outline-none transition-colors placeholder:text-crema-suave focus:border-oro"
+        className="texto-input w-full rounded-full border border-oro/25 bg-black/40 px-[5cqw] py-[1.6cqh] text-crema outline-none transition-colors focus:border-oro"
       />
       {error && <span className="mt-[0.5cqh] block text-[clamp(10px,2.6cqw,12px)] text-[#ff6b6b]">{error}</span>}
     </label>

@@ -21,7 +21,7 @@ export function Listo() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-[4.5cqh]">
-        <h1 className="max-w-[80cqw] font-titulo text-[clamp(30px,9.3cqw,46px)] font-semibold uppercase leading-[1.05] text-white">
+        <h1 className="texto-titulo max-w-[80cqw]">
           ¿Listo para
           <br />
           armar el mix
@@ -31,7 +31,7 @@ export function Listo() {
         <button
           type="button"
           onClick={() => despachar({ tipo: "INICIAR_RETO" })}
-          className="rounded-full bg-gradient-to-b from-oro-claro to-oro px-[11cqw] py-[1.8cqh] font-cuerpo text-[clamp(13px,3.4cqw,15px)] font-medium uppercase tracking-[0.16em] text-navy-deep shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95"
+          className="texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[11cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95"
         >
           Iniciar
         </button>

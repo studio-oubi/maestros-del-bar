@@ -28,8 +28,8 @@ export function GridMix({ restante }: { restante: number }) {
       </div>
 
       <div className="mt-[3.6cqh] flex flex-col items-center gap-[1cqh]">
-        <span className="font-titulo text-[1.7cqh] font-600 tracking-[0.32em] text-oro">ELIGE TU MEZCLA</span>
-        <span className="font-titulo text-[3.2cqh] font-600 leading-tight tracking-[0.04em] text-crema">
+        <span className="texto-label">ELIGE TU MEZCLA</span>
+        <span className="font-titulo text-[2.6cqh] font-medium uppercase leading-tight text-white">
           COMPLETA EL MIX
         </span>
       </div>
@@ -88,7 +88,7 @@ export function GridMix({ restante }: { restante: number }) {
         type="button"
         onClick={onMezclar}
         disabled={seleccionados.length === 0}
-        className="shrink-0 rounded-full bg-gradient-to-b from-oro-claro to-oro px-[14cqw] py-[1.8cqh] font-cuerpo text-[clamp(13px,3.4cqw,15px)] font-medium uppercase tracking-[0.16em] text-navy-deep shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
+        className="texto-boton shrink-0 rounded-full bg-gradient-to-b from-oro-claro to-oro px-[14cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
       >
         Mezclar
       </button>

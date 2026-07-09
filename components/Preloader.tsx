@@ -46,9 +46,7 @@ export function Preloader() {
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="text-center font-cuerpo text-[11px] font-medium uppercase tracking-[0.32em] text-oro">
-          Cargando experiencia
-        </p>
+        <p className="texto-label text-center">Cargando experiencia</p>
       </div>
     </div>
   );

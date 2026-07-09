@@ -11,7 +11,7 @@ import { reintentarPendiente } from "@/lib/registro-cliente";
 import { useJuego } from "@/lib/juego";
 
 const BOTON =
-  "rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[1.8cqh] font-cuerpo text-[clamp(13px,3.4cqw,15px)] font-medium uppercase tracking-[0.16em] text-navy-deep shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95";
+  "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95";
 
 function Logo() {
   return (
@@ -91,9 +91,7 @@ function Ganaste() {
       <Logo />
 
       <div className="absolute inset-x-0 top-[13cqh] z-10 flex flex-col items-center gap-[3cqh] px-[6cqw] text-center">
-        <h1 className="font-titulo text-[clamp(40px,13cqw,64px)] font-bold uppercase leading-none text-white">
-          GANASTE!!
-        </h1>
+        <h1 className="texto-titulo">GANASTE!!</h1>
         <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
           INICIO
         </button>
@@ -127,16 +125,13 @@ function Ganaste() {
             />
           </div>
 
-          <div className="mb-[3.4cqh] flex max-w-[42cqw] flex-col items-start gap-[1cqh] text-left">
-            <h2 className="font-titulo text-[clamp(14px,4.4cqw,18px)] font-600 uppercase leading-tight text-white">
+          <div className="mb-[3.4cqh] flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
+            <h2 className="font-titulo text-[2.1cqh] font-medium uppercase leading-[1.04] text-white">
               {receta.nombre}
             </h2>
             <ul className="flex flex-col gap-[0.5cqh]">
               {receta.lineasReceta.map((linea) => (
-                <li
-                  key={linea}
-                  className="font-cuerpo text-[clamp(9px,2.6cqw,11px)] font-medium uppercase tracking-[0.02em] text-oro"
-                >
+                <li key={linea} className="texto-label !tracking-[0.04em]">
                   • {linea}
                 </li>
               ))}
@@ -151,7 +146,7 @@ function Ganaste() {
 function FilaCheck({ etiqueta, ok }: { etiqueta: string; ok: boolean }) {
   return (
     <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[1.3cqh]">
-      <span className="font-titulo text-[clamp(12px,3.6cqw,15px)] font-600 uppercase tracking-[0.06em] text-crema">
+      <span className="font-titulo text-[clamp(12px,3.6cqw,15px)] font-medium uppercase tracking-[0.06em] text-crema">
         {etiqueta}
       </span>
       <span className={`text-[clamp(16px,4.6cqw,20px)] font-bold ${ok ? "text-oro" : "text-red-400"}`} aria-hidden>
@@ -191,12 +186,8 @@ function Casi() {
       <Logo />
 
       <div className="mt-[10cqh] flex flex-col items-center gap-[0.8cqh]">
-        <h1 className="font-titulo text-[clamp(34px,10.5cqw,50px)] font-bold uppercase leading-none text-white">
-          CASI...
-        </h1>
-        <p className="font-titulo text-[clamp(12px,3.6cqw,15px)] font-600 uppercase tracking-[0.08em] text-oro">
-          ASÍ ERA EL {receta.nombre}
-        </p>
+        <h1 className="texto-titulo">CASI...</h1>
+        <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
 
       <div className="mt-[3.2cqh] flex w-full flex-col items-center">
@@ -206,7 +197,7 @@ function Casi() {
       </div>
 
       <div className="mt-[3cqh] flex w-full flex-col items-center gap-[1.4cqh]">
-        <span className="font-titulo text-[1.5cqh] font-600 tracking-[0.28em] text-oro/80">INGREDIENTES</span>
+        <span className="texto-label">INGREDIENTES</span>
         <div className="flex flex-wrap items-center justify-center gap-[1.6cqw]">
           {receta.ingredientes.map((id) => (
             <ChipIngrediente key={id} id={id} correcto={!ev.faltaron.includes(id)} />
@@ -245,7 +236,7 @@ function TiempoAgotado() {
     <div className="relative h-full w-full overflow-hidden">
       <Logo />
       <div className="absolute inset-x-0 top-[16cqh] z-10 flex flex-col items-center gap-[3.6cqh] px-[9cqw] text-center">
-        <h1 className="font-titulo text-[clamp(30px,9.6cqw,48px)] font-bold uppercase leading-[1.05] text-white">
+        <h1 className="texto-titulo">
           UPP.. SE ACABO
           <br />
           EL TIEMPO

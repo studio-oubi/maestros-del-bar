@@ -29,17 +29,17 @@ export function Intro() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-[2.6cqh]">
-        <h1 className="font-titulo text-[clamp(34px,10.5cqw,52px)] font-semibold uppercase leading-[0.95] text-white">
+        <h1 className="texto-titulo">
           Arma el mix
           <br />
           Perfecto
         </h1>
-        <p className="max-w-[78cqw] font-titulo text-[clamp(14px,3.9cqw,17px)] font-semibold uppercase leading-snug tracking-[0.03em] text-oro">
+        <p className="texto-sub max-w-[78cqw] leading-snug">
           Recuerda la receta y completa tu trago antes de llegar a cero.
         </p>
       </div>
 
-      <p className="mb-[8cqh] animate-pulse font-cuerpo text-[clamp(11px,2.8cqw,13px)] text-crema/60 [animation-duration:2.4s]">
+      <p className="mb-[8cqh] animate-pulse font-cuerpo text-[1cqh] text-crema/60 [animation-duration:2.4s]">
         toca para continuar....
       </p>
     </div>
