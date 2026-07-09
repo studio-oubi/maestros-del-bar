@@ -16,7 +16,7 @@ interface Props {
 }
 
 // Reparto/física del coverflow (afinado visualmente contra el mock 7).
-const FACTOR = 0.5; // separación horizontal (× 46cqw)
+const FACTOR = 0.44; // separación horizontal (× 46cqw)
 const ROT = 38; // grados de rotateY por unidad de distancia
 const DEPTH = 175; // px de translateZ por unidad de distancia
 const SCALE_STEP = 0.2; // reducción de escala por unidad

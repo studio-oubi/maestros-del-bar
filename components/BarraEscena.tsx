@@ -26,17 +26,14 @@ export function BarraEscena({ children }: { children: ReactNode }) {
       {/* Capa de escena: aquí vive el coverflow, apoyado en --linea-barra. */}
       <div className="absolute inset-0">{children}</div>
 
-      {/* Firma inferior */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-[7cqh] flex flex-col items-center gap-[1.2cqh]">
-        <span className="font-titulo text-[5.2cqh] font-600 leading-none tracking-[0.16em] text-crema">
-          ESCÁPATE
-        </span>
-        <div className="relative h-[2.6cqh] w-[42cqw]">
+      {/* Firma inferior: lockup ESCÁPATE / A LO EXTRAORDINARIO (una sola imagen). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[6cqh] flex justify-center">
+        <div className="relative aspect-[1031/300] w-[62cqw]">
           <Image
             src={IMG.escapate}
-            alt="A lo extraordinario"
+            alt="Escápate a lo extraordinario"
             fill
-            sizes="(min-width: 600px) 480px, 60vw"
+            sizes="(min-width: 600px) 620px, 64vw"
             className="select-none object-contain"
           />
         </div>
