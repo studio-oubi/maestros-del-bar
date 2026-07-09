@@ -46,7 +46,7 @@ function Confetti() {
       {piezas.map((p, i) => (
         <span
           key={i}
-          className={`absolute top-[-6%] rounded-[1px] [animation:confetti-caer_var(--dur)_ease-in_var(--delay)_1_forwards] ${
+          className={`absolute top-[-6%] rounded-[1px] [animation:resultado-confetti-caer_var(--dur)_ease-in_var(--delay)_1_forwards] ${
             p.dorado ? "bg-oro-claro" : "bg-oro"
           }`}
           style={{
@@ -59,8 +59,11 @@ function Confetti() {
           }}
         />
       ))}
-      <style jsx>{`
-        @keyframes confetti-caer {
+      {/* global: styled-jsx renombra los @keyframes por componente (modo scoped);
+          la clase Tailwind arbitrary [animation:...] referencia el nombre literal,
+          así que el keyframe debe declararse global para que coincida. */}
+      <style jsx global>{`
+        @keyframes resultado-confetti-caer {
           0% {
             transform: translateY(0) translateX(0) rotate(0deg);
             opacity: 1;
@@ -78,7 +81,7 @@ function Confetti() {
 // Variante "gano" (mock 13): título gigante, confetti sutil, trago sobre la
 // barra con su tarjeta de receta al lado.
 function Ganaste() {
-  const { estado } = useJuego();
+  const { estado, despachar } = useJuego();
   const receta = estado.receta;
   if (!receta) return null;
 
@@ -87,10 +90,13 @@ function Ganaste() {
       <Confetti />
       <Logo />
 
-      <div className="absolute inset-x-0 top-[15cqh] z-10 flex justify-center px-[6cqw] text-center">
+      <div className="absolute inset-x-0 top-[13cqh] z-10 flex flex-col items-center gap-[3cqh] px-[6cqw] text-center">
         <h1 className="font-titulo text-[clamp(40px,13cqw,64px)] font-bold uppercase leading-none text-white">
           GANASTE!!
         </h1>
+        <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
+          INICIO
+        </button>
       </div>
 
       <BarraEscena>
