@@ -77,7 +77,8 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .en-barra > *{pointer-events:auto}
 /* zona bajo la barra (frente de la mesa) para hints/acciones */
 .bajo-barra{position:absolute;left:0;right:0;top:calc(var(--barra) + 9cqh);
-  display:flex;flex-direction:column;align-items:center;gap:14px}
+  bottom:calc(38px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px}
 
 .btn{font-family:'Jost';font-size:16px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
   color:var(--noche);background:linear-gradient(180deg,#e7cf9f,var(--oro));border:none;border-radius:999px;
@@ -168,6 +169,7 @@ h2{font-size:clamp(27px,6cqw,46px)}
   text-shadow:var(--sombraTexto)}
 #s-riddle.activa .verso{opacity:1;transform:none}
 .verso::before,.verso::after{content:"—";display:block;color:var(--oro);font-style:normal;font-size:16px;letter-spacing:.3em;margin:5px 0}
+#s-riddle .bajo-barra{top:auto;bottom:calc(30px + env(safe-area-inset-bottom))}
 #riddle-trago{transform:scale(.94);opacity:0;transition:transform .9s var(--easeOut), opacity .9s var(--easeOut)}
 #riddle-trago img{height:min(30cqh,350px);width:auto;filter:drop-shadow(0 26px 24px rgba(0,0,0,.65))}
 #s-riddle.activa #riddle-trago{transform:scale(1);opacity:1}
@@ -244,21 +246,23 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .btn-cambiar{background:none;border:none;color:var(--crema-suave);font-family:'Jost';font-size:14px;
   letter-spacing:.22em;text-transform:uppercase;cursor:pointer;text-decoration:underline;text-underline-offset:5px}
 
-/* ---------- RESULTADO: trago en la barra, receta bajo la barra ---------- */
-.rev-wrap{position:relative;height:min(38cqh,440px)}
+/* ---------- RESULTADO: trago pequeño arriba, tarjeta completa debajo ---------- */
+.rev-wrap{position:relative;height:min(16cqh,170px);transition:height .6s var(--easeOut)}
 .rev-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   filter:drop-shadow(0 26px 24px rgba(0,0,0,.6))}
 .rev-trago{position:absolute;inset:0;
   -webkit-mask-image:linear-gradient(to top, #000 0%, #000 calc(var(--rev,0%) - 4%), transparent var(--rev,0%));
   mask-image:linear-gradient(to top, #000 0%, #000 calc(var(--rev,0%) - 4%), transparent var(--rev,0%))}
-.panel-res{position:absolute;left:0;right:0;top:calc(var(--barra) + 2cqh);bottom:calc(24px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 18px;
+#barra-resultado{position:static;bottom:auto;height:auto;margin-top:2px;flex:0 0 auto;
+  display:flex;align-items:flex-start;justify-content:center}
+#panel-res{position:static;top:auto;bottom:auto;flex:1 1 auto;min-height:0;
+  display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 18px 0;width:100%;
   opacity:0;transform:translateY(12px);
   transition:opacity .8s .2s var(--easeOut), transform .8s .2s var(--easeOut)}
-.panel-res.visible{opacity:1;transform:none}
+#panel-res.visible{opacity:1;transform:none}
 .card-resultado{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--borde);
   border-radius:var(--radius);padding:16px 22px;width:min(460px,93cqw);box-shadow:0 30px 70px rgba(0,0,0,.65);
-  flex:0 1 auto;overflow:auto}
+  flex:0 1 auto;min-height:0;overflow:auto}
 .card-resultado h3{font-family:'Cormorant Garamond';font-size:22px;line-height:1.05;margin-bottom:2px}
 .card-resultado .tag{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--oro);margin-bottom:6px}
 .card-resultado ul{list-style:none;margin:4px 0 3px}
