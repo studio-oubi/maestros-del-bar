@@ -1,0 +1,103 @@
+"use client";
+
+import { useRef } from "react";
+import { IMG } from "@/lib/asset-manifest";
+import { useJuego } from "@/lib/juego";
+import { ShaderBotellas } from "@/components/ShaderBotellas";
+
+const BOTELLAS = [IMG.homeExtraviejo, IMG.homeDoble, IMG.homeTriple];
+const UMBRAL_MOV = 12; // px: más que esto se considera scroll/drag, no un toque
+
+export function Home() {
+  const { despachar } = useJuego();
+  const inicio = useRef<{ x: number; y: number } | null>(null);
+
+  const comenzar = () => despachar({ tipo: "IR", a: "formulario" });
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Comenzar el Mix Challenge"
+      onPointerDown={(e) => {
+        inicio.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerUp={(e) => {
+        const p = inicio.current;
+        inicio.current = null;
+        if (!p) return;
+        const dist = Math.hypot(e.clientX - p.x, e.clientY - p.y);
+        if (dist <= UMBRAL_MOV) comenzar();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          comenzar();
+        }
+      }}
+      className="relative flex h-full w-full cursor-pointer flex-col items-center overflow-hidden px-8 pb-8 pt-9 select-none outline-none"
+    >
+      <style>{estilos}</style>
+
+      {/* Cabecera: logo Brugal + lockup ESCÁPATE / A LO EXTRAORDINARIO */}
+      <header className="flex w-full flex-col items-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={IMG.logoBrugal} alt="Brugal" className="w-[46%] max-w-[220px]" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <h1 className="mt-7 w-[74%] max-w-[320px]">
+          <img src={IMG.escapate} alt="Escápate a lo extraordinario" className="w-full" />
+        </h1>
+      </header>
+
+      {/* Escena central: botellas con dissolve + logo neón flotante */}
+      <div className="relative mt-4 w-full flex-1">
+        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={6000} className="h-full w-full" />
+
+        {/* Logo neón: fijo delante. Posición y animación en capas separadas
+            para que el translate de centrado no choque con las animaciones. */}
+        <div className="pointer-events-none absolute left-1/2 top-[64%] w-[64%] max-w-[300px] -translate-x-1/2">
+          <div className="mix-flotar">
+            <div className="mix-tiltear">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={IMG.logoMix}
+                alt="Mix Challenge"
+                className="w-full drop-shadow-[0_0_18px_rgba(255,63,216,0.45)]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hint inferior */}
+      <p className="mix-latido mt-2 font-cuerpo text-[0.7rem] font-light uppercase tracking-[0.35em] text-crema/55">
+        toca para comenzar
+      </p>
+    </div>
+  );
+}
+
+const estilos = `
+@keyframes mixFlotar {
+  0%, 100% { transform: translateY(-6px); }
+  50%      { transform: translateY(6px); }
+}
+@keyframes mixTiltear {
+  0%   { transform: rotate(-2deg); }
+  35%  { transform: rotate(1.4deg); }
+  70%  { transform: rotate(-1deg); }
+  100% { transform: rotate(2deg); }
+}
+@keyframes mixLatido {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.8; }
+}
+.mix-flotar  { animation: mixFlotar 5s ease-in-out infinite; }
+.mix-tiltear { animation: mixTiltear 7.3s ease-in-out infinite alternate; transform-origin: 50% 60%; }
+.mix-latido  { animation: mixLatido 2.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mix-flotar  { animation: none; }
+  .mix-tiltear { animation: none; }
+  .mix-latido  { animation: none; opacity: 0.6; }
+}
+`;
