@@ -8,7 +8,7 @@ const kaneda = localFont({
   weight: "500",
   variable: "--font-kaneda",
 });
-const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-inter" });
+const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-inter" });
 
 export const metadata: Metadata = { title: "Mix Challenge — Brugal", description: "Escápate a lo extraordinario" };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover" };

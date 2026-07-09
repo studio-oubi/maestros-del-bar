@@ -24,6 +24,8 @@
 }
 
 html, body { height: 100%; overscroll-behavior: none; }
+/* Kaneda Gothic solo existe en Medium (500): prohibir negritas sintéticas */
+* { font-synthesis-weight: none; }
 body {
   background: var(--navy-deep);
   color: var(--crema);
