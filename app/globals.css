@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #0a1a3a;
+  --navy-deep: #060d1f;
+  --oro: #c9a45c;
+  --oro-claro: #e7cf9f;
+  --crema: #f0e3cd;
+  --crema-suave: rgba(240, 227, 205, 0.65);
+  --neon: #ff3fd8;
+}
+
+@theme inline {
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-oro: var(--oro);
+  --color-oro-claro: var(--oro-claro);
+  --color-crema: var(--crema);
+  --color-neon: var(--neon);
+  --font-titulo: var(--font-oswald);
+  --font-cuerpo: var(--font-jost);
+}
+
+html, body { height: 100%; overscroll-behavior: none; }
+body {
+  background: var(--navy-deep);
+  color: var(--crema);
+  font-family: var(--font-jost), sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+img { -webkit-user-drag: none; }
