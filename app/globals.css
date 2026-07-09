@@ -17,15 +17,15 @@
   --color-oro-claro: var(--oro-claro);
   --color-crema: var(--crema);
   --color-neon: var(--neon);
-  --font-titulo: var(--font-oswald);
-  --font-cuerpo: var(--font-jost);
+  --font-titulo: var(--font-kaneda);
+  --font-cuerpo: var(--font-inter);
 }
 
 html, body { height: 100%; overscroll-behavior: none; }
 body {
   background: var(--navy-deep);
   color: var(--crema);
-  font-family: var(--font-jost), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
