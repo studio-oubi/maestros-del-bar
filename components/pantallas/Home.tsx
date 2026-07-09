@@ -51,7 +51,7 @@ export function Home() {
 
       {/* Escena central: botellas con dissolve + logo neón flotante */}
       <div className="relative mt-4 w-full flex-1">
-        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={6000} className="h-full w-full" />
+        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
 
         {/* Logo neón: fijo delante, grande (cruza sobre el tercio inferior de
             la botella como en los mocks). Posición y animación en capas
@@ -95,10 +95,16 @@ const estilos = `
   0%, 100% { opacity: 0.35; }
   50%      { opacity: 0.8; }
 }
-.mix-flotar  { animation: mixFlotar 5s ease-in-out infinite; }
-.mix-tiltear { animation: mixTiltear 7.3s ease-in-out infinite alternate; transform-origin: 50% 60%; }
+@keyframes mixBob {
+  0%, 100% { transform: translateY(-5px); }
+  50%      { transform: translateY(5px); }
+}
+.mix-flotar  { animation: mixFlotar 8s ease-in-out infinite; }
+.mix-tiltear { animation: mixTiltear 11.7s ease-in-out infinite alternate; transform-origin: 50% 60%; }
 .mix-latido  { animation: mixLatido 2.6s ease-in-out infinite; }
+.mix-bob     { animation: mixBob 4.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
+  .mix-bob     { animation: none; }
   .mix-flotar  { animation: none; }
   .mix-tiltear { animation: none; }
   .mix-latido  { animation: none; opacity: 0.6; }
