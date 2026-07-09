@@ -171,9 +171,6 @@ h2{font-size:clamp(27px,6cqw,46px)}
 #s-riddle.activa .verso{opacity:1;transform:none}
 .verso::before,.verso::after{content:"—";display:block;color:var(--oro);font-style:normal;font-size:16px;letter-spacing:.3em;margin:5px 0}
 #s-riddle .bajo-barra{top:auto;bottom:calc(30px + env(safe-area-inset-bottom))}
-#riddle-trago{transform:scale(.94);opacity:0;transition:transform .9s var(--easeOut), opacity .9s var(--easeOut)}
-#riddle-trago img{height:min(30cqh,350px);width:auto;filter:drop-shadow(0 26px 24px rgba(0,0,0,.65))}
-#s-riddle.activa #riddle-trago{transform:scale(1);opacity:1}
 .reto-msg{font-family:'Cormorant Garamond';font-style:italic;font-size:clamp(15px,3.6cqw,20px);line-height:1.45;
   text-align:center;color:var(--crema);text-shadow:var(--sombraTexto);max-width:460px}
 .reto-msg b{color:var(--oro);font-style:normal;font-weight:600}
@@ -185,14 +182,6 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .riddle-slide.saliendo-der{opacity:0;transform:translateX(60px);position:absolute;pointer-events:none}
 .riddle-slide.entrando{opacity:0;transform:translateX(0);animation:riddle-in .5s var(--easeOut) forwards}
 @keyframes riddle-in{from{opacity:0;transform:translateX(var(--dir,40px))}to{opacity:1;transform:none}}
-.riddle-nav{position:absolute;top:46%;transform:translateY(-50%);z-index:8;
-  width:44px;height:44px;border-radius:50%;border:1px solid var(--borde);background:rgba(6,13,26,.5);
-  backdrop-filter:blur(6px);color:var(--crema-suave);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:background .25s, border-color .25s}
-.riddle-nav:active{background:rgba(201,164,92,.18);border-color:var(--oro)}
-.riddle-nav.izq{left:10px}
-.riddle-nav.der{right:10px}
-.riddle-nav svg{width:20px;height:20px}
 
 /* ---------- FORM ---------- */
 .card-form{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--borde);
@@ -339,7 +328,7 @@ h2{font-size:clamp(27px,6cqw,46px)}
   </div>
 </section>
 
-<!-- 3.5 · ACERTIJO: verso arriba, trago sobre la barra -->
+<!-- 3.5 · ACERTIJO: verso arriba, trago en coverflow sobre la barra (toca para preparar) -->
 <section class="pantalla" id="s-riddle">
   <div id="riddle-contenido">
     <div class="riddle-slide" id="riddle-slide">
@@ -347,17 +336,10 @@ h2{font-size:clamp(27px,6cqw,46px)}
       <div class="verso" id="riddle-verso"></div>
     </div>
   </div>
-  <div class="en-barra"><div id="riddle-trago"></div></div>
+  <div class="cf-stage" id="cf-riddle"></div>
   <div class="bajo-barra">
-    <div class="reto-msg">Cada verso esconde una pista.<br><b>Úsalas para preparar tu trago.</b></div>
-    <button class="btn" onclick="ir('s-glass')">Empezar a prepararlo</button>
+    <div class="reto-msg">Cada verso esconde una pista.<br><b>Toca tu trago para prepararlo.</b></div>
   </div>
-  <button class="riddle-nav izq" onclick="cambiarTragoRiddle(-1)" aria-label="Trago anterior">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-  </button>
-  <button class="riddle-nav der" onclick="cambiarTragoRiddle(1)" aria-label="Trago siguiente">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
-  </button>
 </section>
 
 <!-- 4 · CRISTALERÍA -->
@@ -511,6 +493,7 @@ let sel = {receta:null, vaso:null, ron:null, mixer:null, ings:new Set()};
 let suscriptores = [];
 let CF = {};
 let ultimoCambioPantalla = 0;
+let riddleSync = false, riddleUltimoK = 0;
 
 /* =====================================================================
    LÍNEA DE LA BARRA — tomada de la FOTO real, no de un % fijo.
@@ -559,6 +542,11 @@ function ir(id){
     d.classList.toggle('hecho', k < i); d.classList.toggle('actual', k === i);
   });
   if(id==='s-drinks'     && CF.tragos) CF.tragos.entrar();
+  else if(id==='s-riddle' && CF.riddle){
+    const k = Math.max(0, Object.keys(RECETAS).indexOf(sel.receta));
+    riddleUltimoK = k; riddleSync = true;
+    CF.riddle.entrar(k);
+  }
   else if(id==='s-glass' && CF.vasos)  CF.vasos.entrar();
   else if(id==='s-rum'   && CF.rones)  CF.rones.entrar();
   else if(id==='s-mixer' && CF.mixers) CF.mixers.entrar();
@@ -622,7 +610,7 @@ function reiniciarInactividad(){
    Items con base en la línea de la mesa; escala desde la base para
    que los laterales "retrocedan" sin despegarse de la barra.
 ===================================================================== */
-function crearCoverflow(stageId, datos, renderItem, onSelect, cabeceraId){
+function crearCoverflow(stageId, datos, renderItem, onSelect, cabeceraId, onCentro){
   const stage = document.getElementById(stageId);
   const n = datos.length;
   stage.innerHTML = datos.map((d,k)=>`
@@ -641,13 +629,15 @@ function crearCoverflow(stageId, datos, renderItem, onSelect, cabeceraId){
     if(cabDetalle) cabDetalle.textContent = datos[k].detalle || '';
   }
   function actualizarCabecera(){
-    if(!cab) return;
     const k = (((Math.round(st.i)) % n) + n) % n;
     if(k === centroActual) return;
     centroActual = k;
-    cab.classList.add('cambiando');
-    clearTimeout(cab._t);
-    cab._t = setTimeout(()=>{ pintarCabecera(k); cab.classList.remove('cambiando'); }, 170);
+    if(cab){
+      cab.classList.add('cambiando');
+      clearTimeout(cab._t);
+      cab._t = setTimeout(()=>{ pintarCabecera(k); cab.classList.remove('cambiando'); }, 170);
+    }
+    if(onCentro) onCentro(datos[k], k);
   }
   if(cab){ pintarCabecera(0); centroActual = 0; }
   const spacing = ()=> Math.min(stage.clientWidth*0.30, 205);
@@ -736,7 +726,12 @@ function crearCoverflow(stageId, datos, renderItem, onSelect, cabeceraId){
   render();
   return {
     reset:  ()=>{ cancelar(); st.i=0; st.bloqueado=false; centroActual=-1; if(cab){pintarCabecera(0);centroActual=0;} render(); },
-    entrar: ()=>{ cancelar(); st.bloqueado=false; st.i=-0.75; render(); animarA(0, 760); }
+    entrar: (destino=0)=>{
+      cancelar(); st.bloqueado=false;
+      centroActual = destino;
+      if(cab) pintarCabecera(destino);
+      st.i = destino - 0.75; render(); animarA(destino, 760);
+    }
   };
 }
 
@@ -757,6 +752,20 @@ function construirTodo(){
   CF.tragos = crearCoverflow('cf-tragos', listaRecetas,
                 t=>`<img class="img-trago-cf" src="${t.img}" alt="${t.nombre}">`,
                 p=>{ elegirTrago(p.id); ir('s-riddle'); }, 'cab-tragos');
+
+  riddleSync = false; riddleUltimoK = 0;
+  CF.riddle = crearCoverflow('cf-riddle', listaRecetas,
+                t=>`<img class="img-trago-cf" src="${t.img}" alt="${t.nombre}">`,
+                p=>{ ir('s-glass'); }, null,
+                (d,k)=>{
+                  const prevK = riddleUltimoK;
+                  riddleUltimoK = k;
+                  if(riddleSync){
+                    const n = listaRecetas.length;
+                    const delta = ((k - prevK) % n + n) % n;
+                    elegirTrago(d.id, delta === n-1 ? -1 : 1);
+                  }
+                });
 
   CF.vasos  = crearCoverflow('cf-vasos', VASOS,
                 v=>`<img src="${v.img}" alt="${v.nombre}">`,
@@ -817,61 +826,30 @@ function omitirMixer(){ sel.mixer = null; ir('s-grid'); }
 /* =====================================================================
    FLUJO
 ===================================================================== */
-function elegirTrago(id){
+function elegirTrago(id, dir){
   sel = {receta:id, vaso:null, ron:null, mixer:null, ings:new Set()};
   const r = RECETAS[id];
-  document.getElementById('riddle-nombre').textContent = r.nombre;
-  document.getElementById('riddle-trago').innerHTML = `<img src="${r.imgTrago}" alt="${r.nombre}">`;
-  document.getElementById('riddle-verso').innerHTML = r.verso.replace(/\n/g,'<br>');
+  const slide = document.getElementById('riddle-slide');
+  const pintar = ()=>{
+    document.getElementById('riddle-nombre').textContent = r.nombre;
+    document.getElementById('riddle-verso').innerHTML = r.verso.replace(/\n/g,'<br>');
+  };
+  if(dir){
+    slide.classList.add(dir > 0 ? 'saliendo-izq' : 'saliendo-der');
+    setTimeout(()=>{
+      pintar();
+      slide.classList.remove('saliendo-izq','saliendo-der');
+      slide.classList.add('entrando');
+      slide.style.setProperty('--dir', dir > 0 ? '40px' : '-40px');
+      setTimeout(()=> slide.classList.remove('entrando'), 500);
+    }, 300);
+  } else {
+    pintar();
+  }
   document.getElementById('lbl-trago-vaso').textContent = 'Vas a preparar · ' + r.nombre;
   CF.vasos.reset(); CF.rones.reset(); CF.mixers.reset();
   construirGrid();
 }
-function cambiarTragoRiddle(dir){
-  const keys = Object.keys(RECETAS);
-  const idx = keys.indexOf(sel.receta);
-  const next = ((idx + dir) % keys.length + keys.length) % keys.length;
-  // Animate slide text
-  const slide = document.getElementById('riddle-slide');
-  slide.classList.add(dir > 0 ? 'saliendo-izq' : 'saliendo-der');
-  // Animate drink image out
-  const tragoEl = document.getElementById('riddle-trago');
-  tragoEl.style.transition = 'opacity .3s, transform .3s';
-  tragoEl.style.opacity = '0';
-  tragoEl.style.transform = `translateX(${dir > 0 ? '-30' : '30'}px)`;
-  setTimeout(()=>{
-    elegirTrago(keys[next]);
-    slide.classList.remove('saliendo-izq','saliendo-der');
-    slide.classList.add('entrando');
-    slide.style.setProperty('--dir', dir > 0 ? '40px' : '-40px');
-    // Animate drink image in
-    tragoEl.style.transform = `translateX(${dir > 0 ? '30' : '-30'}px)`;
-    requestAnimationFrame(()=>{
-      tragoEl.style.opacity = '1';
-      tragoEl.style.transform = 'translateX(0)';
-    });
-    setTimeout(()=> slide.classList.remove('entrando'), 500);
-  }, 300);
-}
-/* Swipe en pantalla acertijo */
-(function(){
-  const sec = document.getElementById('s-riddle');
-  let sx=0, sy=0, swiping=false;
-  sec.addEventListener('pointerdown', e=>{
-    if(e.target.closest('.riddle-nav') || e.target.closest('.btn')) return;
-    sx = e.clientX; sy = e.clientY; swiping = true;
-  });
-  sec.addEventListener('pointermove', e=>{
-    if(!swiping) return;
-    if(Math.abs(e.clientY - sy) > 40) swiping = false;
-  });
-  sec.addEventListener('pointerup', e=>{
-    if(!swiping) return; swiping = false;
-    const dx = e.clientX - sx;
-    if(Math.abs(dx) > 50) cambiarTragoRiddle(dx < 0 ? 1 : -1);
-  });
-  sec.addEventListener('pointercancel', ()=> swiping = false);
-})();
 /* auto-formato: cédula 000-0000000-0 y teléfono (809) 000-0000 */
 document.getElementById('f-cedula').addEventListener('input', e=>{
   const d = e.target.value.replace(/\D/g,'').slice(0,11);
