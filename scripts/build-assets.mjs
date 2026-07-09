@@ -17,40 +17,47 @@ const nd = (name) => path.join(ND, name);
 const leg = (name) => path.join(LEG, name);
 
 // out: nombre de archivo en public/img; src: ruta absoluta de origen; height: alto máx de resize.
+//
+// Alturas subidas (feedback de usuario: se veían de baja resolución). Las
+// alturas originales del plan estaban pensadas en px CSS, pero en móviles
+// con DPR 2-3 la imagen se muestra al doble/triple del tamaño CSS y quedaba
+// corta de resolución real. `background` se deja igual: la fuente es
+// 1080x1920 (no hay más resolución para sacar) y es una textura difusa de
+// fondo donde no se nota.
 const JOBS = [
   { out: "background.webp", src: nd("Background.png"), height: 1920 },
-  { out: "barra.webp", src: nd("Barra.png"), height: 1200 },
-  { out: "escapate.webp", src: nd("Escapate a lo extra ordinario.png"), height: 300 },
-  { out: "mix-challenge-logo.webp", src: nd("Mix Challenge Logo.png"), height: 500 },
-  { out: "home-doble.webp", src: nd("Home Doble.png"), height: 1100 },
-  { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 1100 },
-  { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 1100 },
-  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 900 },
-  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 900 },
-  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 900 },
-  { out: "trago-toronja.webp", src: nd("toronja.png"), height: 700 },
-  { out: "trago-sour.webp", src: nd("sour.png"), height: 700 },
-  { out: "trago-albahaca.webp", src: nd("basir.png"), height: 700 },
-  { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 700 },
-  { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 700 },
-  { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 700 },
-  { out: "mixer-perrier.webp", src: leg("mixer-perrier.png"), height: 700 },
-  { out: "mixer-limon.webp", src: leg("mixer-limon.png"), height: 700 },
-  { out: "mixer-tonica.webp", src: leg("mixer-tonica.png"), height: 700 },
-  { out: "mixer-ginger.webp", src: leg("mixer-ginger.png"), height: 700 },
-  { out: "mixer-arandano.webp", src: leg("mixer-arandano.png"), height: 700 },
-  { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 400 },
-  { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 400 },
-  { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 400 },
-  { out: "ing-clara.webp", src: leg("ing-clara.png"), height: 400 },
-  { out: "ing-canela.webp", src: leg("ing-canela.png"), height: 400 },
-  { out: "ing-jengibre.webp", src: leg("ing-jengibre.png"), height: 400 },
-  { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 400 },
-  { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 400 },
-  { out: "ing-angostura.webp", src: leg("ing-angostura.png"), height: 400 },
-  { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 400 },
-  { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 400 },
-  { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 400 },
+  { out: "barra.webp", src: nd("Barra.png"), height: 1613 },
+  { out: "escapate.webp", src: nd("Escapate a lo extra ordinario.png"), height: 520 },
+  { out: "mix-challenge-logo.webp", src: nd("Mix Challenge Logo.png"), height: 760 },
+  { out: "home-doble.webp", src: nd("Home Doble.png"), height: 2200 },
+  { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 2200 },
+  { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 2200 },
+  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 1600 },
+  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 1600 },
+  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 1600 },
+  { out: "trago-toronja.webp", src: nd("toronja.png"), height: 1300 },
+  { out: "trago-sour.webp", src: nd("sour.png"), height: 1300 },
+  { out: "trago-albahaca.webp", src: nd("basir.png"), height: 1300 },
+  { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 1300 },
+  { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 1300 },
+  { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 1300 },
+  { out: "mixer-perrier.webp", src: leg("mixer-perrier.png"), height: 1000 },
+  { out: "mixer-limon.webp", src: leg("mixer-limon.png"), height: 1000 },
+  { out: "mixer-tonica.webp", src: leg("mixer-tonica.png"), height: 1000 },
+  { out: "mixer-ginger.webp", src: leg("mixer-ginger.png"), height: 1000 },
+  { out: "mixer-arandano.webp", src: leg("mixer-arandano.png"), height: 1000 },
+  { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 640 },
+  { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 640 },
+  { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 640 },
+  { out: "ing-clara.webp", src: leg("ing-clara.png"), height: 640 },
+  { out: "ing-canela.webp", src: leg("ing-canela.png"), height: 640 },
+  { out: "ing-jengibre.webp", src: leg("ing-jengibre.png"), height: 640 },
+  { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 640 },
+  { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 640 },
+  { out: "ing-angostura.webp", src: leg("ing-angostura.png"), height: 640 },
+  { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 640 },
+  { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 640 },
+  { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 640 },
 ];
 
 // Tiles derivados: recorte (extract) sobre la imagen fuente a tamaño original,
@@ -79,7 +86,7 @@ const CROPS = [
     src: nd("toronja.png"),
     extract: { left: 333, top: 563, width: 349, height: 305 },
     pad: { top: 22, bottom: 22, left: 0, right: 0 },
-    height: 400,
+    height: 640,
   },
   {
     // Par de hojas de albahaca: bbox real ~(305,745)-(715,878) (punta hoja
@@ -91,7 +98,7 @@ const CROPS = [
     src: nd("basir.png"),
     extract: { left: 305, top: 740, width: 410, height: 138 },
     pad: { top: 136, bottom: 136, left: 0, right: 0 },
-    height: 400,
+    height: 640,
   },
   {
     // Rodaja de limón: recorte ya cuadrado, centrado en la rueda de limón
@@ -99,7 +106,7 @@ const CROPS = [
     out: "ing-limon.webp",
     src: nd("basir.png"),
     extract: { left: 780, top: 1100, width: 350, height: 350 },
-    height: 400,
+    height: 640,
   },
 ];
 
@@ -153,7 +160,7 @@ async function run() {
     const outPath = path.join(OUT, job.out);
     await sharp(job.src)
       .resize({ height: job.height, withoutEnlargement: true })
-      .webp({ quality: 82 })
+      .webp({ quality: 86 })
       .toFile(outPath);
     results.push(outPath);
   }
@@ -177,7 +184,7 @@ async function run() {
     // resto de los tiles ing-*.
     await sharp(buf)
       .resize({ height: crop.height })
-      .webp({ quality: 82 })
+      .webp({ quality: 86 })
       .toFile(outPath);
     results.push(outPath);
   }
