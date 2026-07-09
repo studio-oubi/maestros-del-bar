@@ -3,11 +3,13 @@
 :root {
   --navy: #0a1a3a;
   --navy-deep: #060d1f;
-  --oro: #c9a45c;
+  --oro: #c9a84c;
   --oro-claro: #e7cf9f;
   --crema: #f0e3cd;
   --crema-suave: rgba(240, 227, 205, 0.65);
   --neon: #ff3fd8;
+  --tinta-boton: #030b2a;
+  --placeholder: rgb(191 199 217 / 0.7);
 }
 
 @theme inline {
@@ -30,3 +32,41 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 img { -webkit-user-drag: none; }
+
+/* ============================================================
+   Roles tipográficos (spec del diseño, artboard 1080×1920).
+   Tamaños en cqh (relativos al alto del Marco, container-type:size)
+   para que se vean idénticos en cualquier dispositivo vertical.
+   ============================================================ */
+.texto-titulo {
+  font-family: var(--font-titulo);
+  font-weight: 500;
+  font-size: 4.99cqh; /* 95.7px @1920 */
+  line-height: 1.04;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+.texto-sub,
+.texto-label {
+  font-family: var(--font-cuerpo);
+  font-weight: 700;
+  font-size: 1.21cqh; /* 23.3px @1920 */
+  color: var(--oro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.texto-input {
+  font-family: var(--font-cuerpo);
+  font-weight: 400;
+  font-size: 1.47cqh; /* 28.3px @1920 */
+}
+.texto-input::placeholder {
+  color: var(--placeholder);
+}
+.texto-boton {
+  font-family: var(--font-titulo);
+  font-weight: 500;
+  font-size: 3.79cqh; /* 72.7px @1920 */
+  color: var(--tinta-boton);
+  text-transform: uppercase;
+}
