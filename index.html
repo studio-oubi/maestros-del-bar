@@ -91,10 +91,17 @@ h2{font-size:clamp(27px,6cqw,46px)}
 #progreso .punto{width:7px;height:7px;border-radius:50%;background:rgba(240,227,205,.25);transition:.4s var(--easeOut)}
 #progreso .punto.hecho{background:var(--oro)}
 #progreso .punto.actual{background:var(--crema);transform:scale(1.45)}
-#btn-inicio{position:fixed;top:calc(10px + env(safe-area-inset-top));right:14px;z-index:6;display:none;
-  background:rgba(6,13,26,.45);backdrop-filter:blur(6px);border:1px solid var(--borde);color:var(--crema-suave);border-radius:999px;
-  padding:8px 16px;font-family:'Jost';font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
-#btn-inicio.visible{display:block}
+#btn-inicio, #btn-atras{position:fixed;top:calc(10px + env(safe-area-inset-top));z-index:6;display:none;
+  background:rgba(6,13,26,.45);backdrop-filter:blur(6px);border:1px solid var(--borde);color:var(--crema-suave);border-radius:50%;
+  width:40px;height:40px;padding:0;cursor:pointer;
+  align-items:center;justify-content:center;
+  transition:background .25s, border-color .25s}
+#btn-inicio:active, #btn-atras:active{background:rgba(201,164,92,.18);border-color:var(--oro)}
+#btn-inicio{right:14px}
+#btn-atras{left:14px}
+#btn-inicio.visible, #btn-atras.visible{display:flex}
+.icono-nav{width:20px;height:20px;stroke:var(--crema-suave);transition:stroke .25s}
+#btn-inicio:active .icono-nav, #btn-atras:active .icono-nav{stroke:var(--oro)}
 
 /* ---------- COVERFLOW SOBRE LA BARRA ----------
    Los items están anclados por su BASE (bottom) a la línea de la
@@ -110,8 +117,8 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .cf-item .cf-foto img{height:min(38cqh,440px);width:auto;max-width:66cqw;display:block}
 .cf-item .cf-foto img.img-botella{height:min(42cqh,490px);max-width:52cqw}
 .cf-item .cf-foto img.img-mixer{height:min(32cqh,360px);max-width:58cqw}
-.cf-item.centro .cf-foto{animation:flotar 5s ease-in-out infinite}
-@keyframes flotar{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-9px) rotate(.5deg)}}
+.cf-item .cf-foto img.img-trago-cf{height:min(34cqh,380px);max-width:60cqw}
+
 /* nombre del elemento centrado — ARRIBA, junto al título; nunca despega la barra */
 .cf-cabecera{min-height:64px;display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:12px}
 .cf-cabecera .cf-h-nombre{font-family:'Cormorant Garamond';font-weight:600;line-height:1;
@@ -137,7 +144,7 @@ h2{font-size:clamp(27px,6cqw,46px)}
 
 /* ---------- INTRO ---------- */
 #logo-brugal{width:min(56cqw,340px);height:auto;filter:drop-shadow(0 3px 12px rgba(0,0,0,.6));margin-bottom:10px}
-#s-intro .trio{display:flex;align-items:flex-end;justify-content:center;gap:clamp(10px,3.5cqw,34px)}
+#s-intro .trio{display:flex;align-items:flex-end;justify-content:center;gap:clamp(10px,3.5cqw,34px);pointer-events:none}
 #s-intro .trio img{height:min(25cqh,290px);width:auto;filter:drop-shadow(0 22px 20px rgba(0,0,0,.6))}
 .pulso{color:var(--crema-suave);font-size:13px;letter-spacing:.32em;text-transform:uppercase;animation:pulso 2.4s ease-in-out infinite;
   text-shadow:var(--sombraTexto)}
@@ -167,6 +174,22 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .reto-msg{font-family:'Cormorant Garamond';font-style:italic;font-size:clamp(15px,3.6cqw,20px);line-height:1.45;
   text-align:center;color:var(--crema);text-shadow:var(--sombraTexto);max-width:460px}
 .reto-msg b{color:var(--oro);font-style:normal;font-weight:600}
+/* Riddle swipe */
+#riddle-contenido{position:relative;width:100%;flex:1;overflow:hidden;display:flex;flex-direction:column;align-items:center}
+.riddle-slide{display:flex;flex-direction:column;align-items:center;width:100%;
+  transition:opacity .45s var(--easeOut), transform .45s var(--easeOut)}
+.riddle-slide.saliendo-izq{opacity:0;transform:translateX(-60px);position:absolute;pointer-events:none}
+.riddle-slide.saliendo-der{opacity:0;transform:translateX(60px);position:absolute;pointer-events:none}
+.riddle-slide.entrando{opacity:0;transform:translateX(0);animation:riddle-in .5s var(--easeOut) forwards}
+@keyframes riddle-in{from{opacity:0;transform:translateX(var(--dir,40px))}to{opacity:1;transform:none}}
+.riddle-nav{position:absolute;top:46%;transform:translateY(-50%);z-index:8;
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--borde);background:rgba(6,13,26,.5);
+  backdrop-filter:blur(6px);color:var(--crema-suave);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .25s, border-color .25s}
+.riddle-nav:active{background:rgba(201,164,92,.18);border-color:var(--oro)}
+.riddle-nav.izq{left:10px}
+.riddle-nav.der{right:10px}
+.riddle-nav svg{width:20px;height:20px}
 
 /* ---------- FORM ---------- */
 .card-form{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--borde);
@@ -228,19 +251,22 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .rev-trago{position:absolute;inset:0;
   -webkit-mask-image:linear-gradient(to top, #000 0%, #000 calc(var(--rev,0%) - 4%), transparent var(--rev,0%));
   mask-image:linear-gradient(to top, #000 0%, #000 calc(var(--rev,0%) - 4%), transparent var(--rev,0%))}
-.panel-res{position:absolute;left:0;right:0;top:calc(var(--barra) + 3.5cqh);bottom:calc(24px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 18px}
+.panel-res{position:absolute;left:0;right:0;top:calc(var(--barra) + 2cqh);bottom:calc(24px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 18px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .8s .2s var(--easeOut), transform .8s .2s var(--easeOut)}
+.panel-res.visible{opacity:1;transform:none}
 .card-resultado{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--borde);
-  border-radius:var(--radius);padding:20px 26px;width:min(480px,93cqw);box-shadow:0 30px 70px rgba(0,0,0,.65);
-  opacity:0;transform:translateY(22px);transition:opacity .8s .2s var(--easeOut), transform .8s .2s var(--easeOut);
+  border-radius:var(--radius);padding:16px 22px;width:min(460px,93cqw);box-shadow:0 30px 70px rgba(0,0,0,.65);
   flex:0 1 auto;overflow:auto}
-.card-resultado.visible{opacity:1;transform:none}
-.card-resultado h3{font-family:'Cormorant Garamond';font-size:27px;margin-bottom:2px}
-.card-resultado .tag{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--oro);margin-bottom:8px}
-.card-resultado ul{list-style:none;margin:6px 0 4px}
-.card-resultado li{padding:6px 0;border-bottom:1px dashed rgba(201,164,92,.18);font-weight:300;font-size:14px;display:flex;gap:12px}
-.card-resultado li b{font-weight:500;min-width:74px;color:var(--oro)}
-.acciones{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.card-resultado h3{font-family:'Cormorant Garamond';font-size:22px;line-height:1.05;margin-bottom:2px}
+.card-resultado .tag{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--oro);margin-bottom:6px}
+.card-resultado ul{list-style:none;margin:4px 0 3px}
+.card-resultado li{padding:3px 0;border-bottom:1px dashed rgba(201,164,92,.18);font-weight:300;font-size:12.5px;display:flex;gap:10px}
+.card-resultado li b{font-weight:500;min-width:64px;color:var(--oro)}
+.card-resultado .sub{font-size:11.5px!important;line-height:1.4;margin-top:5px!important}
+.acciones{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;flex:0 0 auto;margin-top:6px}
+.acciones .btn{padding:13px 28px;font-size:13.5px}
 .confeti{position:fixed;top:-4cqh;font-size:22px;z-index:30;animation:caer linear forwards}
 @keyframes caer{to{transform:translateY(110cqh) rotate(720deg)}}
 
@@ -257,7 +283,12 @@ h2{font-size:clamp(27px,6cqw,46px)}
 </div>
 <div id="legal">El consumo de alcohol perjudica la salud. Ley 42-01.</div>
 <div id="progreso" aria-hidden="true"></div>
-<button id="btn-inicio" onclick="irInicio()">Inicio</button>
+<button id="btn-atras" onclick="irAtras()" aria-label="Atrás">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icono-nav"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</button>
+<button id="btn-inicio" onclick="irInicio()" aria-label="Inicio">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icono-nav"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+</button>
 
 <!-- 1 · INTRO: logo + título arriba, tragos sobre la barra -->
 <section class="pantalla activa" id="s-intro" onclick="ir('s-email')">
@@ -295,19 +326,32 @@ h2{font-size:clamp(27px,6cqw,46px)}
 <section class="pantalla" id="s-drinks">
   <div class="eyebrow">El reto</div>
   <h2>¿Cuál trago vas a preparar?</h2>
-  <div class="en-barra"><div class="fila-tragos" id="fila-tragos"></div></div>
-  <div class="bajo-barra"><div class="hint-tap">Toca un cóctel</div></div>
+  <div class="cf-cabecera" id="cab-tragos"><div class="cf-h-nombre"></div><div class="cf-h-detalle"></div></div>
+  <div class="cf-stage" id="cf-tragos"></div>
+  <div class="bajo-barra" style="top:calc(var(--barra) + 13cqh)">
+    <div class="swipe-hint"><span class="fl izq">←</span><span>Desliza · toca para elegir</span><span class="fl">→</span></div>
+  </div>
 </section>
 
 <!-- 3.5 · ACERTIJO: verso arriba, trago sobre la barra -->
-<section class="pantalla" id="s-riddle" onclick="ir('s-glass')">
-  <div class="eyebrow" id="riddle-nombre">—</div>
-  <div class="verso" id="riddle-verso"></div>
+<section class="pantalla" id="s-riddle">
+  <div id="riddle-contenido">
+    <div class="riddle-slide" id="riddle-slide">
+      <div class="eyebrow" id="riddle-nombre">—</div>
+      <div class="verso" id="riddle-verso"></div>
+    </div>
+  </div>
   <div class="en-barra"><div id="riddle-trago"></div></div>
   <div class="bajo-barra">
     <div class="reto-msg">Cada verso esconde una pista.<br><b>Úsalas para preparar tu trago.</b></div>
-    <div class="pulso">Toca para empezar a prepararlo</div>
+    <button class="btn" onclick="ir('s-glass')">Empezar a prepararlo</button>
   </div>
+  <button class="riddle-nav izq" onclick="cambiarTragoRiddle(-1)" aria-label="Trago anterior">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <button class="riddle-nav der" onclick="cambiarTragoRiddle(1)" aria-label="Trago siguiente">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+  </button>
 </section>
 
 <!-- 4 · CRISTALERÍA -->
@@ -366,12 +410,14 @@ h2{font-size:clamp(27px,6cqw,46px)}
 <section class="pantalla" id="s-result">
   <div class="eyebrow" id="res-eyebrow">Preparando…</div>
   <h2 id="res-titulo">&nbsp;</h2>
-  <div class="en-barra"><div id="zona-preparado"></div></div>
-  <div class="panel-res">
+  <div class="en-barra" id="barra-resultado">
+    <div id="zona-preparado"></div>
+  </div>
+  <div class="panel-res" id="panel-res">
     <div class="card-resultado" id="card-res"></div>
     <div class="acciones" id="res-acciones" style="display:none">
       <button class="btn fantasma" onclick="reintentar()">Intentar de nuevo</button>
-      <button class="btn" onclick="ir('s-drinks')">Otro trago</button>
+      <button class="btn" onclick="irInicio()">Inicio</button>
     </div>
   </div>
 </section>
@@ -458,6 +504,7 @@ const PASOS = ['s-drinks','s-riddle','s-glass','s-rum','s-mixer','s-grid'];
 let sel = {receta:null, vaso:null, ron:null, mixer:null, ings:new Set()};
 let suscriptores = [];
 let CF = {};
+let ultimoCambioPantalla = 0;
 
 /* =====================================================================
    LÍNEA DE LA BARRA — tomada de la FOTO real, no de un % fijo.
@@ -476,6 +523,7 @@ function ajustarBarra(){
   const desfaseY = (mAlto - altoReal) / 2;                      // center: recorta igual arriba/abajo
   let y = desfaseY + ESCENA.barraY * escala;
   y = Math.max(mAlto*0.42, Math.min(y, mAlto*0.90));            // red de seguridad
+  y += 12;
   const raiz = document.documentElement.style;
   raiz.setProperty('--barra', y.toFixed(1) + 'px');
   raiz.setProperty('--vph', mAlto + 'px');
@@ -486,21 +534,71 @@ ajustarBarra();
 document.getElementById('progreso').innerHTML = PASOS.map(()=>'<div class="punto"></div>').join('');
 
 function ir(id){
+  // Guardias de validación: no se puede saltar pasos
+  if (id === 's-riddle' && !sel.receta) return;
+  if (id === 's-glass' && !sel.receta) return;
+  if (id === 's-rum' && !sel.vaso) return;
+  if (id === 's-mixer' && !sel.ron) return;
+  if (id === 's-grid' && !sel.ron) return;
+  if (id === 's-result' && !sel.receta) return;
+
   document.querySelectorAll('.pantalla').forEach(p=>p.classList.remove('activa'));
   document.getElementById(id).classList.add('activa');
   const i = PASOS.indexOf(id);
   const prog = document.getElementById('progreso');
   prog.classList.toggle('visible', i >= 0);
   document.getElementById('btn-inicio').classList.toggle('visible', id!=='s-intro');
+  document.getElementById('btn-atras').classList.toggle('visible', id!=='s-intro');
   prog.querySelectorAll('.punto').forEach((d,k)=>{
     d.classList.toggle('hecho', k < i); d.classList.toggle('actual', k === i);
   });
-  if(id==='s-glass'      && CF.vasos)  CF.vasos.entrar();
+  if(id==='s-drinks'     && CF.tragos) CF.tragos.entrar();
+  else if(id==='s-glass' && CF.vasos)  CF.vasos.entrar();
   else if(id==='s-rum'   && CF.rones)  CF.rones.entrar();
   else if(id==='s-mixer' && CF.mixers) CF.mixers.entrar();
   reiniciarInactividad();
 }
-function irInicio(){ cerrarOverlay(); resetTodo(); ir('s-intro'); }
+function irInicio(){
+  cerrarOverlay();
+  document.getElementById('panel-res').classList.remove('visible');
+  document.getElementById('zona-preparado').innerHTML = '';
+  resetTodo();
+  ir('s-intro');
+}
+function irAtras(){
+  const act = document.querySelector('.pantalla.activa');
+  if(!act) return;
+  const mapaAtras = {
+    's-email': 's-intro',
+    's-drinks': 's-intro',
+    's-riddle': 's-drinks',
+    's-glass': 's-riddle',
+    's-rum': 's-glass',
+    's-mixer': 's-rum',
+    's-grid': 's-mixer',
+    's-result': 's-grid'
+  };
+  const prev = mapaAtras[act.id];
+  if(prev) {
+    if(act.id === 's-riddle') {
+      sel.receta = null; sel.vaso = null; sel.ron = null; sel.mixer = null; sel.ings.clear();
+    } else if(act.id === 's-glass') {
+      sel.vaso = null; sel.ron = null; sel.mixer = null; sel.ings.clear();
+    } else if(act.id === 's-rum') {
+      sel.ron = null; sel.mixer = null; sel.ings.clear();
+    } else if(act.id === 's-mixer') {
+      sel.mixer = null; sel.ings.clear();
+    } else if(act.id === 's-grid') {
+      sel.ings.clear();
+    }
+
+    if(prev === 's-intro') {
+      irInicio();
+    } else {
+      ir(prev);
+    }
+  }
+}
 function resetTodo(){
   sel = {receta:null, vaso:null, ron:null, mixer:null, ings:new Set()};
   document.getElementById('form-email').reset();
@@ -627,6 +725,7 @@ function crearCoverflow(stageId, datos, renderItem, onSelect, cabeceraId){
   }
   stage.addEventListener('pointerup', soltar);
   stage.addEventListener('pointercancel', soltar);
+
   window.addEventListener('resize', render);
   render();
   return {
@@ -642,11 +741,16 @@ function construirTodo(){
   document.getElementById('trio-intro').innerHTML =
     Object.values(RECETAS).map(r=>`<img src="${r.imgTrago}" alt="${r.nombre}">`).join('');
 
-  document.getElementById('fila-tragos').innerHTML = Object.entries(RECETAS).map(([id,r])=>`
-    <div class="trago-opcion" role="button" tabindex="0" onclick="elegirTrago('${id}')">
-      <img src="${r.imgTrago}" alt="${r.nombre}">
-      <div class="nombre">${r.nombre}</div>
-    </div>`).join('');
+  const listaRecetas = Object.entries(RECETAS).map(([id, r]) => ({
+    id: id,
+    nombre: r.nombre,
+    detalle: 'Descifra el acertijo',
+    img: r.imgTrago
+  }));
+
+  CF.tragos = crearCoverflow('cf-tragos', listaRecetas,
+                t=>`<img class="img-trago-cf" src="${t.img}" alt="${t.nombre}">`,
+                p=>{ elegirTrago(p.id); ir('s-riddle'); }, 'cab-tragos');
 
   CF.vasos  = crearCoverflow('cf-vasos', VASOS,
                 v=>`<img src="${v.img}" alt="${v.nombre}">`,
@@ -658,7 +762,8 @@ function construirTodo(){
                 m=>`<img class="img-mixer" src="${m.img}" alt="${m.nombre}">`,
                 p=>{ sel.mixer=p.id; ir('s-grid'); }, 'cab-mixers');
   construirGrid();
-  document.getElementById('card-res').classList.remove('visible');
+  document.getElementById('panel-res').classList.remove('visible');
+  document.getElementById('card-res').innerHTML = '';
   document.getElementById('res-acciones').style.display='none';
 }
 function construirGrid(){
@@ -715,8 +820,52 @@ function elegirTrago(id){
   document.getElementById('lbl-trago-vaso').textContent = 'Vas a preparar · ' + r.nombre;
   CF.vasos.reset(); CF.rones.reset(); CF.mixers.reset();
   construirGrid();
-  ir('s-riddle');
 }
+function cambiarTragoRiddle(dir){
+  const keys = Object.keys(RECETAS);
+  const idx = keys.indexOf(sel.receta);
+  const next = ((idx + dir) % keys.length + keys.length) % keys.length;
+  // Animate slide text
+  const slide = document.getElementById('riddle-slide');
+  slide.classList.add(dir > 0 ? 'saliendo-izq' : 'saliendo-der');
+  // Animate drink image out
+  const tragoEl = document.getElementById('riddle-trago');
+  tragoEl.style.transition = 'opacity .3s, transform .3s';
+  tragoEl.style.opacity = '0';
+  tragoEl.style.transform = `translateX(${dir > 0 ? '-30' : '30'}px)`;
+  setTimeout(()=>{
+    elegirTrago(keys[next]);
+    slide.classList.remove('saliendo-izq','saliendo-der');
+    slide.classList.add('entrando');
+    slide.style.setProperty('--dir', dir > 0 ? '40px' : '-40px');
+    // Animate drink image in
+    tragoEl.style.transform = `translateX(${dir > 0 ? '30' : '-30'}px)`;
+    requestAnimationFrame(()=>{
+      tragoEl.style.opacity = '1';
+      tragoEl.style.transform = 'translateX(0)';
+    });
+    setTimeout(()=> slide.classList.remove('entrando'), 500);
+  }, 300);
+}
+/* Swipe en pantalla acertijo */
+(function(){
+  const sec = document.getElementById('s-riddle');
+  let sx=0, sy=0, swiping=false;
+  sec.addEventListener('pointerdown', e=>{
+    if(e.target.closest('.riddle-nav') || e.target.closest('.btn')) return;
+    sx = e.clientX; sy = e.clientY; swiping = true;
+  });
+  sec.addEventListener('pointermove', e=>{
+    if(!swiping) return;
+    if(Math.abs(e.clientY - sy) > 40) swiping = false;
+  });
+  sec.addEventListener('pointerup', e=>{
+    if(!swiping) return; swiping = false;
+    const dx = e.clientX - sx;
+    if(Math.abs(dx) > 50) cambiarTragoRiddle(dx < 0 ? 1 : -1);
+  });
+  sec.addEventListener('pointercancel', ()=> swiping = false);
+})();
 /* auto-formato: cédula 000-0000000-0 y teléfono (809) 000-0000 */
 document.getElementById('f-cedula').addEventListener('input', e=>{
   const d = e.target.value.replace(/\D/g,'').slice(0,11);
@@ -775,9 +924,11 @@ function preparar(){
   document.getElementById('res-titulo').textContent = r.nombre;
   document.getElementById('res-acciones').style.display='none';
   const card = document.getElementById('card-res');
-  card.classList.remove('visible');
+  card.innerHTML = '';
+  const panelRes = document.getElementById('panel-res');
+  panelRes.classList.remove('visible');
 
-  const vasoElegido = VASOS.find(v=>v.id===sel.vaso);
+  const vasoElegido = VASOS.find(v=>v.id===sel.vaso) || VASOS[0];
   const zona = document.getElementById('zona-preparado');
   zona.innerHTML = `
     <div class="rev-wrap" id="rev-wrap">
@@ -786,6 +937,7 @@ function preparar(){
         <img id="rev-trago-img" src="${r.imgTrago}" alt="">
       </div>
     </div>`;
+
   const wrap = document.getElementById('rev-wrap');
   const imgTmp = new Image();
   imgTmp.onload = ()=>{ wrap.style.aspectRatio = imgTmp.naturalWidth + ' / ' + imgTmp.naturalHeight; };
@@ -800,6 +952,7 @@ function preparar(){
 
   setTimeout(()=>{
     document.getElementById('res-eyebrow').textContent = correcto ? 'Receta de los Maestros del Bar' : 'Creación original';
+    panelRes.classList.add('visible');
     const listaReceta = `<ul>${r.pasos.map(p=>`<li><b>${p[0]}</b><span>${p[1]}</span></li>`).join('')}</ul>`;
     if(correcto){
       card.innerHTML = `
@@ -817,11 +970,12 @@ function preparar(){
         ${listaReceta}
         <p class="sub" style="max-width:none;margin-top:6px;font-size:13px;color:var(--oro);text-shadow:none">Ahora que conoces el secreto… ¿otra ronda para hacerlo tuyo?</p>`;
     }
-    card.classList.add('visible');
     document.getElementById('res-acciones').style.display='flex';
   }, correcto ? 4300 : 3400);
 }
 function reintentar(){
+  document.getElementById('panel-res').classList.remove('visible');
+  document.getElementById('zona-preparado').innerHTML = '';
   const receta = sel.receta;
   sel = {receta, vaso:null, ron:null, mixer:null, ings:new Set()};
   CF.vasos.reset(); CF.rones.reset(); CF.mixers.reset();
