@@ -47,8 +47,8 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
   const onCentroRef = useRef(onCentroChange);
   onCentroRef.current = onCentroChange;
 
-  // Puntero
-  const punteroRef = useRef({ x0: 0, y0: 0, pos0: 0, t0: 0, xPrev: 0, tPrev: 0, vpx: 0, idx: -1 });
+  // Puntero. `id` = pointerId del primer dedo activo (guard multi-touch).
+  const punteroRef = useRef({ id: -1, x0: 0, y0: 0, pos0: 0, t0: 0, xPrev: 0, tPrev: 0, vpx: 0, idx: -1 });
 
   function pasoPx() {
     const w = stageRef.current?.clientWidth ?? 390;
@@ -129,9 +129,12 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
 
   // ---- Punteros ----
   function onDown(e: React.PointerEvent) {
+    // Guard multi-touch: si ya hay un dedo arrastrando, ignora los siguientes.
+    if (arrastreRef.current) return;
     pararRaf();
     arrastreRef.current = true;
     const p = punteroRef.current;
+    p.id = e.pointerId;
     p.x0 = p.xPrev = e.clientX;
     p.y0 = e.clientY;
     p.pos0 = posRef.current;
@@ -146,7 +149,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
   }
 
   function onMove(e: React.PointerEvent) {
-    if (!arrastreRef.current) return;
+    if (!arrastreRef.current || e.pointerId !== punteroRef.current.id) return;
     const p = punteroRef.current;
     const t = performance.now();
     const dtm = Math.max(1, t - p.tPrev);
@@ -162,9 +165,10 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
   }
 
   function onUp(e: React.PointerEvent) {
-    if (!arrastreRef.current) return;
-    arrastreRef.current = false;
     const p = punteroRef.current;
+    if (!arrastreRef.current || e.pointerId !== p.id) return;
+    arrastreRef.current = false;
+    p.id = -1;
     const dx = e.clientX - p.x0;
     const dy = e.clientY - p.y0;
     const mov = Math.hypot(dx, dy);
@@ -181,6 +185,17 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     const proyectado = posRef.current + velIdx * PROY;
     objetivoRef.current = clamp(Math.round(proyectado), 0, n - 1);
     correrMuelle();
+  }
+
+  // pointercancel NO es un tap: un gesto del sistema (menú contextual, segundo
+  // dedo, cancelación del navegador) no debe seleccionar ni navegar. Solo se
+  // reencaja al índice más cercano.
+  function onCancel(e: React.PointerEvent) {
+    const p = punteroRef.current;
+    if (!arrastreRef.current || e.pointerId !== p.id) return;
+    arrastreRef.current = false;
+    p.id = -1;
+    irA(clamp(Math.round(posRef.current), 0, n - 1));
   }
 
   // Pintado inicial y en cambios de tamaño / lista.
@@ -201,7 +216,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}
-      onPointerCancel={onUp}
+      onPointerCancel={onCancel}
       className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing [perspective:1100px]"
       style={{ ["--altura-item" as string]: `${alturaItem}cqh` }}
     >
