@@ -967,7 +967,7 @@ function preparar(){
     const cardRect = document.getElementById('card-res').getBoundingClientRect();
     const vphPx2 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vph')) || pantallaRect.height;
     const chicoH = Math.min(vphPx2*0.16, 170);
-    const targetTop = Math.max(6, (cardRect.top - pantallaRect.top) - chicoH - 8);
+    const targetTop = Math.max(6, (cardRect.top - pantallaRect.top) - chicoH - 30);
     wrap2.style.height = chicoH + 'px';
     wrap2.style.top = targetTop + 'px';
   }, correcto ? 3800 : 3200);
