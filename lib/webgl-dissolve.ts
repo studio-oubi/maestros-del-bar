@@ -182,27 +182,32 @@ export function crearDissolve(
     raf = requestAnimationFrame(dibujar);
 
     const n = texturas.length;
-    const desde = texturas[indice];
-    const hacia = texturas[(indice + 1) % n];
 
+    // Actualiza la máquina de estados ANTES de capturar las texturas, para que
+    // el frame que cierra una transición ya dibuje el estado post-swap. Si se
+    // capturaran antes, ese frame pintaría la textura FROM anterior con
+    // progreso=0 (máscara ≈1) → un flash de 1 frame de la textura vieja.
     let progreso = 0;
     const transcurrido = ahora - faseInicio;
     if (!enTransicion) {
       if (n > 1 && transcurrido >= intervaloMs) {
         enTransicion = true;
         faseInicio = ahora;
-        progreso = 0;
       }
     } else {
       const t = Math.min(1, (ahora - faseInicio) / duracionTrans);
-      progreso = suavizar(t);
       if (t >= 1) {
         indice = (indice + 1) % n;
         enTransicion = false;
         faseInicio = ahora;
         progreso = 0;
+      } else {
+        progreso = suavizar(t);
       }
     }
+
+    const desde = texturas[indice];
+    const hacia = texturas[(indice + 1) % n];
 
     const [sfx, sfy] = calcularEscala(desde.w, desde.h, anchoCanvas, altoCanvas);
     const [stx, sty] = calcularEscala(hacia.w, hacia.h, anchoCanvas, altoCanvas);
