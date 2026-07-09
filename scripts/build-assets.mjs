@@ -54,35 +54,51 @@ const JOBS = [
 ];
 
 // Tiles derivados: recorte (extract) sobre la imagen fuente a tamaño original,
-// luego resize a `height`, fondo transparente conservado.
+// recorte llevado a un lienzo CUADRADO (pad transparente si hace falta),
+// luego resize a `height`. Estos 3 tiles se renderizan como medallones
+// circulares con object-fit: cover, por lo que el resultado DEBE ser
+// cuadrado y con el sujeto centrado llenando la mayor parte del cuadro
+// (si no, el cover recorta de forma asimétrica y corta la fruta/hoja).
 //
-// Coordenadas medidas a mano: se generó un preview escalado de cada fuente
-// (sips -Z 600 / sharp resize) y se iteró el recorte hasta obtener un tile
-// presentable (sin bordes de vaso, sin fruta cortada), verificando cada
-// iteración con Read sobre el WebP resultante.
+// Coordenadas medidas a mano con precisión de píxel: se generó un overlay
+// de grilla (líneas cada 50px con la coordenada original impresa) sobre
+// cada fuente y se leyó directamente la posición del sujeto y del borde
+// del vaso/aro dorado, para no adivinar. Se verificó cada iteración con
+// Read sobre el resultado final (compuesto sobre blanco para juzgar
+// encuadre/márgenes).
 //
 // toronja.png y basir.png son 1536x2752. En ambos, el garnish (cuña de
 // toronja / albahaca+limón) está en el tercio superior de la imagen.
 const CROPS = [
   {
-    // Cuña de toronja: zona superior-izquierda del garnish, por encima del borde del vaso.
+    // Cuña de toronja: bbox real medido con grilla ~(350,580)-(660,868)
+    // (punta arriba, base abajo, borde del vaso empieza ~y870). El bbox
+    // resultó casi cuadrado (349x305): solo hace falta un pad simétrico
+    // mínimo arriba/abajo para cuadrar, sin recortar la fruta.
     out: "ing-toronja.webp",
     src: nd("toronja.png"),
-    extract: { left: 300, top: 565, width: 560, height: 285 },
+    extract: { left: 333, top: 563, width: 349, height: 305 },
+    pad: { top: 22, bottom: 22, left: 0, right: 0 },
     height: 400,
   },
   {
-    // Ramillete de albahaca: hojas en la zona superior del garnish, justo sobre el borde dorado del vaso.
+    // Par de hojas de albahaca: bbox real ~(305,745)-(715,878) (punta hoja
+    // izq. en x330/y745, punta hoja der. en x700/y780, aro dorado del vaso
+    // arranca ~y885). Es una forma intrínsecamente ancha y baja (410x138);
+    // se prioriza mostrar ambas puntas completas y cero píxeles del aro
+    // dorado por sobre el ratio de llenado, con pad simétrico arriba/abajo.
     out: "ing-albahaca.webp",
     src: nd("basir.png"),
-    extract: { left: 305, top: 705, width: 530, height: 165 },
+    extract: { left: 305, top: 740, width: 410, height: 138 },
+    pad: { top: 136, bottom: 136, left: 0, right: 0 },
     height: 400,
   },
   {
-    // Rodaja de limón: zona superior-derecha del garnish, flotando en el trago.
+    // Rodaja de limón: recorte ya cuadrado, centrado en la rueda de limón
+    // flotando en el trago (sin bordes de vaso ni residuos de albahaca).
     out: "ing-limon.webp",
     src: nd("basir.png"),
-    extract: { left: 790, top: 1090, width: 330, height: 370 },
+    extract: { left: 780, top: 1100, width: 350, height: 350 },
     height: 400,
   },
 ];
@@ -144,9 +160,23 @@ async function run() {
 
   for (const crop of CROPS) {
     const outPath = path.join(OUT, crop.out);
-    await sharp(crop.src)
-      .extract(crop.extract)
-      .resize({ height: crop.height, withoutEnlargement: true })
+    // Nota: extract/extend/resize se materializan en buffers separados
+    // (en vez de encadenar .extend().resize() en un solo pipeline) porque
+    // esa combinación encadenada produce dimensiones incorrectas en esta
+    // versión de sharp (el resize se calcula sobre el tamaño pre-extend).
+    let buf = await sharp(crop.src).extract(crop.extract).png().toBuffer();
+    if (crop.pad) {
+      buf = await sharp(buf)
+        .extend({ ...crop.pad, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .png()
+        .toBuffer();
+    }
+    // Sin withoutEnlargement: estos crops cuadrados (ya recortados a su
+    // bbox real + pad) suelen quedar por debajo de los 400px objetivo, y
+    // deben escalarse hacia arriba para quedar del mismo tamaño que el
+    // resto de los tiles ing-*.
+    await sharp(buf)
+      .resize({ height: crop.height })
       .webp({ quality: 82 })
       .toFile(outPath);
     results.push(outPath);
