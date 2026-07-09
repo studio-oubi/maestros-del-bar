@@ -246,8 +246,9 @@ h2{font-size:clamp(27px,6cqw,46px)}
 .btn-cambiar{background:none;border:none;color:var(--crema-suave);font-family:'Jost';font-size:14px;
   letter-spacing:.22em;text-transform:uppercase;cursor:pointer;text-decoration:underline;text-underline-offset:5px}
 
-/* ---------- RESULTADO: trago pequeño arriba, tarjeta completa debajo ---------- */
-.rev-wrap{position:relative;height:min(16cqh,170px);transition:height .6s var(--easeOut)}
+/* ---------- RESULTADO: trago grande al llenarse, pequeño arriba al salir la ficha ---------- */
+.rev-wrap{position:relative;height:min(38cqh,420px);transition:height .7s var(--easeOut)}
+.rev-wrap.chico{height:min(16cqh,170px)}
 .rev-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   filter:drop-shadow(0 26px 24px rgba(0,0,0,.6))}
 .rev-trago{position:absolute;inset:0;
@@ -954,6 +955,8 @@ function preparar(){
   }
   setTimeout(()=> animarRevelado(document.getElementById('rev-trago'), correcto ? 3200 : 2600), 600);
 
+  setTimeout(()=> document.getElementById('rev-wrap').classList.add('chico'), correcto ? 3800 : 3200);
+
   setTimeout(()=>{
     document.getElementById('res-eyebrow').textContent = correcto ? 'Receta de los Maestros del Bar' : 'Creación original';
     panelRes.classList.add('visible');
@@ -975,7 +978,7 @@ function preparar(){
         <p class="sub" style="max-width:none;margin-top:6px;font-size:13px;color:var(--oro);text-shadow:none">Ahora que conoces el secreto… ¿otra ronda para hacerlo tuyo?</p>`;
     }
     document.getElementById('res-acciones').style.display='flex';
-  }, correcto ? 4300 : 3400);
+  }, correcto ? 4500 : 3900);
 }
 function reintentar(){
   document.getElementById('panel-res').classList.remove('visible');
