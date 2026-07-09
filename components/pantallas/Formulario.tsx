@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { useJuego } from "@/lib/juego";
 import { mascaraCedula, mascaraTelefono } from "@/lib/mascaras";
@@ -22,6 +22,29 @@ const datosVacios: RegistroInput = { nombre: "", cedula: "", telefono: "", corre
 function campoDeError(mensaje: string): keyof RegistroInput | null {
   const campo = CAMPOS.find((c) => mensaje.includes(c.palabraError));
   return campo?.clave ?? null;
+}
+
+// Preserva la posición del cursor en inputs con máscara: React resetea la
+// selección al final cada vez que el valor controlado cambia, así que
+// contamos dígitos (no caracteres) a la izquierda del cursor antes de
+// enmascarar y recolocamos el cursor tras el mismo dígito en el resultado.
+function contarDigitosAntes(bruto: string, cursor: number): number {
+  return (bruto.slice(0, cursor).match(/\d/g) ?? []).length;
+}
+
+function posicionTrasDigitos(enmascarado: string, digitos: number): number {
+  if (digitos <= 0) {
+    const idx = enmascarado.search(/\d/);
+    return idx === -1 ? enmascarado.length : idx;
+  }
+  let contados = 0;
+  for (let i = 0; i < enmascarado.length; i++) {
+    if (/\d/.test(enmascarado[i])) {
+      contados++;
+      if (contados === digitos) return i + 1;
+    }
+  }
+  return enmascarado.length;
 }
 
 export function Formulario() {
@@ -81,7 +104,8 @@ export function Formulario() {
           <Campo
             etiqueta="Cédula"
             valor={datos.cedula}
-            onCambio={(v) => actualizar("cedula", mascaraCedula(v))}
+            onCambio={(v) => actualizar("cedula", v)}
+            mascara={mascaraCedula}
             placeholder="000-0000000-0"
             type="text"
             inputMode="numeric"
@@ -91,7 +115,8 @@ export function Formulario() {
           <Campo
             etiqueta="Teléfono"
             valor={datos.telefono}
-            onCambio={(v) => actualizar("telefono", mascaraTelefono(v))}
+            onCambio={(v) => actualizar("telefono", v)}
+            mascara={mascaraTelefono}
             placeholder="(809) 000-0000"
             type="tel"
             inputMode="numeric"
@@ -125,6 +150,7 @@ function Campo({
   etiqueta,
   valor,
   onCambio,
+  mascara,
   placeholder,
   type,
   inputMode,
@@ -134,23 +160,43 @@ function Campo({
   etiqueta: string;
   valor: string;
   onCambio: (valor: string) => void;
+  mascara?: (bruto: string) => string;
   placeholder: string;
   type: string;
   inputMode?: "numeric" | "email" | "tel";
   autoComplete: string;
   error?: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function manejarCambio(e: ChangeEvent<HTMLInputElement>) {
+    const bruto = e.target.value;
+    if (!mascara) {
+      onCambio(bruto);
+      return;
+    }
+    const cursor = e.target.selectionStart ?? bruto.length;
+    const digitosAntes = contarDigitosAntes(bruto, cursor);
+    const enmascarado = mascara(bruto);
+    onCambio(enmascarado);
+    const pos = posicionTrasDigitos(enmascarado, digitosAntes);
+    requestAnimationFrame(() => {
+      inputRef.current?.setSelectionRange(pos, pos);
+    });
+  }
+
   return (
     <label className="block">
       <span className="mb-[0.7cqh] block font-cuerpo text-[clamp(10px,2.6cqw,12px)] font-medium uppercase tracking-[0.28em] text-oro">
         {etiqueta}
       </span>
       <input
+        ref={inputRef}
         type={type}
         inputMode={inputMode}
         autoComplete={autoComplete}
         value={valor}
-        onChange={(e) => onCambio(e.target.value)}
+        onChange={manejarCambio}
         placeholder={placeholder}
         className="w-full rounded-full border border-oro/25 bg-black/40 px-[5cqw] py-[1.6cqh] font-cuerpo text-[clamp(14px,3.6cqw,17px)] text-crema outline-none transition-colors placeholder:text-crema-suave focus:border-oro"
       />
