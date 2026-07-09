@@ -115,7 +115,7 @@ const estilos = `
 .mix-flotar  { animation: mixFlotar 8s ease-in-out infinite; }
 .mix-tiltear { animation: mixTiltear 11.7s ease-in-out infinite alternate; transform-origin: 50% 60%; }
 .mix-latido  { animation: mixLatido 2.6s ease-in-out infinite; }
-.mix-bob     { animation: mixBob 7.5s ease-in-out infinite; }
+.mix-bob     { animation: mixBob 15s ease-in-out infinite; }
 .mix-contratilt { animation: mixContraTilt 11.7s ease-in-out infinite alternate; transform-origin: 50% 85%; }
 @media (prefers-reduced-motion: reduce) {
   .mix-bob     { animation: none; }
