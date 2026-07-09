@@ -51,7 +51,13 @@ export function Home() {
 
       {/* Escena central: botellas con dissolve + logo neón flotante */}
       <div className="relative mt-4 w-full flex-1">
-        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
+        {/* Contenedor del canvas: contra-tilt (rotate) por fuera y bob (translateY)
+            por dentro, en capas separadas para no pisarse el transform. El
+            contra-tilt usa el MISMO ciclo que el tilt del neón pero con signo
+            invertido y amplitud mínima, para leerse como contrapeso. */}
+        <div className="mix-contratilt absolute inset-0">
+          <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
+        </div>
 
         {/* Logo neón: fijo delante, grande (cruza sobre el tercio inferior de
             la botella como en los mocks). Posición y animación en capas
@@ -96,15 +102,24 @@ const estilos = `
   50%      { opacity: 0.8; }
 }
 @keyframes mixBob {
-  0%, 100% { transform: translateY(-5px); }
-  50%      { transform: translateY(5px); }
+  0%, 100% { transform: translateY(-12px); }
+  50%      { transform: translateY(12px); }
+}
+/* Contra-tilt: keyframes del neón (-2,1.4,-1,2) invertidos y escalados a ±0.9°. */
+@keyframes mixContraTilt {
+  0%   { transform: rotate(0.9deg); }
+  35%  { transform: rotate(-0.63deg); }
+  70%  { transform: rotate(0.45deg); }
+  100% { transform: rotate(-0.9deg); }
 }
 .mix-flotar  { animation: mixFlotar 8s ease-in-out infinite; }
 .mix-tiltear { animation: mixTiltear 11.7s ease-in-out infinite alternate; transform-origin: 50% 60%; }
 .mix-latido  { animation: mixLatido 2.6s ease-in-out infinite; }
-.mix-bob     { animation: mixBob 4.5s ease-in-out infinite; }
+.mix-bob     { animation: mixBob 7.5s ease-in-out infinite; }
+.mix-contratilt { animation: mixContraTilt 11.7s ease-in-out infinite alternate; transform-origin: 50% 85%; }
 @media (prefers-reduced-motion: reduce) {
   .mix-bob     { animation: none; }
+  .mix-contratilt { animation: none; }
   .mix-flotar  { animation: none; }
   .mix-tiltear { animation: none; }
   .mix-latido  { animation: none; opacity: 0.6; }
