@@ -72,19 +72,24 @@ const JOBS = [
   { out: "mixer-agua-gas.webp", src: stock("mixer-agua-gas.png"), height: 1600, quality: 90 },
   { out: "mixer-soda.webp", src: stock("mixer-soda.png"), height: 1600, quality: 90 },
 
-  // Ingredientes nuevos (stock/): cáscara recortada de un render propio del
-  // cliente (sour.png), anís de la única foto externa del juego (Dominio
-  // Público, ver stock/LICENCIAS.md).
+  // Ingredientes nuevos (stock/): cáscara y albahaca fotografiadas full-bleed
+  // sobre el navy exacto del medallón (ver build-stock.mjs y LICENCIAS.md —
+  // "ponle ese mismo fondo azul del círculo para que no tengas que
+  // recortarlo"), anís de la única foto externa del juego (Dominio Público).
   { out: "ing-cascara.webp", src: stock("ing-cascara.png"), height: 800 },
+  { out: "ing-albahaca.webp", src: stock("ing-albahaca.png"), height: 800 },
   { out: "ing-anis.webp", src: stock("ing-anis.png"), height: 800 },
 ];
 
 // Tiles derivados: recorte (extract) sobre la imagen fuente a tamaño original,
 // recorte llevado a un lienzo CUADRADO (pad transparente si hace falta),
-// luego resize a `height`. Estos 3 tiles se renderizan como medallones
+// luego resize a `height`. Estos 2 tiles se renderizan como medallones
 // circulares con object-fit: cover, por lo que el resultado DEBE ser
 // cuadrado y con el sujeto centrado llenando la mayor parte del cuadro
 // (si no, el cover recorta de forma asimétrica y corta la fruta/hoja).
+// (ing-albahaca pasó a JOBS arriba — foto full-bleed sobre navy, ver
+// build-stock.mjs — pero toronja y limón siguen recortándose de renders
+// existentes del cliente.)
 //
 // Coordenadas medidas a mano con precisión de píxel: se generó un overlay
 // de grilla (líneas cada 50px con la coordenada original impresa) sobre
@@ -93,8 +98,8 @@ const JOBS = [
 // Read sobre el resultado final (compuesto sobre blanco para juzgar
 // encuadre/márgenes).
 //
-// toronja.png y basir.png son 1536x2752. En ambos, el garnish (cuña de
-// toronja / albahaca+limón) está en el tercio superior de la imagen.
+// toronja.png y basir.png son 1536x2752. El garnish (cuña de toronja /
+// rodaja de limón) está en el tercio superior/medio de la imagen.
 const CROPS = [
   {
     // Cuña de toronja: bbox real medido con grilla ~(350,580)-(660,868)
@@ -105,18 +110,6 @@ const CROPS = [
     src: nd("toronja.png"),
     extract: { left: 333, top: 563, width: 349, height: 305 },
     pad: { top: 22, bottom: 22, left: 0, right: 0 },
-    height: 800,
-  },
-  {
-    // Par de hojas de albahaca: bbox real ~(305,745)-(715,878) (punta hoja
-    // izq. en x330/y745, punta hoja der. en x700/y780, aro dorado del vaso
-    // arranca ~y885). Es una forma intrínsecamente ancha y baja (410x138);
-    // se prioriza mostrar ambas puntas completas y cero píxeles del aro
-    // dorado por sobre el ratio de llenado, con pad simétrico arriba/abajo.
-    out: "ing-albahaca.webp",
-    src: nd("basir.png"),
-    extract: { left: 305, top: 740, width: 410, height: 138 },
-    pad: { top: 136, bottom: 136, left: 0, right: 0 },
     height: 800,
   },
   {

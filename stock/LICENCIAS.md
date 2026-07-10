@@ -9,13 +9,15 @@ documenta el ÚNICO asset externo usado en el juego.
 
 Fotos de producto generadas con Gemini (Nano Banana Pro) por nosotros para
 este proyecto — sin restricción de terceros, uso exclusivo del cliente. Cada
-una viene con la etiqueta navy/oro (`#0a1a3a` / `#c9a84c`) y el texto de la
-mezcla ya generados por el modelo, sobre fondo de estudio blanco; el fondo se
-quita con `scripts/lib/quitar-fondo.mjs` (flood-fill + detección de textura,
-sin herramientas externas) antes de empaquetar. Reemplazan a las botellas
-reetiquetadas a mano de la primera pasada (ver commit 692312e para ese
-método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y se usa
-para ing-demerara más abajo).
+una viene con la etiqueta azul y texto blanco condensado grande ya generados
+por el modelo, sobre fondo de estudio NAVY (`#0a1a3a`, igual al fondo de la
+app); el fondo se quita con `quitarFondoNavy` en
+`scripts/lib/quitar-fondo.mjs` (flood-fill + detección de textura + key por
+distancia de color al navy, sin herramientas externas) antes de empaquetar.
+Reemplazan al set v1 de fondo blanco/etiqueta dorada, que a su vez reemplazó
+a las botellas reetiquetadas a mano de la primera pasada (ver commit 692312e
+para ese método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y
+se usa para ing-demerara más abajo).
 
 - zumo-limon.png → mixer-zumo-limon.png (ZUMO DE LIMÓN)
 - sirope-albahaca.png → mixer-sirope-albahaca.png (SIROPE DE ALBAHACA)
@@ -24,6 +26,14 @@ para ing-demerara más abajo).
 - bitter-naranja.png → mixer-bitter-naranja.png (BITTER DE NARANJA)
 - agua-gas.png → mixer-agua-gas.png (AGUA CON GAS)
 - soda.png → mixer-soda.png (SODA)
+
+## stock/fuentes-gemini/ing-cascara.png, ing-albahaca.png → stock/ing-{cascara,albahaca}.png
+
+Mismo origen (Gemini, uso exclusivo del cliente) que las 7 botellas de arriba,
+pero fotografiadas cuadradas 1:1 directo sobre el navy exacto del círculo del
+medallón del grid COMPLETA (`#0a1a3a`) — full-bleed, sin recorte ni pad
+alfa, a pedido del cliente. Reemplazan a los recortes con pad transparente de
+sour.png/basir.png de la primera pasada.
 
 ## stock/_fuentes/star-aniseed-pd.jpg → stock/ing-anis.png
 

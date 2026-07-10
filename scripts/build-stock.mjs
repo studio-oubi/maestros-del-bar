@@ -10,25 +10,27 @@ import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { relabelarBotella, muestrearColor } from "./lib/etiqueta-generica.mjs";
-import { quitarFondoBlanco, recortarDesde } from "./lib/quitar-fondo.mjs";
+import { quitarFondoNavy, recortarDesde } from "./lib/quitar-fondo.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const LEG = path.join(ROOT, "legacy/assets");
-const ND = path.join(ROOT, "New design ");
 const STOCK = path.join(ROOT, "stock");
 const GEMINI = path.join(STOCK, "fuentes-gemini");
 const leg = (n) => path.join(LEG, n);
-const nd = (n) => path.join(ND, n);
 const out = (n) => path.join(STOCK, n);
 const gemini = (n) => path.join(GEMINI, n);
 
 // Las 7 botellas de mezclas: primera pasada (commit 692312e) reetiquetaba
-// fotos legacy con marca tapada a mano (ver historial de git para ese
-// método, scripts/lib/etiqueta-generica.mjs). Esta pasada las REEMPLAZA con
-// fotos de producto generadas con Gemini (Nano Banana Pro) — ya vienen con
-// la etiqueta navy/oro correcta pintada por el modelo, fondo de estudio
-// blanco — así que el trabajo acá es solo quitar ese fondo (ver
-// lib/quitar-fondo.mjs) y dejarlas en el mismo nombre de archivo de salida
+// fotos legacy con marca tapada a mano; segunda pasada (fondo blanco,
+// quitarFondoBlanco) generó fotos de producto con Gemini pero con etiqueta
+// dorada sobre navy y fondo de estudio blanco. Esta tercera pasada (v2) las
+// REEMPLAZA con un nuevo set: mismo esqueleto de foto de producto, pero
+// fondo de estudio NAVY (~#0a1a3a, igual al fondo de la app) y etiqueta azul
+// con texto blanco condensado grande — a pedido del cliente, porque el
+// vidrio transparente ya refracta azul y así cualquier resto de recorte
+// queda invisible sobre la app. El trabajo acá es solo quitar ese fondo (ver
+// quitarFondoNavy en lib/quitar-fondo.mjs, que keyea por distancia de color
+// en vez de luminancia) y dejarlas en el mismo nombre de archivo de salida
 // para no tocar el manifiesto ni lib/recetas.ts.
 const BOTELLAS_GEMINI = [
   "zumo-limon",
@@ -40,56 +42,65 @@ const BOTELLAS_GEMINI = [
   "soda",
 ];
 
-// Criterio final del cliente (ronda de remate post-07feec8): por debajo de
-// la línea de apoyo (la y donde la botella y su decoración tocan
-// visualmente la barra) NO debe quedar NINGÚN píxel con alpha — ni sombra
-// de contacto ni continua. quitarFondoBlanco por sí solo no garantiza esto
-// (la sombra de piso, sobre todo cerca de fruta/hoja con color propio,
-// puede fallar el umbral de color/textura por las mismas razones que un
-// resto de marca — ver comentarios en quitar-fondo.mjs). Se probaron dos
-// heurísticas automáticas para ubicar esa línea (conteo de textura por
-// fila, corrida contigua de textura) y ambas fallan en zumo-limon porque el
-// ruido de compresión bajo esa imagen tiene el mismo orden de magnitud que
-// la textura real de la fruta vecina — no hay separación limpia. Se mide la
-// línea a mano por imagen: última fila con color realmente saturado
-// (sat>55, no la sombra tibia) del objeto o su decoración, con margen
-// chico, usando el mismo método de esta sesión (grilla de coordenadas +
-// muestreo de píxeles del canal alpha, no a ojo). soda no tiene color
-// saturado (vidrio transparente) — se usó en cambio la fila donde la
-// corrida de alpha denso cae a cero de forma natural (ya venía limpia).
+// Criterio final del cliente (vigente desde la ronda post-07feec8, re-medido
+// para el set v2 navy): por debajo de la línea de apoyo (la y donde la
+// botella y su decoración tocan visualmente la barra) NO debe quedar NINGÚN
+// píxel con alpha — ni sombra de contacto ni continua. quitarFondoNavy por
+// sí sola deja el fondo prácticamente limpio (el set v2 casi no trae sombra,
+// y lo que hay es azul sobre azul), pero cada base se remató con
+// recortarDesde para garantizar cero alpha por debajo — medido a mano por
+// imagen con el mismo método de esta sesión: distancia de color contra el
+// navy local interpolado (dist>90 = color de objeto real, no sombra/fondo),
+// grilla de coordenadas + muestreo de píxeles, no a ojo.
 const LINEA_APOYO = {
-  "zumo-limon": 1100,
-  "sirope-albahaca": 1152,
-  "zumo-toronja": 1190,
-  "sirope-simple": 1183,
-  "bitter-naranja": 1129,
-  "agua-gas": 1167,
-  soda: 1196,
+  "zumo-limon": 1145,
+  "sirope-albahaca": 1121,
+  "zumo-toronja": 1106,
+  "sirope-simple": 1134,
+  "bitter-naranja": 1046,
+  "agua-gas": 1139,
+  soda: 1092,
 };
+
+// soda: la única de las 7 con una sombra proyectada al COSTADO (no debajo)
+// de la base — recortarDesde no la alcanza (es un corte horizontal). Se
+// resuelve subiendo el umbral de distancia de color solo para esta imagen
+// (30→60): a esa distancia la sombra (dist ~25-35 del navy esperado) cae
+// del lado "es fondo" sin comerse ningún reflejo/contenido real de la
+// botella (verificado con zoom en la base y en los reflejos del vidrio).
+const UMBRAL_COLOR = { soda: 60 };
 
 async function buildBotellasGemini() {
   for (const nombre of BOTELLAS_GEMINI) {
-    let buf = await quitarFondoBlanco(gemini(`${nombre}.png`));
+    let buf = await quitarFondoNavy(gemini(`${nombre}.png`), {
+      umbralColor: UMBRAL_COLOR[nombre] ?? 30,
+    });
     buf = await recortarDesde(buf, { y: LINEA_APOYO[nombre] });
     await writeFile(out(`mixer-${nombre}.png`), buf);
-    console.log("stock:", `mixer-${nombre}.png`, "(gemini, fondo quitado)");
+    console.log("stock:", `mixer-${nombre}.png`, "(gemini v2 navy, fondo quitado)");
   }
 }
 
-// ing-cascara: recorta el twist de naranja del borde del vaso en New
-// design/sour.png (asset propio del cliente, cero riesgo de licencia). Bbox
-// ajustado bien ceñido al rulo principal (poca espuma/vidrio visible, solo
-// un filo mínimo abajo a la derecha) — más chico dentro del tile a cambio de
-// no traer el borde del vaso.
+// ing-cascara / ing-albahaca (v2): primera pasada recortaba el twist de
+// naranja del borde del vaso en New design/sour.png y un par de hojas de
+// basir.png, con pad transparente para cuadrar el tile — quedaban como
+// medallón translúcido, igual que el resto de ing-*. Esta pasada las
+// REEMPLAZA con fotos de producto generadas con Gemini directo sobre el
+// mismo navy exacto del círculo del medallón (#0a1a3a) — a pedido del
+// cliente, que quiere estos 2 tiles "llenos" en vez de translúcidos: "ponle
+// ese mismo fondo azul del círculo para que no tengas que recortarlo". Ya
+// vienen cuadradas 1:1 y encuadradas, así que el trabajo acá es SOLO
+// convertir a PNG (llegan en JPEG) — sin recorte, sin pad alfa, full-bleed.
 async function buildCascara() {
-  const extract = { left: 838, top: 698, width: 412, height: 206 };
-  let buf = await sharp(nd("sour.png")).extract(extract).png().toBuffer();
-  buf = await sharp(buf)
-    .extend({ top: 103, bottom: 103, left: 0, right: 0, background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .png()
-    .toBuffer();
+  const buf = await sharp(gemini("ing-cascara.png")).png().toBuffer();
   await writeFile(out("ing-cascara.png"), buf);
-  console.log("stock: ing-cascara.png");
+  console.log("stock: ing-cascara.png (gemini v2 navy, full-bleed)");
+}
+
+async function buildAlbahaca() {
+  const buf = await sharp(gemini("ing-albahaca.png")).png().toBuffer();
+  await writeFile(out("ing-albahaca.png"), buf);
+  console.log("stock: ing-albahaca.png (gemini v2 navy, full-bleed)");
 }
 
 // ing-anis: recorta 2-3 estrellas limpias de la foto de anís estrellado
@@ -159,13 +170,15 @@ documenta el ÚNICO asset externo usado en el juego.
 
 Fotos de producto generadas con Gemini (Nano Banana Pro) por nosotros para
 este proyecto — sin restricción de terceros, uso exclusivo del cliente. Cada
-una viene con la etiqueta navy/oro (\`#0a1a3a\` / \`#c9a84c\`) y el texto de la
-mezcla ya generados por el modelo, sobre fondo de estudio blanco; el fondo se
-quita con \`scripts/lib/quitar-fondo.mjs\` (flood-fill + detección de textura,
-sin herramientas externas) antes de empaquetar. Reemplazan a las botellas
-reetiquetadas a mano de la primera pasada (ver commit 692312e para ese
-método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y se usa
-para ing-demerara más abajo).
+una viene con la etiqueta azul y texto blanco condensado grande ya generados
+por el modelo, sobre fondo de estudio NAVY (\`#0a1a3a\`, igual al fondo de la
+app); el fondo se quita con \`quitarFondoNavy\` en
+\`scripts/lib/quitar-fondo.mjs\` (flood-fill + detección de textura + key por
+distancia de color al navy, sin herramientas externas) antes de empaquetar.
+Reemplazan al set v1 de fondo blanco/etiqueta dorada, que a su vez reemplazó
+a las botellas reetiquetadas a mano de la primera pasada (ver commit 692312e
+para ese método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y
+se usa para ing-demerara más abajo).
 
 - zumo-limon.png → mixer-zumo-limon.png (ZUMO DE LIMÓN)
 - sirope-albahaca.png → mixer-sirope-albahaca.png (SIROPE DE ALBAHACA)
@@ -174,6 +187,14 @@ para ing-demerara más abajo).
 - bitter-naranja.png → mixer-bitter-naranja.png (BITTER DE NARANJA)
 - agua-gas.png → mixer-agua-gas.png (AGUA CON GAS)
 - soda.png → mixer-soda.png (SODA)
+
+## stock/fuentes-gemini/ing-cascara.png, ing-albahaca.png → stock/ing-{cascara,albahaca}.png
+
+Mismo origen (Gemini, uso exclusivo del cliente) que las 7 botellas de arriba,
+pero fotografiadas cuadradas 1:1 directo sobre el navy exacto del círculo del
+medallón del grid COMPLETA (\`#0a1a3a\`) — full-bleed, sin recorte ni pad
+alfa, a pedido del cliente. Reemplazan a los recortes con pad transparente de
+sour.png/basir.png de la primera pasada.
 
 ## stock/_fuentes/star-aniseed-pd.jpg → stock/ing-anis.png
 
@@ -192,6 +213,7 @@ async function run() {
   await mkdir(STOCK, { recursive: true });
   await buildBotellasGemini();
   await buildCascara();
+  await buildAlbahaca();
   await buildAnis();
   await buildDemerara();
   await writeFile(path.join(STOCK, "LICENCIAS.md"), LICENCIAS_MD, "utf8");

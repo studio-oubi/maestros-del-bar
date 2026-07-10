@@ -264,6 +264,117 @@ export async function quitarFondoBlanco(srcPath, { feather = 1.4, murallaRadio =
   return sharp(rgba, { raw: { width, height, channels: 4 } }).png().toBuffer();
 }
 
+// Distancia de color euclidiana simple entre dos RGB.
+function distColor(r1, g1, b1, r2, g2, b2) {
+  const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+// Set v2 (Gemini, fondo navy de estudio en vez de blanco — ver
+// build-stock.mjs): mismo esqueleto que quitarFondoBlanco (flood-fill desde
+// el borde + muralla de textura + feather), pero la clasificación de "es
+// fondo" ya no es luminancia/saturación sino DISTANCIA DE COLOR al navy de
+// fondo. El fondo de estudio tiene un degradé de iluminación real (más
+// oscuro arriba, más claro cerca del "piso") — se muestrean los 4 rincones
+// del lienzo y se interpola bilinealmente el navy ESPERADO en cada píxel
+// según su posición, en vez de comparar contra un solo color de referencia
+// fijo (que fallaría en los rincones más alejados del que se usó de
+// referencia). La etiqueta de la botella es TAMBIÉN navy (mismo tono que
+// el fondo) pero no se confunde: al estar rodeada por vidrio/líquido de
+// otro color, nunca queda conectada al borde del lienzo, así que el
+// flood-fill no la alcanza aunque su color technically matchee.
+const RADIO_RINCON = 5; // ventana para promediar el color de cada rincón (reduce ruido JPEG)
+
+async function colorRincones(srcPath) {
+  const { data, info } = await sharp(srcPath).raw().toBuffer({ resolveWithObject: true });
+  const { width: W, height: H, channels: ch } = info;
+  const r = RADIO_RINCON;
+  function promedio(x0, y0) {
+    let sr = 0, sg = 0, sb = 0, n = 0;
+    for (let y = y0; y < y0 + r; y++) {
+      for (let x = x0; x < x0 + r; x++) {
+        const i = (y * W + x) * ch;
+        sr += data[i]; sg += data[i + 1]; sb += data[i + 2];
+        n++;
+      }
+    }
+    return [sr / n, sg / n, sb / n];
+  }
+  return {
+    W, H,
+    tl: promedio(0, 0),
+    tr: promedio(W - r, 0),
+    bl: promedio(0, H - r),
+    br: promedio(W - r, H - r),
+  };
+}
+
+function navyEsperado(rincones, x, y) {
+  const fx = x / rincones.W, fy = y / rincones.H;
+  const top = [0, 1, 2].map((i) => rincones.tl[i] * (1 - fx) + rincones.tr[i] * fx);
+  const bot = [0, 1, 2].map((i) => rincones.bl[i] * (1 - fx) + rincones.br[i] * fx);
+  return [0, 1, 2].map((i) => top[i] * (1 - fy) + bot[i] * fy);
+}
+
+export async function quitarFondoNavy(srcPath, { feather = 1.4, murallaRadio = 2, umbralColor = 30 } = {}) {
+  const img = sharp(srcPath).ensureAlpha();
+  const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+
+  const rincones = await colorRincones(srcPath);
+
+  // Igual que quitarFondoBlanco: clasificar sobre una versión desenfocada
+  // evita que el ruido de compresión JPEG del degradé forme una "cerca
+  // punteada" que bloquee el flood-fill.
+  const clasif = await sharp(srcPath).ensureAlpha().blur(2.5).raw().toBuffer({ resolveWithObject: true });
+  const { data: dc, info: ic } = clasif;
+  const width2 = ic.width, height2 = ic.height, ch2 = ic.channels;
+
+  const colorFondo = new Uint8Array(width2 * height2);
+  for (let y = 0; y < height2; y++) {
+    for (let x = 0; x < width2; x++) {
+      const p = y * width2 + x;
+      const i = p * ch2;
+      const [er, eg, eb] = navyEsperado(rincones, x, y);
+      colorFondo[p] = distColor(dc[i], dc[i + 1], dc[i + 2], er, eg, eb) <= umbralColor ? 1 : 0;
+    }
+  }
+
+  // Muralla de textura, igual que quitarFondoBlanco (blur nítido aparte
+  // para no ensanchar la muralla con el mismo blur usado para el color).
+  const nitida = await sharp(srcPath).ensureAlpha().blur(1.0).raw().toBuffer({ resolveWithObject: true });
+  const rango = rangoLocalLuminancia(nitida.data, nitida.info.channels, width2, height2, RADIO_TEXTURA);
+  const textura = new Uint8Array(width2 * height2);
+  for (let p = 0; p < width2 * height2; p++) textura[p] = rango[p] > RANGO_LOCAL_MAX ? 1 : 0;
+  const texturaDilatada = murallaRadio > 0 ? dilatarBooleano(textura, width2, height2, murallaRadio) : textura;
+
+  const esFondoFinal = new Uint8Array(width2 * height2);
+  for (let p = 0; p < width2 * height2; p++) esFondoFinal[p] = colorFondo[p] && !texturaDilatada[p] ? 1 : 0;
+
+  const fondo = floodFillFondo(esFondoFinal, width, height);
+
+  const alphaBin = Buffer.alloc(width * height);
+  for (let p = 0; p < width * height; p++) alphaBin[p] = fondo[p] ? 0 : 255;
+
+  const alphaSuave = await sharp(alphaBin, { raw: { width, height, channels: 1 } })
+    .blur(feather)
+    .extractChannel(0)
+    .raw()
+    .toBuffer();
+
+  const rgba = Buffer.alloc(width * height * 4);
+  for (let p = 0; p < width * height; p++) {
+    const iSrc = p * channels;
+    const iDst = p * 4;
+    rgba[iDst] = data[iSrc];
+    rgba[iDst + 1] = data[iSrc + 1];
+    rgba[iDst + 2] = data[iSrc + 2];
+    rgba[iDst + 3] = alphaSuave[p];
+  }
+
+  return sharp(rgba, { raw: { width, height, channels: 4 } }).png().toBuffer();
+}
+
 // Corta TODO el alpha por debajo de una línea de apoyo dada — el criterio
 // final del cliente es que no quede NINGÚN píxel de sombra fotográfica (ni
 // siquiera de contacto/continua) por debajo de donde la botella o su
