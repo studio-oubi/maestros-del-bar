@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
+import type { CSSProperties } from "react";
 import { BarraEscena } from "@/components/BarraEscena";
-import { IMG } from "@/lib/asset-manifest";
+import { IMG, PAD_INFERIOR } from "@/lib/asset-manifest";
 import { INGREDIENTES, VASOS } from "@/lib/recetas";
 import type { IngredienteId, Receta, VasoId } from "@/lib/recetas";
 import { enviarPartida } from "@/lib/partida-cliente";
@@ -131,6 +132,7 @@ function TragoRevelado({
   elecciones,
   vasoElegido,
   alturaClase,
+  style,
 }: {
   receta: Receta;
   elecciones: IngredienteId[];
@@ -139,6 +141,10 @@ function TragoRevelado({
   // vaso correcto de la receta.
   vasoElegido: VasoId | null;
   alturaClase: string;
+  // Extra inline styles (p.ej. el margin-bottom negativo que usa Ganaste
+  // para compensar el padding transparente inferior del PNG y anclar la
+  // base VISIBLE del vaso a la línea de la barra).
+  style?: CSSProperties;
 }) {
   const tinte = filtroTinte(elecciones, receta.ingredientes);
   const acerto = tinte === "";
@@ -147,7 +153,11 @@ function TragoRevelado({
   const imgVasoBase = (vasoElegido && VASOS.find((v) => v.id === vasoElegido)?.img) || receta.imgVaso;
 
   return (
-    <div ref={revRef} className={`relative aspect-[1536/2752] ${alturaClase}`} style={{ ["--rev" as string]: "0%" }}>
+    <div
+      ref={revRef}
+      className={`relative aspect-[1536/2752] ${alturaClase}`}
+      style={{ ["--rev" as string]: "0%", ...style }}
+    >
       {/* Vaso vacío QUE ELIGIÓ el jugador: base siempre visible, sin máscara. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -175,12 +185,27 @@ function TragoRevelado({
   );
 }
 
+// Alto del trago en la escena de "Ganaste" (cqh). Grande a propósito: debe
+// dominar la escena sin invadir el título GANASTE!! (ver comentario abajo).
+const ALTURA_TRAGO_GANASTE_CQH = 45;
+
 // Variante "gano" (mock 13): título gigante, confetti sutil, trago sobre la
 // barra con su tarjeta de receta al lado.
 function Ganaste() {
   const { estado, despachar } = useJuego();
   const receta = estado.receta;
   if (!receta) return null;
+
+  // Los PNG del trago/vaso traen padding transparente inferior (recorte
+  // consistente del set), así que su base real (el pie del vaso) queda por
+  // encima del borde del lienzo. Sin compensar, el trago "flota" separado
+  // de la línea de la barra. imgVasoBase es la MISMA imagen base que pinta
+  // TragoRevelado (el vaso que eligió el jugador, o el de la receta si no
+  // hay elección); su fracción en PAD_INFERIOR nos dice cuánto compensar.
+  const imgVasoBase =
+    (estado.elecciones.vaso && VASOS.find((v) => v.id === estado.elecciones.vaso)?.img) || receta.imgVaso;
+  const padFrac = PAD_INFERIOR[imgVasoBase] ?? 0;
+  const padCqh = padFrac * ALTURA_TRAGO_GANASTE_CQH;
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -192,18 +217,27 @@ function Ganaste() {
       </div>
 
       <BarraEscena>
+        {/* items-center (no items-end): el margin-bottom negativo de abajo
+            "recorta" el alto de layout del trago a su base VISIBLE (sin el
+            padding transparente), así el centro de la tarjeta —que sí usa
+            su alto natural— cae exactamente en el centro del vaso visible,
+            sin necesidad de conocer su alto de antemano. */}
         <div
-          className="absolute inset-x-0 z-10 flex items-end justify-center gap-[4cqw] px-[6cqw]"
-          style={{ bottom: "calc(100cqh - var(--linea-barra, 62cqh))" }}
+          className="absolute inset-x-0 z-10 flex items-center justify-center gap-[4cqw] px-[6cqw]"
+          style={{ bottom: "calc(100cqh - var(--linea-barra, 64cqh))" }}
         >
           <TragoRevelado
             receta={receta}
             elecciones={estado.elecciones.ingredientes}
             vasoElegido={estado.elecciones.vaso}
-            alturaClase="h-[35cqh]"
+            // Alto vía `style` (no clase Tailwind): ALTURA_TRAGO_GANASTE_CQH
+            // es una constante JS, y una clase arbitraria construida con un
+            // template string no la detecta el escaneo estático de Tailwind.
+            alturaClase=""
+            style={{ height: `${ALTURA_TRAGO_GANASTE_CQH}cqh`, marginBottom: `${-padCqh}cqh` }}
           />
 
-          <div className="mb-[3.4cqh] flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
+          <div className="flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
             <h2 className="font-titulo text-[2.1cqh] font-medium uppercase leading-[1.04] text-white">
               {receta.nombre}
             </h2>
