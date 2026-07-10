@@ -14,6 +14,7 @@ interface Props {
   onSelect: (id: string) => void; // tap sobre el item CENTRADO
   alturaItem?: number; // en cqh
   onCentroChange?: (item: CoverflowItem, index: number) => void; // opcional: snap
+  marcados?: Set<string>; // ids con overlay de check (paso MEZCLA multi-select)
 }
 
 // Reparto/física del coverflow (ruleta infinita estilo legacy).
@@ -36,7 +37,7 @@ const PROY = 0.16; // s de proyección de la inercia al soltar
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
-export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }: Props) {
+export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, marcados }: Props) {
   const n = items.length;
   const inicial = 0; // ruleta infinita: en 0 el primer item queda centrado con ambos vecinos
   const stageRef = useRef<HTMLDivElement>(null);
@@ -301,6 +302,29 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
                     marginBottom: `calc(var(--altura-item) * ${(-padFrac).toFixed(4)})`,
                   }}
                 />
+                {/* Overlay de check (mismo lenguaje visual que GridMix): marca el
+                    item en el paso MEZCLA multi-select. Va dentro del nodo 3D para
+                    escalar/rotar con él. */}
+                {marcados?.has(it.id) && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                  >
+                    <span className="flex h-[5cqh] w-[5cqh] items-center justify-center rounded-full bg-navy-deep/70 ring-2 ring-oro shadow-[0_2px_10px_rgba(0,0,0,.5)]">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-[55%] w-[55%] text-oro"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  </span>
+                )}
               </div>
             </div>
           );

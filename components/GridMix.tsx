@@ -1,36 +1,54 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { INGREDIENTES } from "@/lib/recetas";
 import type { IngredienteId } from "@/lib/recetas";
+import { PanelConfirmar } from "@/components/PanelConfirmar";
 import { useJuego } from "@/lib/juego";
 
 // Ingredientes cuyo asset es una foto recortada (llenan el medallón, object-cover).
 // El resto son PNG aislados sobre fondo transparente (object-contain, con aire).
-const RECORTES_FOTO = new Set<IngredienteId>(["toronja", "albahaca", "limon"]);
+const RECORTES_FOTO = new Set<IngredienteId>(["toronja", "albahaca"]);
 
-// Última pantalla del reto (mock 12): grid 3×4 de ingredientes, sin límite de
-// selección (elegir de más = "sobraron", lo evalúa el reducer). MEZCLAR evalúa.
+// Paso COMPLETA (mock 12): grid 3×4 con los 12 ingredientes. Hay que marcar
+// EXACTAMENTE los de la receta (el reducer no deja marcar de más). Contador
+// "TE FALTAN N"; al completar la cuenta se desenfoca el fondo y aparecen
+// MEZCLAR / VOLVER ATRÁS (volver quita el blur y deja seguir editando).
 export function GridMix({ restante }: { restante: number }) {
   const { estado, despachar } = useJuego();
   const seleccionados = estado.elecciones.ingredientes;
+  const requeridos = estado.receta?.ingredientes.length ?? 0;
+  const restantes = Math.max(0, requeridos - seleccionados.length);
+  const completo = requeridos > 0 && restantes === 0;
+
+  const [confirmando, setConfirmando] = useState(false);
+  // El panel aparece al completar la cuenta y se retira si vuelve a faltar algo.
+  useEffect(() => setConfirmando(completo), [completo]);
 
   const onMezclar = useCallback(() => {
     despachar({ tipo: "MEZCLAR", tiempoRestante: restante });
   }, [despachar, restante]);
 
+  const contador = restantes === 1 ? "TE FALTA 1" : `TE FALTAN ${restantes}`;
+
   return (
-    <div className="flex h-full w-full flex-col items-center px-[7cqw] pt-[7cqh] pb-[4cqh] text-center">
+    <div className="relative flex h-full w-full flex-col items-center px-[7cqw] pt-[7cqh] pb-[4cqh] text-center">
       <div className="relative h-[5cqh] w-[38cqw]">
         <Image src={IMG.logoBrugal} alt="Brugal" fill sizes="40vw" className="object-contain" priority />
       </div>
 
-      <div className="mt-[3.6cqh] flex flex-col items-center gap-[1cqh]">
-        <span className="texto-label">ELIGE TU MEZCLA</span>
+      <div className="mt-[3.6cqh] flex flex-col items-center gap-[0.8cqh]">
         <span className="font-titulo text-[2.6cqh] font-medium uppercase leading-tight text-white">
           COMPLETA EL MIX
+        </span>
+        <span
+          className={`font-cuerpo text-[1.5cqh] font-bold uppercase tracking-[0.14em] ${
+            completo ? "text-oro" : "text-crema/80"
+          }`}
+        >
+          {completo ? "MIX LISTO" : contador}
         </span>
       </div>
 
@@ -44,6 +62,8 @@ export function GridMix({ restante }: { restante: number }) {
               <button
                 key={ing}
                 type="button"
+                aria-label={info.nombre}
+                aria-pressed={activo}
                 onClick={() => despachar({ tipo: "TOGGLE_INGREDIENTE", ing })}
                 className="flex flex-col items-center gap-[0.5cqh]"
               >
@@ -87,14 +107,14 @@ export function GridMix({ restante }: { restante: number }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onMezclar}
-        disabled={seleccionados.length === 0}
-        className="texto-boton shrink-0 rounded-full bg-gradient-to-b from-oro-claro to-oro px-[14cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
-      >
-        Mezclar
-      </button>
+      {confirmando && (
+        <PanelConfirmar
+          onConfirmar={onMezclar}
+          onVolver={() => setConfirmando(false)}
+          textoConfirmar="Mezclar"
+          textoVolver="Volver atrás"
+        />
+      )}
     </div>
   );
 }
