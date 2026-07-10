@@ -200,6 +200,7 @@ async function run() {
   const results = [];
   const hashes = {}; // nombre de archivo en public/img -> hash corto de su contenido
   const pads = {}; // nombre de archivo -> fracción de padding transparente inferior (solo webp con alpha)
+  const dims = {}; // nombre de archivo -> { w, h } finales del webp (para fijar el layout sin depender del decode)
 
   for (const job of JOBS) {
     const outPath = path.join(OUT, job.out);
@@ -211,6 +212,8 @@ async function run() {
     hashes[job.out] = shortHash(buf);
     const frac = await padInferiorFrac(buf);
     if (frac != null) pads[job.out] = frac;
+    const meta = await sharp(buf).metadata();
+    dims[job.out] = { w: meta.width, h: meta.height };
     results.push(outPath);
   }
 
@@ -239,6 +242,8 @@ async function run() {
     hashes[crop.out] = shortHash(webpBuf);
     const frac = await padInferiorFrac(webpBuf);
     if (frac != null) pads[crop.out] = frac;
+    const meta = await sharp(webpBuf).metadata();
+    dims[crop.out] = { w: meta.width, h: meta.height };
     results.push(outPath);
   }
 
@@ -266,6 +271,15 @@ async function run() {
       return `  "/img/${file}?v=${hash}": ${pads[file].toFixed(4)},`;
     })
     .join("\n");
+  // DIMENSIONES: ancho/alto finales (px) de cada webp, keyed por la MISMA URL con
+  // cache-busting que IMG. Permite fijar el tamaño de la caja del item SÍNCRONAMENTE
+  // (sin esperar al decode del bitmap), evitando el "flick" de re-dimensionado.
+  const dimLines = MANIFEST_KEYS.filter(([, file]) => dims[file])
+    .map(([, file]) => {
+      const hash = hashes[file];
+      return `  "/img/${file}?v=${hash}": { w: ${dims[file].w}, h: ${dims[file].h} },`;
+    })
+    .join("\n");
   const manifestSrc = `// Generado por scripts/build-assets.mjs. No editar a mano.
 export const IMG = {
 ${lines}
@@ -275,6 +289,10 @@ export const ALL_IMAGES: string[] = Object.values(IMG);
 
 export const PAD_INFERIOR: Record<string, number> = {
 ${padLines}
+};
+
+export const DIMENSIONES: Record<string, { w: number; h: number }> = {
+${dimLines}
 };
 `;
   await mkdir(path.dirname(MANIFEST_PATH), { recursive: true });

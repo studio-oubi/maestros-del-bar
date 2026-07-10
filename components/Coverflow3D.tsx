@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { PAD_INFERIOR } from "@/lib/asset-manifest";
+import { DIMENSIONES, PAD_INFERIOR } from "@/lib/asset-manifest";
 
 export interface CoverflowItem {
   id: string;
@@ -244,7 +244,11 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onCancel}
-      className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing [perspective:1100px]"
+      // El fundido de entrada va AQUÍ (elemento con perspective, transform-style
+      // flat), no en el contenedor preserve-3d: opacity<1 sobre un preserve-3d lo
+      // APLANA (spec CSS), quitando la profundidad y haciendo que los laterales
+      // nazcan a tamaño ortográfico (más grandes) y salten al 3D al acabar el fade.
+      className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing [perspective:1100px] [animation:coverflow-aparece_.25s_ease-out]"
       // El punto de fuga se sitúa en la línea de la barra: así los pies de los
       // items (todos con base en esa línea) no se despegan al recular en Z.
       style={{
@@ -252,14 +256,18 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
         perspectiveOrigin: "50% var(--linea-barra, 62cqh)",
       }}
     >
-      {/* Entrada suave: fundido de todo el coverflow YA ANCLADO (sin movimiento
-          vertical). No pisa la opacidad por-item que escribe pintar(): la
-          animación va sobre el contenedor, no sobre los nodos. */}
-      <div className="absolute inset-0 [animation:coverflow-aparece_.25s_ease-out] [transform-style:preserve-3d]">
+      {/* Contenedor 3D. El fundido de entrada NO va aquí (ver stage): opacity
+          sobre un preserve-3d lo aplana y rompe la perspectiva de los laterales. */}
+      <div className="absolute inset-0 [transform-style:preserve-3d]">
         {items.map((it, k) => {
           // Padding transparente inferior precomputado (fracción del alto). Anclar
           // la base VISIBLE del item a la barra desde el PRIMER frame, sin scan.
           const padFrac = PAD_INFERIOR[it.img] ?? 0;
+          // Ancho de la caja fijado SÍNCRONAMENTE desde las dimensiones precomputadas
+          // (alto = --altura-item, ancho = alto × ratio): el layout no espera al
+          // decode del webp, así el lateral nace ya a su tamaño (sin flick de resize).
+          const dim = DIMENSIONES[it.img];
+          const ratio = dim ? dim.w / dim.h : null;
           return (
             <div
               key={it.id}
@@ -284,9 +292,12 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
                   src={it.img}
                   alt={it.nombre}
                   draggable={false}
-                  className="pointer-events-none block w-auto select-none object-contain"
+                  width={dim?.w}
+                  height={dim?.h}
+                  className="pointer-events-none block select-none object-contain"
                   style={{
                     height: "var(--altura-item)",
+                    width: ratio ? `calc(var(--altura-item) * ${ratio.toFixed(4)})` : "auto",
                     marginBottom: `calc(var(--altura-item) * ${(-padFrac).toFixed(4)})`,
                   }}
                 />

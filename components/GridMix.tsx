@@ -60,10 +60,13 @@ export function GridMix({ restante }: { restante: number }) {
                     className={cover ? "object-cover" : "object-contain p-[14%]"}
                   />
                   {activo && (
-                    <span className="absolute right-[4%] top-[4%] flex h-[20%] min-h-[14px] w-[20%] min-w-[14px] items-center justify-center rounded-full bg-oro text-navy-deep shadow-[0_2px_6px_rgba(0,0,0,.4)]">
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-navy-deep/50"
+                    >
                       <svg
                         viewBox="0 0 24 24"
-                        className="h-[65%] w-[65%]"
+                        className="h-[40%] w-[40%] text-oro drop-shadow-[0_2px_6px_rgba(0,0,0,.5)]"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth={3}
