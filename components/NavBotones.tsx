@@ -38,7 +38,7 @@ export function NavBotones() {
   if (!destinoAtras && !conHome) return null;
 
   return (
-    <div className="pointer-events-none absolute left-[16px] top-[16px] z-40 flex gap-[8px]">
+    <div className="pointer-events-none absolute left-[30px] top-[30px] z-40 flex gap-[8px]">
       {destinoAtras && (
         <button
           type="button"
