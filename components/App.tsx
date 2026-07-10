@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { JuegoProvider, useJuego } from "@/lib/juego";
 import { Marco } from "@/components/Marco";
 import { NavBotones } from "@/components/NavBotones";
+import { ConfigOculta } from "@/components/ConfigOculta";
 import { Preloader } from "@/components/Preloader";
 import { Home } from "@/components/pantallas/Home";
 import { Formulario } from "@/components/pantallas/Formulario";
@@ -67,6 +68,7 @@ function Juego() {
         <Pantallas />
       </div>
       <NavBotones />
+      <ConfigOculta />
       <style jsx>{`
         .pantalla-enter {
           animation: pantalla-entra 0.4s ease;

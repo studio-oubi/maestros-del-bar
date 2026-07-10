@@ -6,6 +6,8 @@ export const registros = pgTable("registros", {
   cedula: text("cedula").notNull(),
   telefono: text("telefono").notNull(),
   correo: text("correo").notNull(),
+  ciudad: text("ciudad").default("").notNull(),
+  establecimiento: text("establecimiento").default("").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

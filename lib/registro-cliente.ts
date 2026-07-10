@@ -1,16 +1,41 @@
 import type { RegistroInput } from "@/lib/validacion";
 
 const CLAVE_PENDIENTE = "mc_registro_pendiente";
+const CLAVE_CONFIG = "mc_config";
 
-// Envía el registro al servidor. Si falla (red caída o 503 por DB no configurada),
-// guarda los datos en localStorage para reintentar más tarde y devuelve null:
-// el juego nunca debe bloquearse esperando por la red.
+interface ConfigLocal {
+  ciudad: string;
+  establecimiento: string;
+}
+
+// Lee la config del local (ciudad+establecimiento) guardada por el popup oculto
+// (components/ConfigOculta.tsx). "" en cada campo si el kiosko no fue configurado.
+function leerConfig(): ConfigLocal {
+  try {
+    const crudo = localStorage.getItem(CLAVE_CONFIG);
+    if (!crudo) return { ciudad: "", establecimiento: "" };
+    const c = JSON.parse(crudo) as Partial<ConfigLocal> | null;
+    return {
+      ciudad: typeof c?.ciudad === "string" ? c.ciudad : "",
+      establecimiento: typeof c?.establecimiento === "string" ? c.establecimiento : "",
+    };
+  } catch {
+    return { ciudad: "", establecimiento: "" };
+  }
+}
+
+// Envía el registro al servidor, añadiendo ciudad/establecimiento leídos en el
+// momento del envío (no al llenar el formulario). Si falla (red caída o 503 por
+// DB no configurada), guarda los datos originales en localStorage para
+// reintentar más tarde y devuelve null: el juego nunca debe bloquearse
+// esperando por la red.
 export async function enviarRegistro(datos: RegistroInput): Promise<number | null> {
+  const payload: RegistroInput = { ...datos, ...leerConfig() };
   try {
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       guardarPendiente(datos);
@@ -52,11 +77,12 @@ export async function reintentarPendiente(): Promise<void> {
   }
   if (!registro?.pendiente) return;
 
+  const payload: RegistroInput = { ...registro.datos, ...leerConfig() };
   try {
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(registro.datos),
+      body: JSON.stringify(payload),
     });
     if (res.ok) localStorage.removeItem(CLAVE_PENDIENTE);
   } catch {

@@ -33,6 +33,8 @@ export interface FilaRegistro {
   cedula: string;
   telefono: string;
   correo: string;
+  ciudad: string;
+  establecimiento: string;
   fecha: string;
   resultado: string | null;
 }
@@ -50,7 +52,7 @@ export function TablaRegistros({ filas }: { filas: FilaRegistro[] }) {
   const q = busqueda.trim().toLowerCase();
   const filtradas = q
     ? filas.filter((f) =>
-        [f.nombre, f.cedula, f.telefono, f.correo].some((v) => v.toLowerCase().includes(q))
+        [f.nombre, f.cedula, f.telefono, f.correo, f.ciudad, f.establecimiento].some((v) => v.toLowerCase().includes(q))
       )
     : filas;
 
@@ -60,20 +62,22 @@ export function TablaRegistros({ filas }: { filas: FilaRegistro[] }) {
         type="search"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar por nombre, cédula, teléfono o correo…"
+        placeholder="Buscar por nombre, cédula, teléfono, correo, ciudad o establecimiento…"
         className="w-full rounded-full border border-oro/40 bg-navy px-5 py-3 text-crema placeholder:text-crema-suave focus:border-oro focus:outline-none"
       />
       <p className="font-cuerpo text-sm text-crema-suave">
         {filtradas.length} de {filas.length} registros
       </p>
       <div className="overflow-x-auto rounded-2xl border border-oro/20">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[880px] text-left text-sm">
           <thead>
             <tr className="border-b border-oro/20 text-oro-claro">
               <th className="px-4 py-3 font-titulo font-medium">Nombre</th>
               <th className="px-4 py-3 font-titulo font-medium">Cédula</th>
               <th className="px-4 py-3 font-titulo font-medium">Teléfono</th>
               <th className="px-4 py-3 font-titulo font-medium">Correo</th>
+              <th className="px-4 py-3 font-titulo font-medium">Ciudad</th>
+              <th className="px-4 py-3 font-titulo font-medium">Establecimiento</th>
               <th className="px-4 py-3 font-titulo font-medium">Fecha</th>
               <th className="px-4 py-3 font-titulo font-medium">Resultado</th>
             </tr>
@@ -85,6 +89,8 @@ export function TablaRegistros({ filas }: { filas: FilaRegistro[] }) {
                 <td className="px-4 py-3">{f.cedula}</td>
                 <td className="px-4 py-3">{f.telefono}</td>
                 <td className="px-4 py-3">{f.correo}</td>
+                <td className="px-4 py-3">{f.ciudad || <span className="text-crema-suave">—</span>}</td>
+                <td className="px-4 py-3">{f.establecimiento || <span className="text-crema-suave">—</span>}</td>
                 <td className="px-4 py-3 text-crema-suave">{f.fecha}</td>
                 <td className="px-4 py-3">
                   {f.resultado ? (
@@ -99,7 +105,7 @@ export function TablaRegistros({ filas }: { filas: FilaRegistro[] }) {
             ))}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-crema-suave">
+                <td colSpan={8} className="px-4 py-6 text-center text-crema-suave">
                   Sin resultados.
                 </td>
               </tr>

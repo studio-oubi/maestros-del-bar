@@ -15,6 +15,8 @@ async function obtenerFilas(): Promise<FilaRegistro[]> {
     cedula: r.cedula,
     telefono: r.telefono,
     correo: r.correo,
+    ciudad: r.ciudad,
+    establecimiento: r.establecimiento,
     fecha: formateador.format(r.createdAt),
     resultado: r.resultado,
   }));

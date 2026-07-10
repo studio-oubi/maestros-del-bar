@@ -3,6 +3,10 @@ export interface RegistroInput {
   cedula: string;
   telefono: string;
   correo: string;
+  // Ciudad/establecimiento vienen del popup de configuración del kiosko (mc_config),
+  // no del formulario: opcionales para no romper registros hechos antes de configurar el local.
+  ciudad?: string;
+  establecimiento?: string;
 }
 
 type ResultadoValidacion =
@@ -27,7 +31,7 @@ export function validarRegistro(d: unknown): ResultadoValidacion {
     return { ok: false, error: "Payload inválido" };
   }
 
-  const { nombre, cedula, telefono, correo } = d as Record<string, unknown>;
+  const { nombre, cedula, telefono, correo, ciudad, establecimiento } = d as Record<string, unknown>;
 
   if (typeof nombre !== "string" || nombre.trim().length < 3) {
     return { ok: false, error: "Nombre inválido" };
@@ -52,6 +56,8 @@ export function validarRegistro(d: unknown): ResultadoValidacion {
       cedula: normalizarCedula(cedula),
       telefono: normalizarTelefono(telefono),
       correo: correoTrim,
+      ciudad: typeof ciudad === "string" ? ciudad.trim() : "",
+      establecimiento: typeof establecimiento === "string" ? establecimiento.trim() : "",
     },
   };
 }
