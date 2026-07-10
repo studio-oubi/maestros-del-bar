@@ -10,11 +10,11 @@ import { useJuego } from "@/lib/juego";
 
 // Ingredientes cuyo asset es una foto recortada (llenan el medallón, object-cover).
 // El resto son PNG aislados sobre fondo transparente (object-contain, con aire).
-// cascara y albahaca (v2): fotos generadas full-bleed directo sobre el navy
-// exacto del medallón (ver build-stock.mjs) — deben ir a cover como toronja
-// para que el navy se funda con el círculo sin el padding/aire de los ing-*
-// translúcidos.
-const RECORTES_FOTO = new Set<IngredienteId>(["toronja", "cascara", "albahaca"]);
+// cascara/albahaca: recorte manual con alpha real (Photoshop); anis: foto
+// full-bleed sobre el navy exacto del medallón (ver build-stock.mjs). Los
+// tres van a cover como toronja para que se vean "llenos" en vez de flotar
+// con el padding/aire de los ing-* translúcidos.
+const RECORTES_FOTO = new Set<IngredienteId>(["toronja", "cascara", "albahaca", "anis"]);
 
 // Paso COMPLETA (mock 12): grid 3×4 con los 12 ingredientes. Hay que marcar
 // EXACTAMENTE los de la receta (el reducer no deja marcar de más). Contador
