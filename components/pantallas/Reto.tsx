@@ -110,13 +110,13 @@ export function Reto() {
 
       <div key={estado.pantalla} className="absolute inset-0 [animation:paso-entra_.3s_ease]">
         {estado.pantalla === "reto-vaso" && (
-          <PasoCoverflow eyebrow="ELIGE TU VASO" items={vasoItems} onSelect={onSelectVaso} alturaItem={38} />
+          <PasoCoverflow eyebrow="ELIGE TU VASO" items={vasoItems} onSelect={onSelectVaso} alturaItem={45} />
         )}
         {estado.pantalla === "reto-ron" && (
-          <PasoCoverflow eyebrow="ELIGE TU RÓN" items={ronItems} onSelect={onSelectRon} alturaItem={44} />
+          <PasoCoverflow eyebrow="ELIGE TU RÓN" items={ronItems} onSelect={onSelectRon} alturaItem={48} />
         )}
         {estado.pantalla === "reto-mezcla" && (
-          <PasoCoverflow eyebrow="ELIGE TU MEZCLA" items={mezclaItems} onSelect={onSelectMezcla} alturaItem={40} />
+          <PasoCoverflow eyebrow="ELIGE TU MEZCLA" items={mezclaItems} onSelect={onSelectMezcla} alturaItem={46} />
         )}
         {estado.pantalla === "reto-mix" && <GridMix restante={restante} />}
       </div>

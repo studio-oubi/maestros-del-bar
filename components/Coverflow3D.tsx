@@ -34,7 +34,7 @@ const PROY = 0.16; // s de proyección de la inercia al soltar
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
-export function Coverflow3D({ items, onSelect, alturaItem = 42, onCentroChange }: Props) {
+export function Coverflow3D({ items, onSelect, alturaItem = 50, onCentroChange }: Props) {
   const n = items.length;
   const inicial = 0; // ruleta infinita: en 0 el primer item queda centrado con ambos vecinos
   const stageRef = useRef<HTMLDivElement>(null);
@@ -313,22 +313,6 @@ export function Coverflow3D({ items, onSelect, alturaItem = 42, onCentroChange }
                 onLoad={(e) => medirPad(k, e.currentTarget)}
                 className="pointer-events-none block w-auto select-none object-contain"
                 style={{ height: "var(--altura-item)", marginBottom: "calc(var(--pad, 0px) * -1)" }}
-              />
-              {/* Reflejo sobre la superficie de la barra (arranca en la base visible) */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={it.img}
-                alt=""
-                aria-hidden
-                draggable={false}
-                className="pointer-events-none absolute left-1/2 block w-auto -translate-x-1/2 select-none object-contain opacity-[0.18]"
-                style={{
-                  top: "calc(100% - var(--pad, 0px))",
-                  height: "var(--altura-item)",
-                  transform: "translateX(-50%) scaleY(-1)",
-                  WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-                  maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-                }}
               />
             </div>
           </div>

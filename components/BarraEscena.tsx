@@ -8,12 +8,12 @@ import { IMG } from "@/lib/asset-manifest";
 // línea. Debajo, la firma ESCÁPATE / A LO EXTRAORDINARIO (mock 7).
 export function BarraEscena({ children }: { children: ReactNode }) {
   return (
-    <div className="absolute inset-0 [--linea-barra:62cqh]">
+    <div className="absolute inset-0 [--linea-barra:72cqh]">
       {/* Mostrador. Su borde frontal superior cae sobre --linea-barra. El borde
           superior de la foto se difumina (mask-image) para fundirse con el fondo
           texturizado sin costura; el degradado acaba por encima de la línea de la
           barra para que el filo frontal quede nítido. */}
-      <div className="absolute inset-x-0 bottom-0 top-[52cqh] overflow-hidden">
+      <div className="absolute inset-x-0 bottom-0 top-[62cqh] overflow-hidden">
         <Image
           src={IMG.barra}
           alt=""
