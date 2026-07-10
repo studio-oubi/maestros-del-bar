@@ -4,6 +4,14 @@
 // dispositivos de gama baja: mismo resultado, picos mucho menores.
 const CONCURRENCIA = 5;
 
+// Cache de imágenes RETENIDAS a nivel de módulo. Sin esto, los HTMLImageElement
+// creados en la precarga se recogen (GC) al terminar y el bitmap DECODIFICADO se
+// libera: al volver a mostrar la imagen (p.ej. las fotos de Recetas) el navegador
+// la relee del disk cache y la RE-DECODIFICA → parpadeo/"aparece tarde". Mantener
+// la referencia viva conserva la imagen en el memory cache decodificada, así un
+// <img> posterior con la MISMA url pinta al instante (sin red ni re-decode).
+const retenidas = new Map<string, HTMLImageElement>();
+
 export function precargar(urls: string[], onProgress: (pct: number) => void): Promise<void> {
   const total = urls.length;
   if (total === 0) {
@@ -26,10 +34,20 @@ export function precargar(urls: string[], onProgress: (pct: number) => void): Pr
       if (siguiente >= total) return;
       const url = urls[siguiente];
       siguiente += 1;
+      if (retenidas.has(url)) {
+        marcar();
+        return;
+      }
       const img = new Image();
-      img.onload = marcar;
+      img.onload = () => {
+        // decode() fuerza que el bitmap quede completamente decodificado (no solo
+        // descargado); combinado con la retención evita el re-decode posterior.
+        img.decode().catch(() => {});
+        marcar();
+      };
       img.onerror = marcar;
       img.src = url;
+      retenidas.set(url, img); // referencia viva: no se libera el decodificado
     };
 
     for (let i = 0; i < Math.min(CONCURRENCIA, total); i += 1) lanzar();

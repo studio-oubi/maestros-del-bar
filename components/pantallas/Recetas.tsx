@@ -62,6 +62,8 @@ export function Recetas() {
                 alt=""
                 width={726}
                 height={1300}
+                loading="eager"
+                decoding="sync"
                 className="h-[18.5cqh] w-auto shrink-0 object-contain"
               />
               {/* max-w acota el nombre más largo (LIMÓN ALBAHACA EXTRA VIEJO)
