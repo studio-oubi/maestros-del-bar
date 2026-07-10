@@ -38,7 +38,10 @@ export function validarRegistro(d: unknown): ResultadoValidacion {
   if (typeof telefono !== "string" || telefono.replace(/\D/g, "").length < 10) {
     return { ok: false, error: "Teléfono inválido" };
   }
-  if (typeof correo !== "string" || !CORREO_RE.test(correo)) {
+  // Correo es opcional: ausente o vacío se normaliza a "", pero si viene con
+  // contenido debe ser un correo válido.
+  const correoTrim = typeof correo === "string" ? correo.trim() : "";
+  if (correoTrim !== "" && !CORREO_RE.test(correoTrim)) {
     return { ok: false, error: "Correo inválido" };
   }
 
@@ -48,7 +51,7 @@ export function validarRegistro(d: unknown): ResultadoValidacion {
       nombre,
       cedula: normalizarCedula(cedula),
       telefono: normalizarTelefono(telefono),
-      correo,
+      correo: correoTrim,
     },
   };
 }

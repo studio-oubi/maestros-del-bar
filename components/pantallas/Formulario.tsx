@@ -72,6 +72,11 @@ export function Formulario() {
     despachar({ tipo: "IR", a: "recetas" });
   }
 
+  function omitir() {
+    despachar({ tipo: "REGISTRADO", id: null });
+    despachar({ tipo: "IR", a: "recetas" });
+  }
+
   return (
     <div className="flex h-full w-full flex-col items-center overflow-y-auto px-[6cqw] pt-[8cqh] pb-[6cqh]">
       <Image
@@ -86,7 +91,7 @@ export function Formulario() {
       <h1 className="texto-titulo mt-[4cqh] text-center">Únete al challenge</h1>
       <p className="texto-sub mt-[0.8cqh] text-center">Llena tus datos para continuar</p>
 
-      <form onSubmit={enviar} autoComplete="off" className="mt-[3.5cqh] w-full max-w-[480px]">
+      <form onSubmit={enviar} autoComplete="off" className="mt-[3.5cqh] w-[58cqw]">
         <div className="flex flex-col gap-[1.6cqh]">
           <Campo
             etiqueta="Nombre"
@@ -94,7 +99,6 @@ export function Formulario() {
             onCambio={(v) => actualizar("nombre", v)}
             placeholder="Tu nombre"
             type="text"
-            autoComplete="name"
             error={errores.nombre}
           />
           <Campo
@@ -105,7 +109,6 @@ export function Formulario() {
             placeholder="000-0000000-0"
             type="text"
             inputMode="numeric"
-            autoComplete="off"
             error={errores.cedula}
           />
           <Campo
@@ -116,17 +119,15 @@ export function Formulario() {
             placeholder="(809) 000-0000"
             type="tel"
             inputMode="numeric"
-            autoComplete="tel"
             error={errores.telefono}
           />
           <Campo
-            etiqueta="Correo"
+            etiqueta="Correo (opcional)"
             valor={datos.correo}
             onCambio={(v) => actualizar("correo", v)}
             placeholder="tucorreo@ejemplo.com"
             type="email"
             inputMode="email"
-            autoComplete="email"
             error={errores.correo}
           />
         </div>
@@ -136,6 +137,13 @@ export function Formulario() {
           className="texto-boton mt-[3cqh] w-full rounded-full bg-linear-to-r from-oro-claro to-oro py-[0.55cqh] leading-none shadow-[0_16px_34px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]"
         >
           Continuar
+        </button>
+        <button
+          type="button"
+          onClick={omitir}
+          className="mt-[1.4cqh] block w-full text-center font-cuerpo text-[1.1cqh] text-crema/60 underline decoration-crema/30 underline-offset-2 transition-colors hover:text-crema/80"
+        >
+          Omitir
         </button>
       </form>
     </div>
@@ -150,7 +158,6 @@ function Campo({
   placeholder,
   type,
   inputMode,
-  autoComplete,
   error,
 }: {
   etiqueta: string;
@@ -160,7 +167,6 @@ function Campo({
   placeholder: string;
   type: string;
   inputMode?: "numeric" | "email" | "tel";
-  autoComplete: string;
   error?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -188,7 +194,8 @@ function Campo({
         ref={inputRef}
         type={type}
         inputMode={inputMode}
-        autoComplete={autoComplete}
+        autoComplete="off"
+        spellCheck={false}
         value={valor}
         onChange={manejarCambio}
         placeholder={placeholder}
