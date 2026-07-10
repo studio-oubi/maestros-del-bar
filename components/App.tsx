@@ -53,6 +53,12 @@ function grupoDe(pantalla: string): string {
   return pantalla.startsWith("reto") ? "reto" : pantalla;
 }
 
+// Pantallas CON BARRA: los items del coverflow/botella se apoyan en la línea de
+// la barra, así que la entrada con translateY los hacía "subir" a su sitio
+// (movimiento vertical no deseado). Entran solo con fundido. El resto conserva
+// el fade + translateY(16px), que ahí no molesta.
+const GRUPOS_CON_BARRA = new Set(["elige-trago", "reto", "resultado"]);
+
 function Juego() {
   const { estado } = useJuego();
 
@@ -62,9 +68,12 @@ function Juego() {
     void reintentarPendiente();
   }, []);
 
+  const grupo = grupoDe(estado.pantalla);
+  const claseEntra = GRUPOS_CON_BARRA.has(grupo) ? "pantalla-enter-fade" : "pantalla-enter";
+
   return (
     <Marco>
-      <div key={grupoDe(estado.pantalla)} className="pantalla-enter h-full w-full">
+      <div key={grupo} className={`${claseEntra} h-full w-full`}>
         <Pantallas />
       </div>
       <NavBotones />
@@ -72,6 +81,9 @@ function Juego() {
       <style jsx>{`
         .pantalla-enter {
           animation: pantalla-entra 0.4s ease;
+        }
+        .pantalla-enter-fade {
+          animation: pantalla-entra-fade 0.4s ease;
         }
         @keyframes pantalla-entra {
           from {
@@ -83,8 +95,17 @@ function Juego() {
             transform: translateY(0);
           }
         }
+        @keyframes pantalla-entra-fade {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .pantalla-enter {
+          .pantalla-enter,
+          .pantalla-enter-fade {
             animation: none;
           }
         }
