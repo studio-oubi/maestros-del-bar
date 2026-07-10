@@ -197,11 +197,15 @@ const ALTURA_TRAGO_GANASTE_CQH = 45;
 // en ~25-30cqh. El crecimiento respecto al alto de referencia se absorbe con
 // margen superior negativo, así el vaso crece hacia ARRIBA (hacia el hueco
 // bajo el subtítulo) y la ficha de ingredientes no se mueve.
-const ALTURA_TRAGO_CASI_CQH = 58;
-// Alto de caja con el que se calibró la posición actual de la ficha: el
-// margen superior negativo mantiene el final de layout del bloque idéntico
-// al que produce esta referencia.
-const ALTURA_REF_CASI_CQH = 40;
+const ALTURA_TRAGO_CASI_CQH = 46;
+// Alto de caja con el que se calibró la posición de la ficha: el margen superior
+// negativo mantiene el final de layout del bloque en el punto que produce esta
+// referencia. La HUELLA de layout del bloque es 2 + (1-padFrac)·REF (independiente
+// de ALTURA_TRAGO), así que esta constante es la palanca real para liberar alto:
+// se baja para que el peor caso de CASI (Sour perdido: 3 filas de mezcla + hasta
+// 2 chips de mezcla + 2 de ingrediente + 2 sobrantes) quepa SIN scroll en
+// 390×844 y 786×1397.
+const ALTURA_REF_CASI_CQH = 24;
 
 // Variante "gano" (mock 13): título gigante, confetti sutil, trago sobre la
 // barra con su tarjeta de receta al lado.
@@ -298,7 +302,7 @@ function ChipSobrante({ etiqueta }: { etiqueta: string }) {
 
 function FilaCheck({ etiqueta, ok }: { etiqueta: string; ok: boolean }) {
   return (
-    <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[1.3cqh]">
+    <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[0.9cqh]">
       <span className="font-titulo text-[clamp(12px,3.6cqw,15px)] font-medium uppercase tracking-[0.06em] text-crema">
         {etiqueta}
       </span>
@@ -347,12 +351,12 @@ function Casi() {
   const mtCasiCqh = 2 + (1 - padFracCasi) * (ALTURA_REF_CASI_CQH - ALTURA_TRAGO_CASI_CQH);
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[3.5cqh] pt-[5cqh] text-center">
+    <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[2.5cqh] pt-[5cqh] text-center">
       <Logo />
 
       {/* relative z-10: el trago agrandado sube hasta esta zona (el garnish
           puede cruzarla); el texto debe pintarse ENCIMA para seguir legible. */}
-      <div className="relative z-10 mt-[7cqh] flex flex-col items-center gap-[0.8cqh]">
+      <div className="relative z-10 mt-[5cqh] flex flex-col items-center gap-[0.8cqh]">
         <h1 className="texto-titulo">CASI...</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
@@ -367,7 +371,7 @@ function Casi() {
         />
       </div>
 
-      <div className="mt-[3cqh] flex w-full flex-col items-center">
+      <div className="mt-[2cqh] flex w-full flex-col items-center">
         <FilaCheck etiqueta="VASO" ok={ev.vasoOk} />
         <FilaCheck etiqueta={receta.ronNombre} ok={ev.ronOk} />
         {/* Una fila por CADA mezcla de la receta: ✓ si la eligió, ✗ si no. */}
@@ -375,7 +379,7 @@ function Casi() {
           <FilaCheck key={m} etiqueta={nombreMezcla(m)} ok={estado.elecciones.mezclas.includes(m)} />
         ))}
         {ev.mezclasSobraron.length > 0 && (
-          <div className="mt-[1.4cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
+          <div className="mt-[1cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
             {ev.mezclasSobraron.map((m) => (
               <ChipSobrante key={m} etiqueta={nombreMezcla(m)} />
             ))}
@@ -383,7 +387,7 @@ function Casi() {
         )}
       </div>
 
-      <div className="mt-[3cqh] flex w-full flex-col items-center gap-[1.4cqh]">
+      <div className="mt-[2cqh] flex w-full flex-col items-center gap-[1.2cqh]">
         <span className="texto-label">INGREDIENTES</span>
         <div className="flex flex-wrap items-center justify-center gap-[1.6cqw]">
           {receta.ingredientes.map((id) => (
@@ -402,7 +406,7 @@ function Casi() {
       <button
         type="button"
         onClick={() => despachar({ tipo: "REINICIAR" })}
-        className={`mt-[3.4cqh] shrink-0 ${BOTON}`}
+        className={`mt-[2.4cqh] shrink-0 ${BOTON}`}
       >
         VOLVER AL INICIO
       </button>
