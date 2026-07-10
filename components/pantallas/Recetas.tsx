@@ -35,7 +35,7 @@ export function Recetas() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="flex h-full w-full cursor-pointer select-none flex-col items-center px-[4cqw] pt-[14.5cqh] pb-[12cqh] outline-none"
+      className="flex h-full w-full cursor-pointer select-none flex-col items-center pt-[14.5cqh] pb-[12cqh] outline-none"
     >
       <Image
         src={IMG.logoBrugal}
@@ -45,7 +45,10 @@ export function Recetas() {
         className="h-auto w-[33cqw] max-w-[155px] shrink-0"
       />
 
-      <div className="flex w-full flex-1 flex-col justify-center">
+      {/* Ancho fijo relativo al Marco (no depende del contenido) para que el
+          bloque de las 3 filas quede centrado como en el mock, con márgenes
+          simétricos, en vez de estirarse edge-to-edge del contenedor. */}
+      <div className="flex w-[86cqw] flex-1 flex-col justify-center">
         {RECETAS.map((receta, i) => (
           <div key={receta.id}>
             {i > 0 && <div className="ml-[17cqw] h-px bg-oro/25" />}
@@ -55,15 +58,15 @@ export function Recetas() {
                 alt=""
                 width={726}
                 height={1300}
-                className="h-[13.5cqh] w-auto shrink-0 object-contain"
+                className="h-[15.5cqh] w-auto shrink-0 object-contain"
               />
               <div className="flex-1">
-                <h2 className="font-titulo text-[2.6cqh] font-medium uppercase leading-[1.04] text-white">
+                <h2 className="font-titulo text-[2.9cqh] font-medium uppercase leading-[1.04] text-white">
                   {receta.nombre}
                 </h2>
                 <ul className="mt-[0.15cqh] space-y-[0.2cqh]">
                   {receta.lineasReceta.map((linea) => (
-                    <li key={linea} className="texto-label !text-[1.15cqh] !tracking-[0.04em] leading-tight">
+                    <li key={linea} className="texto-label !text-[1.3cqh] !tracking-[0.04em] leading-tight">
                       • {linea}
                     </li>
                   ))}
@@ -78,12 +81,12 @@ export function Recetas() {
         toca para continuar....
       </p>
 
-      <div className="relative aspect-[1031/300] w-[62cqw] max-w-[260px] shrink-0">
+      <div className="relative aspect-[1031/300] w-[66cqw] max-w-[280px] shrink-0">
         <Image
           src={IMG.escapate}
           alt="Escápate a lo extraordinario"
           fill
-          sizes="64vw"
+          sizes="68vw"
           className="select-none object-contain"
         />
       </div>

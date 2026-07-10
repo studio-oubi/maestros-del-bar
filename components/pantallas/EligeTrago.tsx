@@ -35,7 +35,7 @@ export function EligeTrago() {
     <div className="relative h-full w-full overflow-hidden">
       {/* Logo Brugal */}
       <div className="absolute inset-x-0 top-[7cqh] z-10 flex justify-center">
-        <div className="relative h-[5cqh] w-[38cqw]">
+        <div className="relative h-[5.9cqh] w-[42cqw]">
           <Image src={IMG.logoBrugal} alt="Brugal" fill sizes="40vw" className="object-contain" priority />
         </div>
       </div>

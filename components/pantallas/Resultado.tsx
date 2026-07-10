@@ -22,7 +22,7 @@ function Logo() {
         alt="Brugal"
         width={220}
         height={90}
-        className="h-auto w-[28cqw] max-w-[130px]"
+        className="h-auto w-[33cqw] max-w-[155px]"
       />
     </div>
   );
