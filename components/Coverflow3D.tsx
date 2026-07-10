@@ -356,7 +356,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
                     aria-hidden
                     className="pointer-events-none absolute inset-0 flex items-center justify-center"
                   >
-                    <span className="flex h-[5cqh] w-[5cqh] items-center justify-center rounded-full bg-navy-deep/70 ring-2 ring-oro shadow-[0_2px_10px_rgba(0,0,0,.5)]">
+                    <span className="flex h-[5cqh] w-[5cqh] items-center justify-center rounded-full bg-navy ring-2 ring-oro shadow-[0_2px_10px_rgba(0,0,0,.5)]">
                       <svg
                         viewBox="0 0 24 24"
                         className="h-[55%] w-[55%] text-oro"

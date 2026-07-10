@@ -88,21 +88,22 @@ export function GridMix({ restante }: { restante: number }) {
                     className={cover ? "object-cover" : "object-contain p-[14%]"}
                   />
                   {activo && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 flex items-center justify-center rounded-full bg-navy-deep/50"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-[40%] w-[40%] text-oro drop-shadow-[0_2px_6px_rgba(0,0,0,.5)]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
+                    <span aria-hidden className="absolute inset-0 flex items-center justify-center">
+                      {/* Badge SÓLIDO (navy #0a1a3a) con borde y check dorados
+                          opacos, mismo lenguaje que el check del coverflow. */}
+                      <span className="flex h-[45%] w-[45%] items-center justify-center rounded-full bg-navy ring-2 ring-oro shadow-[0_2px_8px_rgba(0,0,0,.5)]">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-[55%] w-[55%] text-oro"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
                     </span>
                   )}
                 </span>

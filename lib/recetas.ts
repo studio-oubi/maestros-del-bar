@@ -59,13 +59,13 @@ export const VASOS: { id: VasoId; nombre: string; img: string }[] = [
 // navy/dorado propia del juego. Sin assets externos (excepto ing-anis, ver
 // stock/LICENCIAS.md).
 export const MEZCLAS: { id: MezclaId; nombre: string; img: string }[] = [
+  { id: "agua-gas", nombre: "AGUA CON GAS", img: IMG.mixerAguaGas },
   { id: "zumo-limon", nombre: "ZUMO DE LIMÓN", img: IMG.mixerZumoLimon },
+  { id: "bitter-naranja", nombre: "BITTER DE NARANJA", img: IMG.mixerBitterNaranja },
+  { id: "soda", nombre: "SODA", img: IMG.mixerSoda },
   { id: "sirope-albahaca", nombre: "SIROPE DE ALBAHACA", img: IMG.mixerSiropeAlbahaca },
   { id: "zumo-toronja", nombre: "ZUMO DE TORONJA", img: IMG.mixerZumoToronja },
   { id: "sirope-simple", nombre: "SIROPE SIMPLE", img: IMG.mixerSiropeSimple },
-  { id: "bitter-naranja", nombre: "BITTER DE NARANJA", img: IMG.mixerBitterNaranja },
-  { id: "agua-gas", nombre: "AGUA CON GAS", img: IMG.mixerAguaGas },
-  { id: "soda", nombre: "SODA", img: IMG.mixerSoda },
 ];
 // EXACTAMENTE 12 (grid 3×4).
 export const INGREDIENTES: Record<IngredienteId, { nombre: string; img: string }> = {
