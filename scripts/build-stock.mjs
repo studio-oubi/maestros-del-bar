@@ -66,16 +66,14 @@ async function buildBotellasGemini() {
 
 // ing-cascara / ing-albahaca (v2): primera pasada recortaba el twist de
 // naranja del borde del vaso en New design/sour.png y un par de hojas de
-// basir.png, con pad transparente para cuadrar el tile — quedaban como
-// medallón translúcido, igual que el resto de ing-*. Esta pasada las
-// REEMPLAZA con fotos de producto generadas con Gemini y luego recortadas A
-// MANO por Oscar en Photoshop (canal alpha real, mismo criterio que las 7
-// botellas de arriba) — cuadradas 1:1, sujeto aislado sobre transparencia.
-// Como el medallón ya es cuadrado y el recorte también, object-cover en
-// GridMix (ver RECORTES_FOTO) llena el círculo exacto y dado que el fondo
-// del medallón YA es navy (bg-navy/70), el margen transparente del recorte
-// se funde solo con el círculo — sin necesidad de bakear el navy en la
-// foto ni de pad alfa de nuestro lado.
+// basir.png, con pad transparente para cuadrar el tile — medallón
+// translúcido, igual que el resto de ing-*. Pasada intermedia las llevó a
+// foto full-bleed sobre el navy del medallón (object-cover); esta pasada
+// las REEMPLAZA de nuevo con fotos recortadas A MANO por Oscar en Photoshop
+// (canal alpha real, mismo criterio que las 7 botellas de arriba) — sujeto
+// aislado sobre transparencia. Con esto vuelven a tratarse como el resto de
+// ing-* translúcidos (object-contain, NO están en RECORTES_FOTO de
+// GridMix.tsx), para verse consistentes con MENTA/FRAMBUESA/etc.
 async function buildCascara() {
   const buf = await sharp(gemini("ing-cascara.png")).png().toBuffer();
   await writeFile(out("ing-cascara.png"), buf);
@@ -155,12 +153,13 @@ para ing-demerara más abajo).
 
 ## stock/fuentes-gemini/ing-{cascara,albahaca,anis}.png → stock/ing-{cascara,albahaca,anis}.png
 
-Mismo origen Gemini que las 7 botellas de arriba, para los 3 tiles "llenos"
-(object-cover) del grid COMPLETA — ver RECORTES_FOTO en components/GridMix.tsx.
-cascara y albahaca vienen recortadas a mano por Oscar igual que las botellas
-(alpha real, sujeto aislado); anis viene fotografiada cuadrada 1:1 directo
-sobre el navy exacto del círculo del medallón (#0a1a3a), full-bleed, sin
-canal alpha. En los tres casos el trabajo de nuestro lado es solo empaquetar
+Mismo origen Gemini que las 7 botellas de arriba. cascara y albahaca vienen
+recortadas a mano por Oscar igual que las botellas (alpha real, sujeto
+aislado) — tile translúcido normal (object-contain), NO están en
+RECORTES_FOTO de components/GridMix.tsx. anis viene fotografiada cuadrada
+1:1 directo sobre el navy exacto del círculo del medallón (#0a1a3a),
+full-bleed, sin canal alpha — SÍ va a object-cover (tile "lleno", como
+toronja). En los tres casos el trabajo de nuestro lado es solo empaquetar
 tal cual — sin recorte, sin pad alfa adicional. Reemplazan a los recortes con
 pad transparente de sour.png/basir.png (cascara/albahaca) y al crop de la
 foto de Wikimedia con exposición subida (anís) de pasadas anteriores.

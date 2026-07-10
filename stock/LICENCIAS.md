@@ -32,12 +32,13 @@ para ing-demerara más abajo).
 
 ## stock/fuentes-gemini/ing-{cascara,albahaca,anis}.png → stock/ing-{cascara,albahaca,anis}.png
 
-Mismo origen Gemini que las 7 botellas de arriba, para los 3 tiles "llenos"
-(object-cover) del grid COMPLETA — ver RECORTES_FOTO en components/GridMix.tsx.
-cascara y albahaca vienen recortadas a mano por Oscar igual que las botellas
-(alpha real, sujeto aislado); anis viene fotografiada cuadrada 1:1 directo
-sobre el navy exacto del círculo del medallón (#0a1a3a), full-bleed, sin
-canal alpha. En los tres casos el trabajo de nuestro lado es solo empaquetar
+Mismo origen Gemini que las 7 botellas de arriba. cascara y albahaca vienen
+recortadas a mano por Oscar igual que las botellas (alpha real, sujeto
+aislado) — tile translúcido normal (object-contain), NO están en
+RECORTES_FOTO de components/GridMix.tsx. anis viene fotografiada cuadrada
+1:1 directo sobre el navy exacto del círculo del medallón (#0a1a3a),
+full-bleed, sin canal alpha — SÍ va a object-cover (tile "lleno", como
+toronja). En los tres casos el trabajo de nuestro lado es solo empaquetar
 tal cual — sin recorte, sin pad alfa adicional. Reemplazan a los recortes con
 pad transparente de sour.png/basir.png (cascara/albahaca) y al crop de la
 foto de Wikimedia con exposición subida (anís) de pasadas anteriores.
