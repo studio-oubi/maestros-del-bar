@@ -6,16 +6,8 @@ export interface PartidaInput {
   detalles: unknown;
 }
 
-// Envía el resultado de la partida al servidor. Fire-and-forget: la pantalla
-// de resultado nunca debe bloquearse ni fallar visiblemente si la red cae.
-export async function enviarPartida(p: PartidaInput): Promise<void> {
-  try {
-    await fetch("/api/partida", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    });
-  } catch {
-    // sin conexión o error de red: se ignora, no bloquea el juego
-  }
-}
+// enviarPartida vive junto a la cola offline (registro-cliente) porque comparte
+// el estado de la sesión encolada: si el registro de este juego quedó pendiente,
+// la partida se le adjunta en vez de perderse. Se re-exporta aquí para no cambiar
+// los sitios de llamada existentes (components/pantallas/Resultado.tsx).
+export { enviarPartida } from "@/lib/registro-cliente";

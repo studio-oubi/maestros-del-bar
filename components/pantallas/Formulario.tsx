@@ -6,7 +6,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { useJuego } from "@/lib/juego";
 import { mascaraCedula, mascaraTelefono } from "@/lib/mascaras";
-import { enviarRegistro } from "@/lib/registro-cliente";
+import { enviarRegistro, reiniciarSesionOffline } from "@/lib/registro-cliente";
 import { validarRegistro } from "@/lib/validacion";
 import type { RegistroInput } from "@/lib/validacion";
 
@@ -77,6 +77,9 @@ export function Formulario() {
   }
 
   function omitir() {
+    // Sin registro: la partida de este juego no debe adjuntarse a un registro
+    // offline de un juego anterior.
+    reiniciarSesionOffline();
     despachar({ tipo: "REGISTRADO", id: null });
     despachar({ tipo: "IR", a: "recetas" });
   }

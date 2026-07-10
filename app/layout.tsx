@@ -10,8 +10,12 @@ const kaneda = localFont({
 });
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-inter" });
 
-export const metadata: Metadata = { title: "Mix Challenge — Brugal", description: "Escápate a lo extraordinario" };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover" };
+export const metadata: Metadata = {
+  title: "Mix Challenge — Brugal",
+  description: "Escápate a lo extraordinario",
+  manifest: "/manifest.webmanifest",
+};
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover", themeColor: "#0a1a3a" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

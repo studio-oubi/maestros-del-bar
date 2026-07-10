@@ -14,7 +14,8 @@ import { EligeTrago } from "@/components/pantallas/EligeTrago";
 import { Listo } from "@/components/pantallas/Listo";
 import { Reto } from "@/components/pantallas/Reto";
 import { Resultado } from "@/components/pantallas/Resultado";
-import { reintentarPendiente } from "@/lib/registro-cliente";
+import { procesarCola } from "@/lib/registro-cliente";
+import { registrarServiceWorker } from "@/lib/sw-registro";
 
 function Pantallas() {
   const { estado } = useJuego();
@@ -62,10 +63,19 @@ const GRUPOS_CON_BARRA = new Set(["elige-trago", "reto", "resultado"]);
 function Juego() {
   const { estado } = useJuego();
 
-  // Reintenta un registro que quedó pendiente (red caída / DB no disponible)
-  // en cuanto la app arranca, sin bloquear el juego.
+  // Offline: registra el service worker (app shell + imágenes) y vacía la cola de
+  // registros/partidas pendientes al arrancar, al volver la conexión ('online') y
+  // cada 60s mientras la app siga abierta.
   useEffect(() => {
-    void reintentarPendiente();
+    registrarServiceWorker();
+    void procesarCola();
+    const alVolverRed = () => void procesarCola();
+    window.addEventListener("online", alVolverRed);
+    const intervalo = window.setInterval(() => void procesarCola(), 60000);
+    return () => {
+      window.removeEventListener("online", alVolverRed);
+      window.clearInterval(intervalo);
+    };
   }, []);
 
   const grupo = grupoDe(estado.pantalla);
