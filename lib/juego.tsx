@@ -5,6 +5,14 @@ import type { ReactNode } from "react";
 import { armarGrid, evaluar } from "@/lib/recetas";
 import type { Elecciones, Evaluacion, IngredienteId, MezclaId, Receta, RonId, VasoId } from "@/lib/recetas";
 
+// Alterna un id en un arreglo (quita si está, agrega si no), respetando un tope:
+// si ya se alcanzó `max` no agrega más (regla "no marcar más de lo requerido").
+function alternarConTope<T>(actual: T[], id: T, max: number): T[] {
+  if (actual.includes(id)) return actual.filter((x) => x !== id);
+  if (actual.length >= max) return actual;
+  return [...actual, id];
+}
+
 export type Pantalla = "loading" | "home" | "formulario" | "recetas" | "intro"
   | "elige-trago" | "listo" | "reto-vaso" | "reto-ron" | "reto-mezcla" | "reto-mix" | "resultado";
 export type ResultadoTipo = "gano" | "fallo" | "tiempo";
@@ -27,13 +35,15 @@ type Accion =
   | { tipo: "REGISTRO_ID"; id: number }               // llega el id real del POST /api/registro (optimista, no cambia pantalla)
   | { tipo: "ELIGE_TRAGO"; receta: Receta }
   | { tipo: "INICIAR_RETO" }
-  | { tipo: "ELIGE_VASO"; vaso: VasoId } | { tipo: "ELIGE_RON"; ron: RonId } | { tipo: "ELIGE_MEZCLA"; mezcla: MezclaId }
+  | { tipo: "ELIGE_VASO"; vaso: VasoId } | { tipo: "ELIGE_RON"; ron: RonId }
+  | { tipo: "TOGGLE_MEZCLA"; mezcla: MezclaId }       // multi-select del paso MEZCLA
+  | { tipo: "CONFIRMA_MEZCLAS" }                      // pasa de reto-mezcla a reto-mix
   | { tipo: "TOGGLE_INGREDIENTE"; ing: IngredienteId }
   | { tipo: "MEZCLAR"; tiempoRestante: number }      // evalúa y va a resultado
   | { tipo: "TIEMPO_AGOTADO" }                        // resultado = 'tiempo'
   | { tipo: "REINICIAR" };                            // vuelve a home, limpia registro (kiosko: no hereda el del jugador anterior)
 
-const elecionesVacias: Elecciones = { vaso: null, ron: null, mezcla: null, ingredientes: [] };
+const elecionesVacias: Elecciones = { vaso: null, ron: null, mezclas: [], ingredientes: [] };
 
 const estadoInicial: EstadoJuego = {
   pantalla: "loading",
@@ -61,7 +71,7 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
       return {
         ...estado,
         receta: accion.receta,
-        grid: armarGrid(accion.receta),
+        grid: armarGrid(),
         elecciones: elecionesVacias,
         resultado: null,
         evaluacion: null,
@@ -73,13 +83,16 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
       return { ...estado, elecciones: { ...estado.elecciones, vaso: accion.vaso }, pantalla: "reto-ron" };
     case "ELIGE_RON":
       return { ...estado, elecciones: { ...estado.elecciones, ron: accion.ron }, pantalla: "reto-mezcla" };
-    case "ELIGE_MEZCLA":
-      return { ...estado, elecciones: { ...estado.elecciones, mezcla: accion.mezcla }, pantalla: "reto-mix" };
+    case "TOGGLE_MEZCLA": {
+      if (!estado.receta) return estado;
+      const mezclas = alternarConTope(estado.elecciones.mezclas, accion.mezcla, estado.receta.mezclas.length);
+      return { ...estado, elecciones: { ...estado.elecciones, mezclas } };
+    }
+    case "CONFIRMA_MEZCLAS":
+      return { ...estado, pantalla: "reto-mix" };
     case "TOGGLE_INGREDIENTE": {
-      const yaElegido = estado.elecciones.ingredientes.includes(accion.ing);
-      const ingredientes = yaElegido
-        ? estado.elecciones.ingredientes.filter((i) => i !== accion.ing)
-        : [...estado.elecciones.ingredientes, accion.ing];
+      if (!estado.receta) return estado;
+      const ingredientes = alternarConTope(estado.elecciones.ingredientes, accion.ing, estado.receta.ingredientes.length);
       return { ...estado, elecciones: { ...estado.elecciones, ingredientes } };
     }
     case "MEZCLAR": {

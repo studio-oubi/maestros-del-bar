@@ -5,34 +5,42 @@ export const GAME_SECONDS = 60;
 export type TragoId = "toronja" | "sour" | "albahaca";
 export type RonId = "doble" | "triple" | "extraviejo";
 export type VasoId = "vaso-toronja" | "vaso-sour" | "vaso-albahaca";
-export type MezclaId = "perrier" | "limon" | "tonica" | "ginger" | "arandano";
+export type MezclaId =
+  | "zumo-limon" | "sirope-albahaca" | "zumo-toronja" | "sirope-simple"
+  | "bitter-naranja" | "agua-gas" | "soda";
+// Grid fijo 3×4: EXACTAMENTE estos 12 ingredientes (ya no hay señuelos muestreados;
+// armarGrid solo baraja los 12).
 export type IngredienteId =
-  | "toronja" | "romero" | "hielo" | "sirope" | "naranja" | "clara" | "albahaca" | "limon"
-  | "canela" | "jengibre" | "frambuesa" | "menta" | "angostura" | "cafe" | "demerara";
+  | "toronja" | "romero" | "cascara" | "albahaca" | "hielo" | "menta"
+  | "canela" | "anis" | "frambuesa" | "jengibre" | "cafe" | "demerara";
 
 export interface Receta {
   id: TragoId; nombre: string; ron: RonId; ronNombre: string;
-  vaso: VasoId; mezcla: MezclaId; mezclaNombre: string;
-  ingredientes: IngredienteId[];        // exactamente 3
-  lineasReceta: string[];               // bullets del mock 5
+  vaso: VasoId;
+  mezclas: MezclaId[];                  // set exacto a marcar en el paso MEZCLA
+  ingredientes: IngredienteId[];        // set exacto a marcar en el paso COMPLETA
+  lineasReceta: string[];               // bullets de la tarjeta (mock 5)
   imgTrago: string; imgVaso: string;
 }
 
 export const RECETAS: Receta[] = [
   { id: "toronja", nombre: "TORONJA RESERVA", ron: "doble", ronNombre: "BRUGAL DOBLE RESERVA",
-    vaso: "vaso-toronja", mezcla: "perrier", mezclaNombre: "AGUA CON GÁS",
+    vaso: "vaso-toronja",
+    mezclas: ["zumo-limon", "zumo-toronja"],
     ingredientes: ["toronja", "romero", "hielo"],
-    lineasReceta: ["2 OZ BRUGAL DOBLE RESERVA", "ZUMO DE LIMÓN", "ZUMO DE TORONJA ROSADA", "TORONJA + ROMERO"],
+    lineasReceta: ["2 OZ BRUGAL DOBLE RESERVA", "ZUMO DE LIMÓN", "ZUMO DE TORONJA", "TORONJA + ROMERO + HIELO"],
     imgTrago: IMG.tragoToronja, imgVaso: IMG.vasoToronja },
   { id: "sour", nombre: "SOUR RESERVA", ron: "triple", ronNombre: "BRUGAL TRIPLE RESERVA",
-    vaso: "vaso-sour", mezcla: "limon", mezclaNombre: "ZUMO DE LIMÓN",
-    ingredientes: ["sirope", "naranja", "clara"],
-    lineasReceta: ["2 OZ BRUGAL TRIPLE RESERVA", "ZUMO DE LIMÓN", "SIROPE SIMPLE", "BITTER DE NARANJA"],
+    vaso: "vaso-sour",
+    mezclas: ["zumo-limon", "sirope-simple", "bitter-naranja"],
+    ingredientes: ["cascara", "hielo"],
+    lineasReceta: ["2 OZ BRUGAL TRIPLE RESERVA", "ZUMO DE LIMÓN", "SIROPE SIMPLE", "BITTER DE NARANJA", "CÁSCARA DE NARANJA + HIELO"],
     imgTrago: IMG.tragoSour, imgVaso: IMG.vasoSour },
   { id: "albahaca", nombre: "LIMÓN ALBAHACA EXTRA VIEJO", ron: "extraviejo", ronNombre: "BRUGAL EXTRA VIEJO",
-    vaso: "vaso-albahaca", mezcla: "limon", mezclaNombre: "ZUMO DE LIMÓN",
-    ingredientes: ["albahaca", "sirope", "limon"],
-    lineasReceta: ["2 OZ BRUGAL EXTRA VIEJO", "ZUMO DE LIMÓN", "SIROPE DE ALBAHACA"],
+    vaso: "vaso-albahaca",
+    mezclas: ["zumo-limon", "sirope-albahaca"],
+    ingredientes: ["albahaca", "hielo"],
+    lineasReceta: ["2 OZ BRUGAL EXTRA VIEJO", "ZUMO DE LIMÓN", "SIROPE DE ALBAHACA", "ALBAHACA + HIELO"],
     imgTrago: IMG.tragoAlbahaca, imgVaso: IMG.vasoAlbahaca },
 ];
 
@@ -46,57 +54,65 @@ export const VASOS: { id: VasoId; nombre: string; img: string }[] = [
   { id: "vaso-sour", nombre: "VASO TALLADO", img: IMG.vasoSour },
   { id: "vaso-albahaca", nombre: "VASO REDONDO", img: IMG.vasoAlbahaca },
 ];
+// PLACEHOLDERS de imagen: se mapean a los mixers actuales con criterio (limón,
+// agua con gas y soda calzan; el resto reusa assets). TODO: otro agente traerá
+// imágenes genéricas sin marca (zumos/siropes/bitter) y las reemplazará aquí.
 export const MEZCLAS: { id: MezclaId; nombre: string; img: string }[] = [
-  { id: "perrier", nombre: "AGUA CON GÁS", img: IMG.mixerPerrier },
-  { id: "limon", nombre: "ZUMO DE LIMÓN", img: IMG.mixerLimon },
-  { id: "tonica", nombre: "AGUA TÓNICA", img: IMG.mixerTonica },
-  { id: "ginger", nombre: "GINGER ALE", img: IMG.mixerGinger },
-  { id: "arandano", nombre: "JUGO DE ARÁNDANO", img: IMG.mixerArandano },
+  { id: "zumo-limon", nombre: "ZUMO DE LIMÓN", img: IMG.mixerLimon },
+  { id: "sirope-albahaca", nombre: "SIROPE DE ALBAHACA", img: IMG.mixerGinger }, // TODO placeholder
+  { id: "zumo-toronja", nombre: "ZUMO DE TORONJA", img: IMG.mixerArandano }, // TODO placeholder
+  { id: "sirope-simple", nombre: "SIROPE SIMPLE", img: IMG.mixerGinger }, // TODO placeholder
+  { id: "bitter-naranja", nombre: "BITTER DE NARANJA", img: IMG.mixerArandano }, // TODO placeholder
+  { id: "agua-gas", nombre: "AGUA CON GAS", img: IMG.mixerPerrier },
+  { id: "soda", nombre: "SODA", img: IMG.mixerTonica },
 ];
+// EXACTAMENTE 12 (grid 3×4). cascara/anis usan placeholders (TODO: assets propios).
 export const INGREDIENTES: Record<IngredienteId, { nombre: string; img: string }> = {
-  toronja: { nombre: "TORONJA", img: IMG.ingToronja }, romero: { nombre: "ROMERO", img: IMG.ingRomero },
-  hielo: { nombre: "HIELO", img: IMG.ingHielo }, sirope: { nombre: "SIROPE", img: IMG.ingSirope },
-  naranja: { nombre: "NARANJA", img: IMG.ingNaranja }, clara: { nombre: "CLARA", img: IMG.ingClara },
-  albahaca: { nombre: "ALBAHACA", img: IMG.ingAlbahaca }, limon: { nombre: "LIMÓN", img: IMG.ingLimon },
-  canela: { nombre: "CANELA", img: IMG.ingCanela }, jengibre: { nombre: "JENGIBRE", img: IMG.ingJengibre },
-  frambuesa: { nombre: "FRAMBUESA", img: IMG.ingFrambuesa }, menta: { nombre: "MENTA", img: IMG.ingMenta },
-  angostura: { nombre: "ANGOSTURA", img: IMG.ingAngostura }, cafe: { nombre: "CAFÉ", img: IMG.ingCafe },
+  toronja: { nombre: "TORONJA", img: IMG.ingToronja },
+  romero: { nombre: "ROMERO", img: IMG.ingRomero },
+  cascara: { nombre: "CÁSCARA DE NARANJA", img: IMG.ingNaranja }, // TODO placeholder
+  albahaca: { nombre: "ALBAHACA", img: IMG.ingAlbahaca },
+  hielo: { nombre: "HIELO", img: IMG.ingHielo },
+  menta: { nombre: "MENTA", img: IMG.ingMenta },
+  canela: { nombre: "CANELA", img: IMG.ingCanela },
+  anis: { nombre: "ANÍS", img: IMG.ingAngostura }, // TODO placeholder
+  frambuesa: { nombre: "FRAMBUESA", img: IMG.ingFrambuesa },
+  jengibre: { nombre: "JENGIBRE", img: IMG.ingJengibre },
+  cafe: { nombre: "CAFÉ", img: IMG.ingCafe },
   demerara: { nombre: "DEMERARA", img: IMG.ingDemerara },
 };
-export const SENUELOS: IngredienteId[] = ["canela", "jengibre", "frambuesa", "menta", "angostura", "cafe", "demerara"];
 
-// Grid de 12: los 3 ingredientes correctos + 9 señuelos elegidos entre todos
-// los IngredienteId que no pertenecen a la receta (siempre hay 12 candidatos).
-export function armarGrid(receta: Receta, rng: () => number = Math.random): IngredienteId[] {
-  const decoyPool = (Object.keys(INGREDIENTES) as IngredienteId[]).filter(
-    (id) => !receta.ingredientes.includes(id)
-  );
-  const decoys: IngredienteId[] = [];
-  for (let i = 0; i < 9 && decoyPool.length > 0; i++) {
-    const idx = Math.floor(rng() * decoyPool.length);
-    decoys.push(decoyPool.splice(idx, 1)[0]);
-  }
-  const grid = [...receta.ingredientes, ...decoys];
-  for (let i = grid.length - 1; i > 0; i--) {
+// Grid de 12: baraja (Fisher-Yates) los 12 IngredienteId. La receta ya no
+// influye en la composición (siempre están los 12, correctos incluidos).
+export function armarGrid(rng: () => number = Math.random): IngredienteId[] {
+  const grid = Object.keys(INGREDIENTES) as IngredienteId[];
+  const copia = [...grid];
+  for (let i = copia.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
-    [grid[i], grid[j]] = [grid[j], grid[i]];
+    [copia[i], copia[j]] = [copia[j], copia[i]];
   }
-  return grid;
+  return copia;
 }
 
-export interface Elecciones { vaso: VasoId | null; ron: RonId | null; mezcla: MezclaId | null; ingredientes: IngredienteId[] }
+export interface Elecciones { vaso: VasoId | null; ron: RonId | null; mezclas: MezclaId[]; ingredientes: IngredienteId[] }
 export interface Evaluacion {
   gano: boolean;
   vasoOk: boolean; ronOk: boolean; mezclaOk: boolean;
-  faltaron: IngredienteId[];   // correctos no elegidos
-  sobraron: IngredienteId[];   // elegidos que no van
+  mezclasFaltaron: MezclaId[];   // mezclas de la receta no elegidas
+  mezclasSobraron: MezclaId[];   // mezclas elegidas que no van
+  faltaron: IngredienteId[];     // ingredientes correctos no elegidos
+  sobraron: IngredienteId[];     // ingredientes elegidos que no van
 }
+// Regla: en Mezcla y en Completa hay que marcar EXACTAMENTE lo de la receta
+// (de más o de menos = pierde). Vaso y ron: coincidencia simple.
 export function evaluar(receta: Receta, e: Elecciones): Evaluacion {
   const vasoOk = e.vaso === receta.vaso;
   const ronOk = e.ron === receta.ron;
-  const mezclaOk = e.mezcla === receta.mezcla;
+  const mezclasFaltaron = receta.mezclas.filter((m) => !e.mezclas.includes(m));
+  const mezclasSobraron = e.mezclas.filter((m) => !receta.mezclas.includes(m));
+  const mezclaOk = mezclasFaltaron.length === 0 && mezclasSobraron.length === 0;
   const faltaron = receta.ingredientes.filter((ing) => !e.ingredientes.includes(ing));
   const sobraron = e.ingredientes.filter((ing) => !receta.ingredientes.includes(ing));
   const gano = vasoOk && ronOk && mezclaOk && faltaron.length === 0 && sobraron.length === 0;
-  return { gano, vasoOk, ronOk, mezclaOk, faltaron, sobraron };
+  return { gano, vasoOk, ronOk, mezclaOk, mezclasFaltaron, mezclasSobraron, faltaron, sobraron };
 }

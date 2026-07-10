@@ -1,24 +1,20 @@
 import type { IngredienteId } from "@/lib/recetas";
 
-// Colores de referencia por ingrediente, portados de legacy/index.html
-// (INGREDIENTES[].color). Los ids que no existían en el legacy (toronja,
-// albahaca, limon; "sirope" reemplaza a su "syrup") llevan un tono
-// equivalente elegido a mano siguiendo el mismo criterio (color real del
-// ingrediente).
+// Colores de referencia por ingrediente (tono real del ingrediente), usados
+// para desviar el tinte del trago cuando el jugador falla. cascara (cáscara de
+// naranja) y anis se añaden con el rediseño de la lista; llevan un tono elegido
+// a mano con el mismo criterio.
 const COLOR_INGREDIENTE: Record<IngredienteId, string> = {
   toronja: "#e8547a",
   romero: "#4a6b3f",
-  hielo: "#bcd8e0",
-  sirope: "#d9a441",
-  naranja: "#d97a2b",
-  clara: "#f3ead6",
+  cascara: "#d97a2b",
   albahaca: "#4f7a3d",
-  limon: "#d7d94a",
-  canela: "#8a5a30",
-  jengibre: "#c9a35a",
-  frambuesa: "#b3123f",
+  hielo: "#bcd8e0",
   menta: "#3f7d4e",
-  angostura: "#7a3421",
+  canela: "#8a5a30",
+  anis: "#dfe0b8",
+  frambuesa: "#b3123f",
+  jengibre: "#c9a35a",
   cafe: "#3b2415",
   demerara: "#a5763d",
 };
