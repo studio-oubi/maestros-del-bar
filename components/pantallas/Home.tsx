@@ -35,51 +35,57 @@ export function Home() {
           comenzar();
         }
       }}
-      className="relative flex h-full w-full cursor-pointer flex-col items-center overflow-hidden px-8 pb-8 pt-9 select-none outline-none"
+      className="relative h-full w-full cursor-pointer overflow-hidden select-none outline-none"
+      style={{ containerType: "size" }}
     >
       <style>{estilos}</style>
 
-      {/* Cabecera: logo Brugal + lockup ESCÁPATE / A LO EXTRAORDINARIO */}
-      <header className="flex w-full flex-col items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={IMG.logoBrugal} alt="Brugal" className="w-[46%] max-w-[220px]" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <h1 className="mt-7 w-[74%] max-w-[320px]">
-          <img src={IMG.escapate} alt="Escápate a lo extraordinario" className="w-full" />
-        </h1>
-      </header>
+      {/* Proporciones medidas de la referencia (User Flow/1.png, 1080×1920),
+          en unidades de container-query relativas a esta pantalla:
+          Brugal ~33cqw centro 17.5cqh · lockup ~66cqw centro 29cqh ·
+          botella 40→88cqh · neón ~72cqw sobre el tercio inferior. */}
 
-      {/* Escena central: botellas con dissolve + logo neón flotante */}
-      <div className="relative mt-4 w-full flex-1">
-        {/* Contenedor del canvas: contra-tilt (rotate) por fuera y bob (translateY)
-            por dentro, en capas separadas para no pisarse el transform. El
-            contra-tilt usa el MISMO ciclo que el tilt del neón pero con signo
-            invertido y amplitud mínima, para leerse como contrapeso. */}
-        <div className="mix-contratilt absolute inset-0">
-          <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
-        </div>
+      {/* Logo Brugal */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={IMG.logoBrugal}
+        alt="Brugal"
+        className="pointer-events-none absolute left-1/2 top-[17.5cqh] w-[33cqw] -translate-x-1/2 -translate-y-1/2"
+      />
 
-        {/* Logo neón: fijo delante, grande (cruza sobre el tercio inferior de
-            la botella como en los mocks). Posición y animación en capas
-            separadas para que el translate de centrado no choque con las
-            animaciones. El texto neón ocupa el 93% del PNG y está centrado,
-            así que basta con centrar la caja. */}
-        <div className="pointer-events-none absolute left-1/2 top-[62%] w-[106%] max-w-[400px] -translate-x-1/2">
-          <div className="mix-flotar">
-            <div className="mix-tiltear">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={IMG.logoMix}
-                alt="Mix Challenge"
-                className="w-full drop-shadow-[0_0_18px_rgba(255,63,216,0.45)]"
-              />
-            </div>
+      {/* Lockup ESCÁPATE / A LO EXTRAORDINARIO (grande) */}
+      <h1 className="absolute left-1/2 top-[29cqh] w-[66cqw] -translate-x-1/2 -translate-y-1/2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={IMG.escapate} alt="Escápate a lo extraordinario" className="w-full" />
+      </h1>
+
+      {/* Botella compacta (dissolve) — ocupa de 40cqh a 88cqh.
+          Contra-tilt (rotate) en este contenedor y bob (translateY) por dentro,
+          en capas separadas para no pisarse el transform. El contra-tilt usa el
+          mismo ciclo que el tilt del neón pero invertido, como contrapeso. */}
+      <div className="mix-contratilt absolute left-0 top-[40cqh] h-[48cqh] w-full">
+        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
+      </div>
+
+      {/* Logo neón: centrado, cruza el tercio inferior de la botella. Posición
+          y animación en capas separadas para que el translate de centrado no
+          choque con las animaciones (el texto neón ocupa el 93% del PNG y está
+          centrado, así que basta con centrar la caja). */}
+      <div className="pointer-events-none absolute left-1/2 top-[76cqh] w-[72cqw] -translate-x-1/2 -translate-y-1/2">
+        <div className="mix-flotar">
+          <div className="mix-tiltear">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={IMG.logoMix}
+              alt="Mix Challenge"
+              className="w-full drop-shadow-[0_0_18px_rgba(255,63,216,0.45)]"
+            />
           </div>
         </div>
       </div>
 
       {/* Hint inferior */}
-      <p className="mix-latido mt-2 font-cuerpo text-[0.7rem] font-light uppercase tracking-[0.35em] text-crema/55">
+      <p className="mix-latido absolute bottom-[3cqh] left-1/2 -translate-x-1/2 font-cuerpo text-[0.7rem] font-light uppercase tracking-[0.35em] text-crema/55">
         toca para comenzar
       </p>
     </div>
