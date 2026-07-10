@@ -1,7 +1,7 @@
 // Preferencia de PORTADA del Home, compartida entre ConfigOculta (la elige) y
 // Home (la pinta). Persiste dentro de la misma clave mc_config, junto a
 // ciudad/establecimiento, para no fragmentar la config del kiosko. Default
-// "actual" (la composición de botellas de siempre); "kv" = imagen de evento.
+// "kv" (imagen de evento, pedido para producción); "actual" = botellas.
 export type Portada = "actual" | "kv";
 
 const CLAVE_CONFIG = "mc_config";
@@ -12,11 +12,12 @@ export const EVENTO_PORTADA = "mc-portada-cambio";
 export function leerPortada(): Portada {
   try {
     const crudo = localStorage.getItem(CLAVE_CONFIG);
-    if (!crudo) return "actual";
+    if (!crudo) return "kv";
     const c = JSON.parse(crudo) as { portada?: unknown } | null;
-    return c?.portada === "kv" ? "kv" : "actual";
+    // Solo una elección explícita de "actual" quita la portada de evento.
+    return c?.portada === "actual" ? "actual" : "kv";
   } catch {
-    return "actual";
+    return "kv";
   }
 }
 
