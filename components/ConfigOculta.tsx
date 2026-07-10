@@ -67,15 +67,19 @@ const ESTILO_FLECHA = {
   backgroundPosition: "right 1.4rem center",
 };
 
-// Overlay a pantalla completa que reproduce el video de lanzamiento. Fondo
-// negro por encima de todo; pide fullscreen real del contenedor si el navegador
-// lo permite y sale de él al cerrar. Controles mínimos: solo la X. Se cierra al
-// terminar el video o al tocar la X. El <video> arranca con playsInline+autoPlay
-// (la reproducción se dispara desde el tap en "Video", así que hay gesto).
-function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
+// Overlay a pantalla completa que reproduce el video de lanzamiento EN LOOP.
+// Se renderiza a nivel de App (hermano del Marco, ver App.tsx), NO dentro del
+// Marco: así escapa de su container-type:size y de su borde dorado (z-30), y
+// cubre la pantalla de borde a borde —por encima del marco y de NavBotones— sin
+// filo dorado visible. Pide fullscreen real del contenedor si el navegador lo
+// permite y sale al cerrar. El ÚNICO cierre es la X, que empieza OCULTA (y no
+// clickeable) y reaparece al tocar la pantalla, ocultándose tras 3s sin tocar.
+export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pediFullscreen = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  const [controlesVisibles, setControlesVisibles] = useState(false);
 
   useEffect(() => {
     const el = contenedorRef.current;
@@ -87,28 +91,42 @@ function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
     // Refuerza el autoplay (algunos navegadores ignoran el atributo).
     videoRef.current?.play?.().catch(() => {});
     return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
       if (pediFullscreen.current && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
     };
   }, []);
 
+  // Muestra la X y programa ocultarla tras 3s sin interacción.
+  const revelarControles = () => {
+    setControlesVisibles(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => setControlesVisibles(false), 3000);
+  };
+
   return (
-    <div ref={contenedorRef} className="fixed inset-0 z-[300] flex items-center justify-center bg-black">
+    <div
+      ref={contenedorRef}
+      onPointerDown={revelarControles}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
+    >
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
         src={VIDEO_LANZAMIENTO}
         autoPlay
+        loop
         playsInline
-        onEnded={onCerrar}
         className="h-full w-full object-contain"
       />
       <button
         type="button"
         aria-label="Cerrar video"
         onClick={onCerrar}
-        className="absolute right-[18px] top-[18px] z-10 grid h-11 w-11 place-items-center rounded-full border border-white/30 bg-black/50 text-white transition-[transform,filter] duration-100 active:scale-90 active:brightness-90"
+        className={`absolute right-[18px] top-[18px] z-10 grid h-11 w-11 place-items-center rounded-full border border-white/30 bg-black/50 text-white transition-[opacity,transform,filter] duration-[250ms] active:scale-90 active:brightness-90 ${
+          controlesVisibles ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
       >
         <X size={22} strokeWidth={2.25} />
       </button>
@@ -245,9 +263,8 @@ function ModalConfig({ onCerrar, onVideo }: { onCerrar: () => void; onVideo: () 
 // ni interfieren con el juego. Esquina superior derecha = configurar el local
 // del kiosko (una sola vez); esquina inferior derecha = alternar pantalla
 // completa (los tótems suelen requerir un gesto para entrar en fullscreen).
-export function ConfigOculta() {
+export function ConfigOculta({ onAbrirVideo }: { onAbrirVideo: () => void }) {
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [videoAbierto, setVideoAbierto] = useState(false);
 
   return (
     <>
@@ -274,11 +291,10 @@ export function ConfigOculta() {
           onCerrar={() => setModalAbierto(false)}
           onVideo={() => {
             setModalAbierto(false);
-            setVideoAbierto(true);
+            onAbrirVideo();
           }}
         />
       )}
-      {videoAbierto && <VideoOverlay onCerrar={() => setVideoAbierto(false)} />}
     </>
   );
 }

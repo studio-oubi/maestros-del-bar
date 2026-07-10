@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { JuegoProvider, useJuego } from "@/lib/juego";
+import { EVENTO_PORTADA, leerPortada, type Portada } from "@/lib/portada";
 import { Marco } from "@/components/Marco";
 import { NavBotones } from "@/components/NavBotones";
-import { ConfigOculta } from "@/components/ConfigOculta";
+import { ConfigOculta, VideoOverlay } from "@/components/ConfigOculta";
 import { Preloader } from "@/components/Preloader";
 import { Home } from "@/components/pantallas/Home";
 import { Formulario } from "@/components/pantallas/Formulario";
@@ -72,15 +73,32 @@ function Juego() {
     };
   }, []);
 
+  // Portada elegida (persiste en localStorage). En el Home con portada "kv" la
+  // imagen va a sangre completa: se oculta el borde dorado del Marco. Al pasar al
+  // flujo (formulario en adelante) el marco vuelve a la normalidad.
+  const [portada, setPortada] = useState<Portada>("actual");
+  useEffect(() => {
+    setPortada(leerPortada());
+    const alCambiar = () => setPortada(leerPortada());
+    window.addEventListener(EVENTO_PORTADA, alCambiar);
+    return () => window.removeEventListener(EVENTO_PORTADA, alCambiar);
+  }, []);
+
   const grupo = grupoDe(estado.pantalla);
+  const sinBorde = estado.pantalla === "home" && portada === "kv";
+
+  // El overlay de video vive a nivel de App (hermano del Marco) para cubrir la
+  // pantalla completa, por encima del marco y de NavBotones (ver VideoOverlay).
+  const [videoAbierto, setVideoAbierto] = useState(false);
 
   return (
-    <Marco>
+    <>
+    <Marco sinBorde={sinBorde}>
       <div key={grupo} className="pantalla-enter h-full w-full">
         <Pantallas />
       </div>
       <NavBotones />
-      <ConfigOculta />
+      <ConfigOculta onAbrirVideo={() => setVideoAbierto(true)} />
       <style jsx>{`
         /* Transición entre pantallas portada del legacy (.pantalla /
            .pantalla.activa, index.html): la pantalla entrante sube 16px y
@@ -108,6 +126,8 @@ function Juego() {
         }
       `}</style>
     </Marco>
+    {videoAbierto && <VideoOverlay onCerrar={() => setVideoAbierto(false)} />}
+    </>
   );
 }
 

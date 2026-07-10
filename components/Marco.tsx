@@ -11,7 +11,10 @@ const fondoEscritorio = "radial-gradient(130% 100% at 50% -10%, #10203a 0%, #070
 const sombraEscritorio =
   "0 60px 140px rgba(0,0,0,.75), 0 0 0 10px #0a0e18, 0 0 0 11px rgba(201,164,92,.3), inset 0 2px 30px rgba(255,255,255,.05)";
 
-export function Marco({ children }: { children: ReactNode }) {
+// `sinBorde`: oculta el borde dorado para las portadas a sangre completa (la
+// KV del Home). El resto del comportamiento (fondo, marco de teléfono en
+// landscape) no cambia.
+export function Marco({ children, sinBorde = false }: { children: ReactNode; sinBorde?: boolean }) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-navy-deep landscape:[background:var(--marco-fondo-escritorio)]"
@@ -31,8 +34,11 @@ export function Marco({ children }: { children: ReactNode }) {
         />
         <div className="relative z-10 h-full w-full">{children}</div>
         {/* El borde va ENCIMA del contenido (z-30) para que la barra u otras
-            imágenes a sangre completa nunca lo tapen; NavBotones usa z-40. */}
-        <div className="pointer-events-none absolute inset-[8px] z-30 border-[16px] border-oro/70" />
+            imágenes a sangre completa nunca lo tapen; NavBotones usa z-40. Se
+            omite en portadas a sangre completa (KV). */}
+        {!sinBorde && (
+          <div className="pointer-events-none absolute inset-[8px] z-30 border-[16px] border-oro/70" />
+        )}
       </div>
     </div>
   );
