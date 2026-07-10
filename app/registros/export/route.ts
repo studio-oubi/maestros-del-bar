@@ -1,14 +1,10 @@
 import { cookies } from "next/headers";
 import { verificarToken } from "@/lib/admin-auth";
+import { escaparCsv } from "@/lib/csv";
 import { obtenerRegistrosConResultado } from "../consultas";
 
 const ETIQUETA: Record<string, string> = { gano: "Ganó", fallo: "Falló", tiempo: "Tiempo" };
 const formateador = new Intl.DateTimeFormat("es-DO", { dateStyle: "short", timeStyle: "short" });
-
-function escaparCsv(valor: string): string {
-  if (/[",\n]/.test(valor)) return `"${valor.replace(/"/g, '""')}"`;
-  return valor;
-}
 
 export async function GET() {
   const secreto = process.env.ADMIN_SECRET;
