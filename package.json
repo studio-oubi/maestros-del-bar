@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-assets.mjs && next build",
     "start": "next start",
     "assets": "node scripts/build-assets.mjs",
     "test": "vitest run",
