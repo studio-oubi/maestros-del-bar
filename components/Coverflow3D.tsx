@@ -44,6 +44,17 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
   const nodosRef = useRef<(HTMLDivElement | null)[]>([]);
   const [centro, setCentro] = useState(inicial);
 
+  // Feedback de selección (portado del legacy `.cf-item.elegido .cf-foto`): al
+  // confirmar el item CENTRAL, su foto interna hace scale + subida ANTES de
+  // avanzar. Se aplica al elemento interno (NO al nodo 3D, que reescribe pintar()
+  // cada frame y cuyo transform-style:preserve-3d se aplanaría). En multi-select
+  // (marcar) es un pulso más corto que vuelve; en single-select bloquea y avanza.
+  const [feedback, setFeedback] = useState<{ idx: number; modo: "confirmar" | "marcar" } | null>(null);
+  const bloqueadoRef = useRef(false);
+  const timerConfirmRef = useRef<number | null>(null);
+  const timerBumpRef = useRef<number | null>(null);
+  const multiSelect = marcados !== undefined;
+
   // Estado físico en refs: nunca provoca re-render (el rAF escribe al DOM directo).
   const posRef = useRef(inicial); // posición en "espacio de índice" (0..n-1)
   const velRef = useRef(0); // velocidad en índice/seg
@@ -151,7 +162,8 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
   // ---- Punteros ----
   function onDown(e: React.PointerEvent) {
     // Guard multi-touch: si ya hay un dedo arrastrando, ignora los siguientes.
-    if (arrastreRef.current) return;
+    // bloqueadoRef: durante el feedback de confirmación no se acepta input.
+    if (arrastreRef.current || bloqueadoRef.current) return;
     pararRaf();
     arrastreRef.current = true;
     const p = punteroRef.current;
@@ -194,8 +206,26 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
     if (mov < 8) {
       // Tap: sobre el central -> seleccionar; sobre un lateral -> ir hacia él.
       const idx = p.idx >= 0 ? p.idx : centroActual;
-      if (idx === centroActual) onSelect(items[idx].id);
-      else irA(idx);
+      if (idx === centroActual) {
+        if (multiSelect) {
+          // Marcar/desmarcar: pulso corto (vuelve solo) + toggle inmediato, sin
+          // bloquear ni avanzar (se sigue editando la multi-selección).
+          if (timerBumpRef.current) clearTimeout(timerBumpRef.current);
+          setFeedback({ idx, modo: "marcar" });
+          timerBumpRef.current = window.setTimeout(() => setFeedback(null), 200);
+          onSelect(items[idx].id);
+        } else {
+          // Confirmar: scale + subida en la foto y avanzar tras 380ms (legacy),
+          // bloqueando el input mientras dura el feedback.
+          bloqueadoRef.current = true;
+          setFeedback({ idx, modo: "confirmar" });
+          timerConfirmRef.current = window.setTimeout(() => {
+            bloqueadoRef.current = false;
+            setFeedback(null);
+            onSelect(items[idx].id);
+          }, 380);
+        }
+      } else irA(idx);
       return;
     }
     // Inercia: proyecta con la velocidad medida y engancha al índice más cercano
@@ -234,6 +264,8 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
     return () => {
       ro.disconnect();
       pararRaf();
+      if (timerConfirmRef.current) clearTimeout(timerConfirmRef.current);
+      if (timerBumpRef.current) clearTimeout(timerBumpRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
@@ -269,6 +301,20 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
           // decode del webp, así el lateral nace ya a su tamaño (sin flick de resize).
           const dim = DIMENSIONES[it.img];
           const ratio = dim ? dim.w / dim.h : null;
+          // Feedback de selección sobre la foto interna (no el nodo 3D): scale +
+          // subida con origen en la base, como el legacy `.cf-item.elegido`.
+          const esFeedback = feedback?.idx === k;
+          const durFeedback = feedback?.modo === "marcar" ? "0.18s" : "0.42s";
+          const estiloFeedback: React.CSSProperties = {
+            transformOrigin: "50% 100%",
+            transition: `transform ${durFeedback} cubic-bezier(0.22, 0.9, 0.28, 1)`,
+            ...(esFeedback && {
+              transform:
+                feedback?.modo === "confirmar"
+                  ? "scale(1.1) translateY(-6px)"
+                  : "scale(1.12) translateY(-4px)",
+            }),
+          };
           return (
             <div
               key={it.id}
@@ -284,7 +330,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
               }}
             >
               {/* Área táctil generosa alrededor del vaso sin alterar su tamaño visual */}
-              <div className="relative flex flex-col items-center px-[6cqw]">
+              <div className="relative flex flex-col items-center px-[6cqw]" style={estiloFeedback}>
                 {/* margin-bottom negativo = padding transparente: sube el borde
                     inferior de la caja hasta la base VISIBLE del vaso, para que
                     se apoye en la barra a cualquier escala. */}
