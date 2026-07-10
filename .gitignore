@@ -7,3 +7,6 @@ node_modules/
 public/img/
 lib/asset-manifest.ts
 .next-*/
+# Iconos PWA generados por scripts/build-assets.mjs (como public/img)
+public/icon-192.png
+public/icon-512.png

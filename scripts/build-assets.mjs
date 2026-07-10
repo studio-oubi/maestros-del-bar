@@ -255,6 +255,26 @@ async function run() {
   hashes["logo-brugal.svg"] = shortHash(await readFile(svgSrc));
   results.push(svgOut);
 
+  // Iconos PWA: logo Brugal centrado sobre fondo navy (#0a1a3a = theme_color),
+  // cuadrado, en 192 y 512. Van en public/ raíz (no en public/img, que se sirve
+  // immutable) para que manifest.webmanifest los referencie como /icon-XXX.png.
+  // Gitignoreados: se regeneran en cada build, igual que el resto del pipeline.
+  const NAVY = { r: 10, g: 26, b: 58, alpha: 1 };
+  const svgLogo = await readFile(svgSrc);
+  for (const size of [192, 512]) {
+    const inner = Math.round(size * 0.6); // logo al 60%: dentro de la zona segura maskable
+    const logo = await sharp(svgLogo, { density: 512 })
+      .resize(inner, inner, { fit: "inside" })
+      .png()
+      .toBuffer();
+    const iconPath = path.join(ROOT, "public", `icon-${size}.png`);
+    await sharp({ create: { width: size, height: size, channels: 4, background: NAVY } })
+      .composite([{ input: logo, gravity: "center" }])
+      .png()
+      .toFile(iconPath);
+    results.push(iconPath);
+  }
+
   // Manifiesto tipado, con cache-busting por hash de contenido en cada URL.
   const lines = MANIFEST_KEYS.map(([key, file]) => {
     const hash = hashes[file];
