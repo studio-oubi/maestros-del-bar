@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Play, Settings, X } from "lucide-react";
 import { CIUDADES } from "@/lib/establecimientos";
+
+const VIDEO_LANZAMIENTO = "/video-lanzamiento.mp4";
 
 const CLAVE_CONFIG = "mc_config";
 
@@ -59,7 +62,56 @@ const ESTILO_FLECHA = {
   backgroundPosition: "right 1.4rem center",
 };
 
-function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
+// Overlay a pantalla completa que reproduce el video de lanzamiento. Fondo
+// negro por encima de todo; pide fullscreen real del contenedor si el navegador
+// lo permite y sale de él al cerrar. Controles mínimos: solo la X. Se cierra al
+// terminar el video o al tocar la X. El <video> arranca con playsInline+autoPlay
+// (la reproducción se dispara desde el tap en "Video", así que hay gesto).
+function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
+  const contenedorRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pediFullscreen = useRef(false);
+
+  useEffect(() => {
+    const el = contenedorRef.current;
+    el?.requestFullscreen?.()
+      .then(() => {
+        pediFullscreen.current = true;
+      })
+      .catch(() => {});
+    // Refuerza el autoplay (algunos navegadores ignoran el atributo).
+    videoRef.current?.play?.().catch(() => {});
+    return () => {
+      if (pediFullscreen.current && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, []);
+
+  return (
+    <div ref={contenedorRef} className="fixed inset-0 z-[300] flex items-center justify-center bg-black">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video
+        ref={videoRef}
+        src={VIDEO_LANZAMIENTO}
+        autoPlay
+        playsInline
+        onEnded={onCerrar}
+        className="h-full w-full object-contain"
+      />
+      <button
+        type="button"
+        aria-label="Cerrar video"
+        onClick={onCerrar}
+        className="absolute right-[18px] top-[18px] z-10 grid h-11 w-11 place-items-center rounded-full border border-white/30 bg-black/50 text-white transition-[transform,filter] duration-100 active:scale-90 active:brightness-90"
+      >
+        <X size={22} strokeWidth={2.25} />
+      </button>
+    </div>
+  );
+}
+
+function ModalConfig({ onCerrar, onVideo }: { onCerrar: () => void; onVideo: () => void }) {
   const actual = leerConfig();
   const [ciudad, setCiudad] = useState(actual?.ciudad ?? "");
   const [establecimiento, setEstablecimiento] = useState(actual?.establecimiento ?? "");
@@ -89,6 +141,14 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
         <p className="mt-1 font-cuerpo text-xs text-crema-suave">
           {actual ? `Actual: ${actual.ciudad} — ${actual.establecimiento}` : "Este kiosko aún no tiene local asignado."}
         </p>
+
+        <button
+          type="button"
+          onClick={onVideo}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-oro/40 py-2.5 font-titulo text-sm uppercase tracking-wide text-oro transition-[transform,filter] duration-100 active:scale-[0.98] active:brightness-90"
+        >
+          <Play size={15} strokeWidth={2.25} className="fill-current" /> Video
+        </button>
 
         <label className="mt-5 block">
           <span className="texto-label mb-1.5 block">Ciudad</span>
@@ -156,22 +216,38 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
 // completa (los tótems suelen requerir un gesto para entrar en fullscreen).
 export function ConfigOculta() {
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [videoAbierto, setVideoAbierto] = useState(false);
 
   return (
     <>
+      {/* Config del local: antes 100% invisible; ahora un engranaje fantasma al
+          20% para que el promotor lo encuentre sin distraer al jugador. El área
+          táctil sigue siendo 56×56. */}
       <button
         type="button"
         aria-label="Configuración del local"
         onClick={() => setModalAbierto(true)}
-        className="pointer-events-auto absolute right-0 top-0 z-50 h-[56px] w-[56px] opacity-0"
-      />
+        className="pointer-events-auto absolute right-0 top-0 z-50 grid h-[56px] w-[56px] place-items-center opacity-20 transition-[transform,opacity] duration-100 active:scale-90 active:opacity-40"
+      >
+        <Settings size={18} strokeWidth={1.75} className="text-crema" />
+      </button>
+      {/* Fullscreen: se queda 100% invisible (gesto del promotor). */}
       <button
         type="button"
         aria-label="Pantalla completa"
         onClick={() => void alternarFullscreen()}
         className="pointer-events-auto absolute bottom-0 right-0 z-50 h-[56px] w-[56px] opacity-0"
       />
-      {modalAbierto && <ModalConfig onCerrar={() => setModalAbierto(false)} />}
+      {modalAbierto && (
+        <ModalConfig
+          onCerrar={() => setModalAbierto(false)}
+          onVideo={() => {
+            setModalAbierto(false);
+            setVideoAbierto(true);
+          }}
+        />
+      )}
+      {videoAbierto && <VideoOverlay onCerrar={() => setVideoAbierto(false)} />}
     </>
   );
 }

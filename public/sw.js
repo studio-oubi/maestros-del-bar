@@ -2,9 +2,80 @@
 // primera carga con red, la app debe abrir y jugarse SIN internet. Los registros
 // hechos offline se encolan en localStorage (ver lib/cola-offline.ts), no aquí.
 const CACHE = "mix-challenge-v1";
+// Cache propio para el video de lanzamiento (44MB): se prefetchea aparte, en
+// segundo plano, para no cargarlo en el arranque ni mezclarlo con el resto.
+const VIDEO_CACHE = "mc-video-v1";
+const VIDEO_URL = "/video-lanzamiento.mp4";
 // Núcleo precacheado en install: shell + manifest e iconos PWA para que la app
 // instalada abra standalone y offline.
 const NUCLEO = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
+
+// Prefetch del video (no bloqueante): descarga completa una sola vez a VIDEO_CACHE.
+function prefetchVideo() {
+  return caches.open(VIDEO_CACHE).then((cache) =>
+    cache.match(VIDEO_URL).then((hit) => {
+      if (hit) return; // ya cacheado
+      return fetch(VIDEO_URL, { cache: "no-cache" })
+        .then((res) => {
+          if (res && res.ok && res.status === 200) return cache.put(VIDEO_URL, res.clone());
+        })
+        .catch(() => {});
+    }),
+  );
+}
+
+// Sirve el video desde VIDEO_CACHE atendiendo Range (los <video>, sobre todo en
+// Safari/WebKit, piden rangos y esperan un 206 con Content-Range). Sin cache
+// aún: pasa a red (online) y la guarda para la próxima. Con cache: corta el
+// buffer completo y responde el rango pedido.
+async function servirVideo(req) {
+  const cache = await caches.open(VIDEO_CACHE);
+  let res = await cache.match(VIDEO_URL);
+  if (!res) {
+    try {
+      const net = await fetch(req);
+      if (net && net.ok && net.status === 200) {
+        // Guarda una copia COMPLETA (sin Range) para poder cortar luego.
+        fetch(VIDEO_URL, { cache: "no-cache" })
+          .then((full) => {
+            if (full && full.ok && full.status === 200) return cache.put(VIDEO_URL, full.clone());
+          })
+          .catch(() => {});
+      }
+      return net;
+    } catch {
+      return new Response(null, { status: 504 });
+    }
+  }
+  const buf = await res.arrayBuffer();
+  const total = buf.byteLength;
+  const tipo = res.headers.get("Content-Type") || "video/mp4";
+  const range = req.headers.get("range");
+  if (!range) {
+    return new Response(buf, {
+      status: 200,
+      headers: { "Content-Type": tipo, "Content-Length": String(total), "Accept-Ranges": "bytes" },
+    });
+  }
+  const m = /bytes=(\d*)-(\d*)/.exec(range);
+  let inicio = m && m[1] ? parseInt(m[1], 10) : 0;
+  let fin = m && m[2] ? parseInt(m[2], 10) : total - 1;
+  if (isNaN(inicio)) inicio = 0;
+  if (isNaN(fin) || fin >= total) fin = total - 1;
+  if (inicio > fin || inicio >= total) {
+    return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${total}` } });
+  }
+  const trozo = buf.slice(inicio, fin + 1);
+  return new Response(trozo, {
+    status: 206,
+    headers: {
+      "Content-Type": tipo,
+      "Content-Range": `bytes ${inicio}-${fin}/${total}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": String(trozo.byteLength),
+    },
+  });
+}
 
 self.addEventListener("install", (evento) => {
   self.skipWaiting();
@@ -18,7 +89,9 @@ self.addEventListener("activate", (evento) => {
     caches
       .keys()
       .then((claves) =>
-        Promise.all(claves.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
+        Promise.all(
+          claves.filter((k) => k !== CACHE && k !== VIDEO_CACHE).map((k) => caches.delete(k)),
+        ),
       )
       .then(() => self.clients.claim()),
   );
@@ -44,7 +117,10 @@ self.addEventListener("message", (evento) => {
           ),
         ),
       ),
-    ),
+    )
+      // Cuando las imágenes ya están cacheadas, arranca el prefetch del video en
+      // segundo plano (no bloquea el arranque; el video no está en el loading).
+      .then(() => prefetchVideo()),
   );
 });
 
@@ -54,6 +130,14 @@ self.addEventListener("fetch", (evento) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // terceros: sin tocar
   if (url.pathname.startsWith("/api/")) return; // API: solo red
+
+  // Video de lanzamiento: cache-first desde VIDEO_CACHE con soporte de Range
+  // (206). Debe ir ANTES del handler genérico, que devolvería un 200 completo
+  // a una petición Range y rompería la reproducción en Safari/WebKit.
+  if (url.pathname === VIDEO_URL) {
+    evento.respondWith(servirVideo(req));
+    return;
+  }
 
   // Navegaciones: network-first para tomar la última versión del HTML; si no hay
   // red, se sirve la copia cacheada de "/" y la app arranca offline.
