@@ -16,10 +16,13 @@ interface Props {
 }
 
 // Reparto/física del coverflow (ruleta infinita estilo legacy).
-const FACTOR = 0.34; // separación horizontal (× 46cqw) — laterales bien dentro del encuadre
-const ROT = 38; // grados de rotateY por unidad de distancia
-const DEPTH = 175; // px de translateZ por unidad de distancia
-const SCALE_STEP = 0.28; // reducción de escala por unidad (marcada: "cambia de tamaño" al rotar)
+const FACTOR = 0.56; // separación horizontal (× 46cqw) — laterales claramente al lado del centro
+const ROT = 40; // grados de rotateY por unidad de distancia
+// El encogimiento de los laterales viene sobre todo de la PROFUNDIDAD (perspectiva
+// con punto de fuga en la línea de la barra): así los pies quedan anclados a la
+// barra a cualquier tamaño. `scale` solo añade un extra pequeño (no despega la base).
+const DEPTH = 185; // px de translateZ por unidad de distancia
+const SCALE_STEP = 0.12; // reducción de escala extra por unidad (pequeña, no rompe el anclaje)
 const BRIGHT_STEP = 0.3; // oscurecimiento por unidad (centro = 1)
 const BLUR_STEP = 1.6; // px de desenfoque por unidad
 const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto (útil con 5+ items)
@@ -29,7 +32,7 @@ const PROY = 0.16; // s de proyección de la inercia al soltar
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
-export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }: Props) {
+export function Coverflow3D({ items, onSelect, alturaItem = 42, onCentroChange }: Props) {
   const n = items.length;
   const inicial = 0; // ruleta infinita: en 0 el primer item queda centrado con ambos vecinos
   const stageRef = useRef<HTMLDivElement>(null);
@@ -79,9 +82,13 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
       const sombra = Math.max(0, 1 - a) * 22;
       // Funde los items que se van al fondo (costura de la ruleta con pocos items).
       const opacidad = a < 2 ? 1 : Math.max(0, 1 - (a - 2) / 0.6);
+      // Orden clave: translateZ ANTES de rotateY, para que la profundidad recule
+      // en el marco del contenedor (converge hacia el punto de fuga en la barra,
+      // sin abrirse hacia los bordes). rotateY gira sobre el eje vertical de la
+      // base (transform-origin bottom center), así el pie no se desplaza.
       el.style.transform =
-        `translateX(-50%) translateX(${txCqw}cqw) rotateY(${ry}deg) ` +
-        `translateZ(${tz}px) scale(${sc})`;
+        `translateX(-50%) translateX(${txCqw}cqw) translateZ(${tz}px) ` +
+        `rotateY(${ry}deg) scale(${sc})`;
       el.style.filter =
         `brightness(${brillo.toFixed(3)}) blur(${blur.toFixed(2)}px) ` +
         `drop-shadow(0 ${(6 + sombra).toFixed(0)}px ${(10 + sombra).toFixed(0)}px rgba(0,0,0,.55))`;
@@ -211,6 +218,9 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
   // Pintado inicial y en cambios de tamaño / lista.
   useEffect(() => {
     pintar();
+    // Notifica el centro inicial para que el consumidor sincronice el título
+    // (el índice de arranque es 0, no el que el consumidor asuma por defecto).
+    onCentroRef.current?.(items[centroRef.current], centroRef.current);
     const ro = new ResizeObserver(() => pintar());
     if (stageRef.current) ro.observe(stageRef.current);
     return () => {
@@ -228,7 +238,12 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
       onPointerUp={onUp}
       onPointerCancel={onCancel}
       className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing [perspective:1100px]"
-      style={{ ["--altura-item" as string]: `${alturaItem}cqh` }}
+      // El punto de fuga se sitúa en la línea de la barra: así los pies de los
+      // items (todos con base en esa línea) no se despegan al recular en Z.
+      style={{
+        ["--altura-item" as string]: `${alturaItem}cqh`,
+        perspectiveOrigin: "50% var(--linea-barra, 62cqh)",
+      }}
     >
       <div className="absolute inset-0 [transform-style:preserve-3d]">
         {items.map((it, k) => (

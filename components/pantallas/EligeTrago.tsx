@@ -42,10 +42,12 @@ export function EligeTrago() {
 
       {/* Epígrafe + nombre del trago centrado */}
       <div className="absolute inset-x-0 top-[18cqh] z-10 flex flex-col items-center gap-[1cqh] px-[8cqw] text-center">
-        <span className="texto-label">ELIGE TU TRAGO</span>
+        <span className="font-cuerpo text-[1.35cqh] font-700 uppercase tracking-[0.14em] text-oro">
+          ELIGE TU TRAGO
+        </span>
         <span
           key={centro}
-          className="font-titulo text-[2.6cqh] font-medium uppercase leading-tight text-white [animation:aparece_.24s_ease]"
+          className="font-titulo text-[3.1cqh] font-medium uppercase leading-tight text-white [animation:aparece_.24s_ease]"
         >
           {items[centro]?.nombre}
         </span>
@@ -53,7 +55,7 @@ export function EligeTrago() {
 
       {/* Escena de barra + coverflow */}
       <BarraEscena>
-        <Coverflow3D items={items} onSelect={onSelect} onCentroChange={onCentroChange} alturaItem={30} />
+        <Coverflow3D items={items} onSelect={onSelect} onCentroChange={onCentroChange} alturaItem={40} />
       </BarraEscena>
 
       <style jsx>{`
