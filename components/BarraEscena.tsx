@@ -6,9 +6,14 @@ import { IMG } from "@/lib/asset-manifest";
 // que la superficie superior de la barra quede a ~62% de alto del marco
 // (variable CSS --linea-barra). Los children (el coverflow) se "apoyan" en esa
 // línea. Debajo, la firma ESCÁPATE / A LO EXTRAORDINARIO (mock 7).
+//
+// --linea-barra = 62.5cqh: el FILO FRONTAL SUPERIOR real del mostrador (medido a
+// píxel sobre la escena renderizada: el brillo de la superficie superior cae a
+// sombra justo en ~62.5cqh). Antes estaba en 64cqh, ~1.5cqh por debajo del filo,
+// así que las bases visibles de vasos/botellas se hundían tapando el borde.
 export function BarraEscena({ children }: { children: ReactNode }) {
   return (
-    <div className="absolute inset-0 [--linea-barra:64cqh]">
+    <div className="absolute inset-0 [--linea-barra:62.5cqh]">
       {/* Mostrador. Su borde frontal superior cae sobre --linea-barra. El borde
           superior de la foto se difumina (mask-image) para fundirse con el fondo
           texturizado sin costura; el degradado acaba por encima de la línea de la

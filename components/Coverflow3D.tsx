@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { PAD_INFERIOR } from "@/lib/asset-manifest";
 
 export interface CoverflowItem {
@@ -218,8 +218,12 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
     correrMuelle();
   }
 
-  // Pintado inicial y en cambios de tamaño / lista.
-  useEffect(() => {
+  // Pintado inicial y en cambios de tamaño / lista. useLayoutEffect (no useEffect):
+  // aplica los transforms SÍNCRONAMENTE antes del primer paint del navegador, así
+  // los items nacen con su tamaño/posición finales. Con useEffect (pasivo, tras el
+  // paint) en gama baja se pintaba un frame con scale(1) sin translateX (items
+  // grandes/apilados) que luego se encogían: el "scale" visible al aparecer.
+  useLayoutEffect(() => {
     pintar();
     // Notifica el centro inicial para que el consumidor sincronice el título
     // (el índice de arranque es 0, no el que el consumidor asuma por defecto).
