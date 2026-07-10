@@ -35,7 +35,7 @@ export function Recetas() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="flex h-full w-full cursor-pointer select-none flex-col items-center px-[5cqw] pt-[14.5cqh] pb-[10cqh] outline-none"
+      className="flex h-full w-full cursor-pointer select-none flex-col items-center px-[4cqw] pt-[14.5cqh] pb-[12cqh] outline-none"
     >
       <Image
         src={IMG.logoBrugal}
@@ -49,7 +49,7 @@ export function Recetas() {
         {RECETAS.map((receta, i) => (
           <div key={receta.id}>
             {i > 0 && <div className="ml-[17cqw] h-px bg-oro/25" />}
-            <div className="flex items-center gap-[2.5cqw] py-[1.8cqh]">
+            <div className="flex items-center gap-[2cqw] py-[1.8cqh]">
               <Image
                 src={receta.imgTrago}
                 alt=""
@@ -61,7 +61,7 @@ export function Recetas() {
                 <h2 className="font-titulo text-[2.6cqh] font-medium uppercase leading-[1.04] text-white">
                   {receta.nombre}
                 </h2>
-                <ul className="mt-[0.3cqh] space-y-[0.2cqh]">
+                <ul className="mt-[0.15cqh] space-y-[0.2cqh]">
                   {receta.lineasReceta.map((linea) => (
                     <li key={linea} className="texto-label !text-[1.15cqh] !tracking-[0.04em] leading-tight">
                       • {linea}
