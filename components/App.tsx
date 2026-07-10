@@ -89,28 +89,36 @@ function Juego() {
       <NavBotones />
       <ConfigOculta />
       <style jsx>{`
+        /* Curva ease-out-quint: arranque rápido y aterrizaje muy suave (sin
+           el frenazo simétrico de "ease"), que es lo que da la sensación smooth.
+           Duración 0.55s: fluido sin sentirse lento entre pasos. */
         .pantalla-enter {
-          animation: pantalla-entra 0.4s ease;
+          animation: pantalla-entra 0.55s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .pantalla-enter-fade {
-          animation: pantalla-entra-fade 0.4s ease;
+          animation: pantalla-entra-fade 0.55s cubic-bezier(0.22, 1, 0.36, 1);
         }
         @keyframes pantalla-entra {
           from {
             opacity: 0;
-            transform: translateY(16px);
+            transform: translateY(10px) scale(0.985);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
           }
         }
+        /* Pantallas con barra: sin translateY (no despegar los items de la
+           línea de la barra), pero comparten el micro-scale para que "asienten"
+           en vez de solo aparecer. */
         @keyframes pantalla-entra-fade {
           from {
             opacity: 0;
+            transform: scale(0.985);
           }
           to {
             opacity: 1;
+            transform: scale(1);
           }
         }
         @media (prefers-reduced-motion: reduce) {
