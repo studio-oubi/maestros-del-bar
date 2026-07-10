@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { IMG } from "@/lib/asset-manifest";
-import { INGREDIENTES } from "@/lib/recetas";
+import { INGREDIENTES, MEZCLAS, RONES, VASOS } from "@/lib/recetas";
 import type { IngredienteId } from "@/lib/recetas";
 import { PanelConfirmar } from "@/components/PanelConfirmar";
 import { useJuego } from "@/lib/juego";
@@ -38,13 +38,31 @@ export function GridMix({ restante }: { restante: number }) {
 
   const contador = restantes === 1 ? "TE FALTA 1" : `TE FALTAN ${restantes}`;
 
-  // Resumen visual de lo elegido para el panel de confirmación (medallones,
-  // mismo lenguaje que el grid).
-  const itemsElegidos = seleccionados.map((id) => ({
-    img: INGREDIENTES[id].img,
-    nombre: INGREDIENTES[id].nombre,
-    cover: RECORTES_FOTO.has(id),
-  }));
+  // Review final: TODAS las elecciones agrupadas (vaso, ron, mezclas y
+  // complementos del grid) para el panel de confirmación, con mini-etiquetas.
+  const ron = RONES.find((r) => r.id === estado.elecciones.ron);
+  const vaso = VASOS.find((v) => v.id === estado.elecciones.vaso);
+  const gruposResumen = [
+    ...(vaso ? [{ etiqueta: "VASO", forma: "botella" as const, items: [{ img: vaso.img, nombre: vaso.nombre }] }] : []),
+    ...(ron ? [{ etiqueta: "RON", forma: "botella" as const, items: [{ img: ron.img, nombre: ron.nombre }] }] : []),
+    {
+      etiqueta: "MEZCLA",
+      forma: "botella" as const,
+      items: estado.elecciones.mezclas.map((id) => {
+        const m = MEZCLAS.find((x) => x.id === id);
+        return { img: m?.img ?? "", nombre: m?.nombre ?? id };
+      }),
+    },
+    {
+      etiqueta: "COMPLEMENTOS",
+      forma: "medallon" as const,
+      items: seleccionados.map((id) => ({
+        img: INGREDIENTES[id].img,
+        nombre: INGREDIENTES[id].nombre,
+        cover: RECORTES_FOTO.has(id),
+      })),
+    },
+  ];
 
   return (
     <div className="relative flex h-full w-full flex-col items-center px-[7cqw] pt-[7cqh] pb-[4cqh] text-center">
@@ -93,22 +111,24 @@ export function GridMix({ restante }: { restante: number }) {
                     className={cover ? "object-cover" : "object-contain p-[14%]"}
                   />
                   {activo && (
-                    <span aria-hidden className="absolute inset-0 flex items-center justify-center">
-                      {/* Badge SÓLIDO (navy #0a1a3a) con borde y check dorados
-                          opacos, mismo lenguaje que el check del coverflow. */}
-                      <span className="flex h-[45%] w-[45%] items-center justify-center rounded-full bg-navy ring-2 ring-oro shadow-[0_2px_8px_rgba(0,0,0,.5)]">
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-[55%] w-[55%] text-oro"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={3}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      </span>
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-navy-deep/50"
+                    >
+                      {/* Velo translúcido: oscurece la foto detrás y deja el check
+                          dorado encima (preferencia del usuario para el grid; el
+                          badge sólido se conserva solo en el coverflow de mezclas). */}
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-[40%] w-[40%] text-oro drop-shadow-[0_2px_6px_rgba(0,0,0,.5)]"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
                     </span>
                   )}
                 </span>
@@ -124,8 +144,7 @@ export function GridMix({ restante }: { restante: number }) {
       {confirmando && (
         <PanelConfirmar
           titulo="TU MIX ESTÁ LISTO"
-          items={itemsElegidos}
-          forma="medallon"
+          grupos={gruposResumen}
           onConfirmar={onMezclar}
           textoConfirmar="Preparar"
           onVolver={() => setConfirmando(false)}
