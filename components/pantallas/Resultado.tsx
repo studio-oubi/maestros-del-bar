@@ -5,8 +5,8 @@ import { useEffect, useMemo, useRef } from "react";
 import type { CSSProperties } from "react";
 import { BarraEscena } from "@/components/BarraEscena";
 import { IMG, PAD_INFERIOR } from "@/lib/asset-manifest";
-import { INGREDIENTES, VASOS } from "@/lib/recetas";
-import type { IngredienteId, Receta, VasoId } from "@/lib/recetas";
+import { INGREDIENTES, MEZCLAS, VASOS } from "@/lib/recetas";
+import type { IngredienteId, MezclaId, Receta, VasoId } from "@/lib/recetas";
 import { enviarPartida } from "@/lib/partida-cliente";
 import { reintentarPendiente } from "@/lib/registro-cliente";
 import { filtroTinte } from "@/lib/tinte-trago";
@@ -283,6 +283,19 @@ function Ganaste() {
   );
 }
 
+function nombreMezcla(id: MezclaId): string {
+  return MEZCLAS.find((m) => m.id === id)?.nombre ?? id;
+}
+
+// Chip tachado "TE SOBRÓ: X" (mezcla o ingrediente elegido de más).
+function ChipSobrante({ etiqueta }: { etiqueta: string }) {
+  return (
+    <span className="rounded-full bg-crema/5 px-[3.4cqw] py-[0.9cqh] font-cuerpo text-[clamp(9px,2.4cqw,11px)] font-medium uppercase tracking-[0.02em] text-crema/40 line-through">
+      TE SOBRÓ: {etiqueta}
+    </span>
+  );
+}
+
 function FilaCheck({ etiqueta, ok }: { etiqueta: string; ok: boolean }) {
   return (
     <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[1.3cqh]">
@@ -357,7 +370,17 @@ function Casi() {
       <div className="mt-[3cqh] flex w-full flex-col items-center">
         <FilaCheck etiqueta="VASO" ok={ev.vasoOk} />
         <FilaCheck etiqueta={receta.ronNombre} ok={ev.ronOk} />
-        <FilaCheck etiqueta={receta.mezclaNombre} ok={ev.mezclaOk} />
+        {/* Una fila por CADA mezcla de la receta: ✓ si la eligió, ✗ si no. */}
+        {receta.mezclas.map((m) => (
+          <FilaCheck key={m} etiqueta={nombreMezcla(m)} ok={estado.elecciones.mezclas.includes(m)} />
+        ))}
+        {ev.mezclasSobraron.length > 0 && (
+          <div className="mt-[1.4cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
+            {ev.mezclasSobraron.map((m) => (
+              <ChipSobrante key={m} etiqueta={nombreMezcla(m)} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-[3cqh] flex w-full flex-col items-center gap-[1.4cqh]">
@@ -370,12 +393,7 @@ function Casi() {
         {ev.sobraron.length > 0 && (
           <div className="mt-[0.4cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
             {ev.sobraron.map((id) => (
-              <span
-                key={id}
-                className="rounded-full bg-crema/5 px-[3.4cqw] py-[0.9cqh] font-cuerpo text-[clamp(9px,2.4cqw,11px)] font-medium uppercase tracking-[0.02em] text-crema/40 line-through"
-              >
-                TE SOBRÓ: {INGREDIENTES[id].nombre}
-              </span>
+              <ChipSobrante key={id} etiqueta={INGREDIENTES[id].nombre} />
             ))}
           </div>
         )}
