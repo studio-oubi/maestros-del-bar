@@ -32,7 +32,7 @@ export function Marco({ children }: { children: ReactNode }) {
         <div className="relative z-10 h-full w-full">{children}</div>
         {/* El borde va ENCIMA del contenido (z-30) para que la barra u otras
             imágenes a sangre completa nunca lo tapen; NavBotones usa z-40. */}
-        <div className="pointer-events-none absolute inset-[8px] z-30 rounded-[18px] border-[16px] border-oro/70" />
+        <div className="pointer-events-none absolute inset-[8px] z-30 border-[16px] border-oro/70" />
       </div>
     </div>
   );
