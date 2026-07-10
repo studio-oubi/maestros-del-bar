@@ -66,8 +66,12 @@ export function Formulario() {
       return;
     }
 
-    // Optimista: no esperamos la red, el juego avanza de inmediato.
-    void enviarRegistro(resultado.datos);
+    // Optimista: no esperamos la red, el juego avanza de inmediato. Cuando el
+    // POST resuelve, el id real se enlaza aparte (sin tocar la pantalla) para
+    // que la partida quede asociada al registro.
+    enviarRegistro(resultado.datos).then((id) => {
+      if (id != null) despachar({ tipo: "REGISTRO_ID", id });
+    });
     despachar({ tipo: "REGISTRADO", id: null });
     despachar({ tipo: "IR", a: "recetas" });
   }

@@ -12,26 +12,26 @@ export type ResultadoTipo = "gano" | "fallo" | "tiempo";
 interface EstadoJuego {
   pantalla: Pantalla;
   registroId: number | null;
-  registroHecho: boolean;         // para no repetir formulario al reiniciar
+  registroHecho: boolean;         // true tras el formulario u Omitir; REINICIAR la limpia (kiosko)
   receta: Receta | null;          // trago elegido
   grid: IngredienteId[];          // 9 tiles de la partida
   elecciones: Elecciones;
   resultado: ResultadoTipo | null;
   evaluacion: Evaluacion | null;
-  inicioReto: number | null;      // performance.now() al pulsar INICIAR
   tiempoRestante: number;         // segundos al terminar (para guardar)
 }
 
 type Accion =
   | { tipo: "CARGA_LISTA" } | { tipo: "IR"; a: Pantalla }
   | { tipo: "REGISTRADO"; id: number | null }
+  | { tipo: "REGISTRO_ID"; id: number }               // llega el id real del POST /api/registro (optimista, no cambia pantalla)
   | { tipo: "ELIGE_TRAGO"; receta: Receta }
   | { tipo: "INICIAR_RETO" }
   | { tipo: "ELIGE_VASO"; vaso: VasoId } | { tipo: "ELIGE_RON"; ron: RonId } | { tipo: "ELIGE_MEZCLA"; mezcla: MezclaId }
   | { tipo: "TOGGLE_INGREDIENTE"; ing: IngredienteId }
   | { tipo: "MEZCLAR"; tiempoRestante: number }      // evalúa y va a resultado
   | { tipo: "TIEMPO_AGOTADO" }                        // resultado = 'tiempo'
-  | { tipo: "REINICIAR" };                            // vuelve a home, conserva registroHecho
+  | { tipo: "REINICIAR" };                            // vuelve a home, limpia registro (kiosko: no hereda el del jugador anterior)
 
 const elecionesVacias: Elecciones = { vaso: null, ron: null, mezcla: null, ingredientes: [] };
 
@@ -44,7 +44,6 @@ const estadoInicial: EstadoJuego = {
   elecciones: elecionesVacias,
   resultado: null,
   evaluacion: null,
-  inicioReto: null,
   tiempoRestante: 0,
 };
 
@@ -56,6 +55,8 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
       return { ...estado, pantalla: accion.a };
     case "REGISTRADO":
       return { ...estado, registroId: accion.id, registroHecho: true, pantalla: "recetas" };
+    case "REGISTRO_ID":
+      return { ...estado, registroId: accion.id };
     case "ELIGE_TRAGO":
       return {
         ...estado,
@@ -67,7 +68,7 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
         pantalla: "listo",
       };
     case "INICIAR_RETO":
-      return { ...estado, inicioReto: performance.now(), pantalla: "reto-vaso" };
+      return { ...estado, pantalla: "reto-vaso" };
     case "ELIGE_VASO":
       return { ...estado, elecciones: { ...estado.elecciones, vaso: accion.vaso }, pantalla: "reto-ron" };
     case "ELIGE_RON":
@@ -95,15 +96,17 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
     case "TIEMPO_AGOTADO":
       return { ...estado, resultado: "tiempo", evaluacion: null, tiempoRestante: 0, pantalla: "resultado" };
     case "REINICIAR":
+      // Kiosko: el siguiente jugador no debe heredar el registro del anterior.
       return {
         ...estado,
         pantalla: "home",
+        registroId: null,
+        registroHecho: false,
         receta: null,
         grid: [],
         elecciones: elecionesVacias,
         resultado: null,
         evaluacion: null,
-        inicioReto: null,
         tiempoRestante: 0,
       };
     default:
