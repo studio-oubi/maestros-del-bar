@@ -54,12 +54,6 @@ function grupoDe(pantalla: string): string {
   return pantalla.startsWith("reto") ? "reto" : pantalla;
 }
 
-// Pantallas CON BARRA: los items del coverflow/botella se apoyan en la línea de
-// la barra, así que la entrada con translateY los hacía "subir" a su sitio
-// (movimiento vertical no deseado). Entran solo con fundido. El resto conserva
-// el fade + translateY(16px), que ahí no molesta.
-const GRUPOS_CON_BARRA = new Set(["elige-trago", "reto", "resultado"]);
-
 function Juego() {
   const { estado } = useJuego();
 
@@ -79,51 +73,36 @@ function Juego() {
   }, []);
 
   const grupo = grupoDe(estado.pantalla);
-  const claseEntra = GRUPOS_CON_BARRA.has(grupo) ? "pantalla-enter-fade" : "pantalla-enter";
 
   return (
     <Marco>
-      <div key={grupo} className={`${claseEntra} h-full w-full`}>
+      <div key={grupo} className="pantalla-enter h-full w-full">
         <Pantallas />
       </div>
       <NavBotones />
       <ConfigOculta />
       <style jsx>{`
-        /* Curva ease-out-quint: arranque rápido y aterrizaje muy suave (sin
-           el frenazo simétrico de "ease"), que es lo que da la sensación smooth.
-           Duración 0.55s: fluido sin sentirse lento entre pasos. */
+        /* Transición entre pantallas portada del legacy (.pantalla /
+           .pantalla.activa, index.html): la pantalla entrante sube 16px y
+           aparece (opacity + transform) en 0.65s con la curva easeOut del
+           legacy cubic-bezier(.22,.9,.28,1). Sin scale y uniforme para todas:
+           el legacy desliza la pantalla ENTERA —barra incluida— los mismos
+           16px, así que los items no se despegan de su propia barra. */
         .pantalla-enter {
-          animation: pantalla-entra 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .pantalla-enter-fade {
-          animation: pantalla-entra-fade 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+          animation: pantalla-entra 0.65s cubic-bezier(0.22, 0.9, 0.28, 1);
         }
         @keyframes pantalla-entra {
           from {
             opacity: 0;
-            transform: translateY(10px) scale(0.985);
+            transform: translateY(16px);
           }
           to {
             opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        /* Pantallas con barra: sin translateY (no despegar los items de la
-           línea de la barra), pero comparten el micro-scale para que "asienten"
-           en vez de solo aparecer. */
-        @keyframes pantalla-entra-fade {
-          from {
-            opacity: 0;
-            transform: scale(0.985);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
+            transform: none;
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pantalla-enter,
-          .pantalla-enter-fade {
+          .pantalla-enter {
             animation: none;
           }
         }
