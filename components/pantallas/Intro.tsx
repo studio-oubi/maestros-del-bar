@@ -45,9 +45,10 @@ export function Intro() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="flex h-full w-full cursor-pointer select-none flex-col items-center px-[8cqw] text-center outline-none"
+      className="relative h-full w-full cursor-pointer select-none px-[8cqw] text-center outline-none"
     >
-      <div className="pt-[5cqh]">
+      {/* Logo fuera del flujo, centrado a 17.5cqh (igual que Home). */}
+      <div className="absolute left-1/2 top-[17.5cqh] -translate-x-1/2 -translate-y-1/2">
         <Image
           src={IMG.logoBrugal}
           alt="Brugal"
@@ -57,18 +58,25 @@ export function Intro() {
         />
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-[2.6cqh]">
-        <h1 className="texto-titulo">
+      {/* Bloque título+subtítulo anclado cerca del tercio superior (no
+          centrado verticalmente): el vacío queda abajo, como en la
+          referencia de diseño. */}
+      <div className="absolute left-1/2 top-[28cqh] flex w-full -translate-x-1/2 flex-col items-center gap-[2.5cqh]">
+        <h1 className="font-titulo text-[7.7cqh] font-medium leading-[1.02] uppercase text-white">
           Arma el mix
           <br />
           Perfecto
         </h1>
-        <p className="texto-sub max-w-[78cqw] leading-snug">
-          Recuerda la receta y completa tu trago antes de llegar a cero.
+        <p className="max-w-[60cqw] font-cuerpo text-[1.6cqh] font-bold uppercase leading-snug tracking-[0.14em] text-oro">
+          Recuerda la receta y
+          <br />
+          completa tu trago
+          <br />
+          antes de llegar a cero.
         </p>
       </div>
 
-      <p className="mb-[8cqh] animate-pulse font-cuerpo text-[1cqh] text-crema/60 [animation-duration:2.4s]">
+      <p className="absolute left-1/2 top-[62cqh] -translate-x-1/2 animate-pulse font-titulo text-[2.3cqh] font-medium text-crema/45 [animation-duration:2.4s]">
         toca para continuar....
       </p>
     </div>

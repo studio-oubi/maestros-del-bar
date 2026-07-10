@@ -44,8 +44,20 @@ async function alternarFullscreen(): Promise<void> {
   }
 }
 
+// Mismo pill que los inputs de Formulario.tsx (borde oro/25, fondo negro
+// translúcido, texto crema) + flecha dorada propia porque appearance-none
+// quita la nativa, y color-scheme:dark para que el listado de opciones
+// respete la paleta oscura en navegadores que lo permiten (Chrome/Edge).
 const CAMPO =
-  "w-full rounded-full border border-oro/30 bg-navy-deep px-4 py-2.5 font-cuerpo text-sm text-crema outline-none transition-colors focus:border-oro disabled:opacity-40";
+  "w-full appearance-none rounded-full border border-oro/25 bg-black/40 bg-no-repeat px-[5cqw] py-[1.6cqh] pr-11 font-cuerpo text-[15px] text-crema outline-none transition-colors focus:border-oro disabled:opacity-40 [color-scheme:dark] [&>option]:bg-navy [&>option]:text-crema";
+
+// Flecha en style (no en clase Tailwind) para no depender del escapado de
+// una data URI dentro de un valor arbitrario: aquí es una cadena normal.
+const ESTILO_FLECHA = {
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%23c9a84c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+  backgroundPosition: "right 1.4rem center",
+};
 
 function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
   const actual = leerConfig();
@@ -79,9 +91,7 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
         </p>
 
         <label className="mt-5 block">
-          <span className="mb-1.5 block font-cuerpo text-[11px] font-medium uppercase tracking-[0.2em] text-oro">
-            Ciudad
-          </span>
+          <span className="texto-label mb-1.5 block">Ciudad</span>
           <select
             value={ciudad}
             onChange={(e) => {
@@ -89,6 +99,7 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
               setEstablecimiento("");
             }}
             className={CAMPO}
+            style={ESTILO_FLECHA}
           >
             <option value="">Selecciona…</option>
             {CIUDADES.map((c) => (
@@ -100,14 +111,13 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
         </label>
 
         <label className="mt-4 block">
-          <span className="mb-1.5 block font-cuerpo text-[11px] font-medium uppercase tracking-[0.2em] text-oro">
-            Establecimiento
-          </span>
+          <span className="texto-label mb-1.5 block">Establecimiento</span>
           <select
             value={establecimiento}
             onChange={(e) => setEstablecimiento(e.target.value)}
             disabled={!ciudad}
             className={CAMPO}
+            style={ESTILO_FLECHA}
           >
             <option value="">Selecciona…</option>
             {establecimientos.map((e) => (
@@ -130,7 +140,7 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
             type="button"
             onClick={guardar}
             disabled={!ciudad || !establecimiento}
-            className="flex-1 rounded-full bg-oro py-2.5 font-titulo text-sm text-navy-deep transition-opacity active:opacity-80 disabled:opacity-40"
+            className="flex-1 rounded-full bg-linear-to-r from-oro-claro to-oro py-2.5 font-titulo text-sm uppercase text-navy-deep shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-transform active:scale-[0.98] disabled:opacity-40"
           >
             Guardar
           </button>
