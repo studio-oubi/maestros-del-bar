@@ -10,7 +10,7 @@ import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { relabelarBotella, muestrearColor } from "./lib/etiqueta-generica.mjs";
-import { quitarFondoBlanco, borrarRect } from "./lib/quitar-fondo.mjs";
+import { quitarFondoBlanco, recortarDesde } from "./lib/quitar-fondo.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const LEG = path.join(ROOT, "legacy/assets");
@@ -40,27 +40,37 @@ const BOTELLAS_GEMINI = [
   "soda",
 ];
 
-// Remates puntuales post quitarFondoBlanco: en zumo-limon quedaba un resto
-// de sombra de piso (color-bleed cálido de la rodaja de limón al lado,
-// saturación 40-124 — muy por encima del umbral normal) que además es
-// texturalmente casi indistinguible de la pulpa real del limón vecino (rango
-// local 34-43 vs 15-33 de la pulpa), así que ni relajar color ni relajar
-// textura de forma general lo resuelve sin arriesgar comerse la fruta. Se
-// mide a mano (grilla de coordenadas + inspección de canal alpha, no a ojo)
-// y se borra con un rect puntual. Verificado que las otras 6 botellas NO
-// tienen este defecto — sus colas de sombra son continuas/monótonas (parte
-// normal de la silueta), zumo-limon era la única con un fragmento realmente
-// desconectado y dentado.
-const REMATES = {
-  "zumo-limon": [{ x: 450, y: 1094, w: 120, h: 26, r: 10, feather: 3 }],
+// Criterio final del cliente (ronda de remate post-07feec8): por debajo de
+// la línea de apoyo (la y donde la botella y su decoración tocan
+// visualmente la barra) NO debe quedar NINGÚN píxel con alpha — ni sombra
+// de contacto ni continua. quitarFondoBlanco por sí solo no garantiza esto
+// (la sombra de piso, sobre todo cerca de fruta/hoja con color propio,
+// puede fallar el umbral de color/textura por las mismas razones que un
+// resto de marca — ver comentarios en quitar-fondo.mjs). Se probaron dos
+// heurísticas automáticas para ubicar esa línea (conteo de textura por
+// fila, corrida contigua de textura) y ambas fallan en zumo-limon porque el
+// ruido de compresión bajo esa imagen tiene el mismo orden de magnitud que
+// la textura real de la fruta vecina — no hay separación limpia. Se mide la
+// línea a mano por imagen: última fila con color realmente saturado
+// (sat>55, no la sombra tibia) del objeto o su decoración, con margen
+// chico, usando el mismo método de esta sesión (grilla de coordenadas +
+// muestreo de píxeles del canal alpha, no a ojo). soda no tiene color
+// saturado (vidrio transparente) — se usó en cambio la fila donde la
+// corrida de alpha denso cae a cero de forma natural (ya venía limpia).
+const LINEA_APOYO = {
+  "zumo-limon": 1100,
+  "sirope-albahaca": 1152,
+  "zumo-toronja": 1190,
+  "sirope-simple": 1183,
+  "bitter-naranja": 1129,
+  "agua-gas": 1167,
+  soda: 1196,
 };
 
 async function buildBotellasGemini() {
   for (const nombre of BOTELLAS_GEMINI) {
     let buf = await quitarFondoBlanco(gemini(`${nombre}.png`));
-    for (const rect of REMATES[nombre] ?? []) {
-      buf = await borrarRect(buf, rect);
-    }
+    buf = await recortarDesde(buf, { y: LINEA_APOYO[nombre] });
     await writeFile(out(`mixer-${nombre}.png`), buf);
     console.log("stock:", `mixer-${nombre}.png`, "(gemini, fondo quitado)");
   }

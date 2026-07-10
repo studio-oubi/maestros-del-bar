@@ -264,6 +264,39 @@ export async function quitarFondoBlanco(srcPath, { feather = 1.4, murallaRadio =
   return sharp(rgba, { raw: { width, height, channels: 4 } }).png().toBuffer();
 }
 
+// Corta TODO el alpha por debajo de una línea de apoyo dada — el criterio
+// final del cliente es que no quede NINGÚN píxel de sombra fotográfica (ni
+// siquiera de contacto/continua) por debajo de donde la botella o su
+// decoración tocan la barra; la barra de la app ya da ese contexto de
+// apoyo, la sombra de la foto original sobra completa.
+//
+// Se probaron dos heurísticas automáticas para ubicar esa línea (conteo de
+// píxeles con textura por fila, y corrida contigua mínima por fila) y
+// ambas fallan en el mismo punto: el ruido de compresión JPEG bajo
+// zumo-limon tiene rango local de contraste (34-43) y corridas contiguas
+// (60-200px) del mismo orden que el vidrio/fruta real — no hay separación
+// limpia por textura ni por color (la sombra ahí llega a saturación 124,
+// más que la propia pulpa en otros puntos). Se optó por medir "y" a mano
+// por imagen (grilla de coordenadas + inspección de canal alpha, mismo
+// método que el resto de remates de esta sesión) en vez de perseguir un
+// umbral automático fragile — más confiable para las 7 fotos puntuales que
+// esto va a procesar.
+export async function recortarDesde(buf, { y, feather = 2 } = {}) {
+  const meta = await sharp(buf).metadata();
+  const W = meta.width, H = meta.height;
+  const { data } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
+  const ch = 4;
+  const rgba = Buffer.from(data);
+  for (let yy = Math.max(0, y - feather); yy < H; yy++) {
+    const factor = yy <= y ? Math.max(0, (y - yy) / feather) : 0;
+    for (let x = 0; x < W; x++) {
+      const i = (yy * W + x) * ch + 3;
+      rgba[i] = Math.round(rgba[i] * factor);
+    }
+  }
+  return sharp(rgba, { raw: { width: W, height: H, channels: ch } }).png().toBuffer();
+}
+
 // Borra (alpha→0, con feather) un rectángulo redondeado puntual sobre un PNG
 // con alpha ya existente — escape hatch para remates puntuales de un caso
 // específico que quitarFondoBlanco no puede resolver de forma general sin
