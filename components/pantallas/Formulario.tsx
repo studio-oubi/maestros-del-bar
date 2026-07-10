@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { useJuego } from "@/lib/juego";
@@ -51,6 +51,27 @@ export function Formulario() {
   const { despachar } = useJuego();
   const [datos, setDatos] = useState<RegistroInput>(datosVacios);
   const [errores, setErrores] = useState<Partial<Record<keyof RegistroInput, string>>>({});
+  const [listo, setListo] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Evita el foco fantasma en Android: Home navega en pointerup y el "click"
+  // residual de ese mismo toque puede caer sobre el input recién montado,
+  // enfocándolo y disparando el teclado sin que el usuario haya tocado el
+  // formulario. Mientras la guardia sigue activa los inputs quedan readOnly
+  // (un input readOnly no abre el teclado en Android) hasta que pase un
+  // tiempo prudencial o hasta el primer toque genuino dentro del formulario.
+  useEffect(() => {
+    const activo = document.activeElement;
+    if (activo instanceof HTMLElement && formRef.current?.contains(activo)) {
+      activo.blur();
+    }
+    const id = window.setTimeout(() => setListo(true), 500);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  function habilitar() {
+    setListo(true);
+  }
 
   function actualizar(campo: keyof RegistroInput, valor: string) {
     setDatos((d) => ({ ...d, [campo]: valor }));
@@ -98,7 +119,13 @@ export function Formulario() {
       <h1 className="texto-titulo mt-[4cqh] text-center">Únete al challenge</h1>
       <p className="texto-sub mt-[0.8cqh] text-center">Llena tus datos para continuar</p>
 
-      <form onSubmit={enviar} autoComplete="off" className="mt-[3.5cqh] w-[58cqw]">
+      <form
+        ref={formRef}
+        onPointerDownCapture={habilitar}
+        onSubmit={enviar}
+        autoComplete="off"
+        className="mt-[3.5cqh] w-[58cqw]"
+      >
         <div className="flex flex-col gap-[1.6cqh]">
           <Campo
             etiqueta="Nombre"
@@ -106,6 +133,8 @@ export function Formulario() {
             onCambio={(v) => actualizar("nombre", v)}
             placeholder="Tu nombre"
             type="text"
+            name="mc-a"
+            soloLectura={!listo}
             error={errores.nombre}
           />
           <Campo
@@ -116,6 +145,8 @@ export function Formulario() {
             placeholder="000-0000000-0"
             type="text"
             inputMode="numeric"
+            name="mc-b"
+            soloLectura={!listo}
             error={errores.cedula}
           />
           <Campo
@@ -126,6 +157,8 @@ export function Formulario() {
             placeholder="(809) 000-0000"
             type="tel"
             inputMode="numeric"
+            name="mc-c"
+            soloLectura={!listo}
             error={errores.telefono}
           />
           <Campo
@@ -135,6 +168,8 @@ export function Formulario() {
             placeholder="tucorreo@ejemplo.com"
             type="email"
             inputMode="email"
+            name="mc-d"
+            soloLectura={!listo}
             error={errores.correo}
           />
         </div>
@@ -166,6 +201,8 @@ function Campo({
   type,
   inputMode,
   error,
+  name,
+  soloLectura,
 }: {
   etiqueta: string;
   valor: string;
@@ -175,6 +212,8 @@ function Campo({
   type: string;
   inputMode?: "numeric" | "email" | "tel";
   error?: string;
+  name: string;
+  soloLectura: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -201,8 +240,20 @@ function Campo({
         ref={inputRef}
         type={type}
         inputMode={inputMode}
-        autoComplete="off"
+        name={name}
+        // "one-time-code" es el truco más efectivo para que Chrome/Android
+        // deje de sugerir autocompletar nombre/teléfono/correo pese a
+        // autoComplete="off" en el <form>. El name no semántico (mc-a..d)
+        // evita que el heurístico de autofill lo identifique por el nombre.
+        autoComplete="one-time-code"
         spellCheck={false}
+        readOnly={soloLectura}
+        // Defensa extra: si el "click" fantasma llega a enfocar el input
+        // mientras la guardia sigue activa (readOnly), lo desenfocamos al
+        // instante para que la pantalla no aparezca con un input "activo".
+        onFocus={(e) => {
+          if (soloLectura) e.currentTarget.blur();
+        }}
         value={valor}
         onChange={manejarCambio}
         placeholder={placeholder}
