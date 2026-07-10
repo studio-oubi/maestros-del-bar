@@ -45,10 +45,14 @@ export function Recetas() {
         className="h-auto w-[33cqw] max-w-[155px] shrink-0"
       />
 
-      {/* Ancho fijo relativo al Marco (no depende del contenido) para que el
-          bloque de las 3 filas quede centrado como en el mock, con márgenes
-          simétricos, en vez de estirarse edge-to-edge del contenedor. */}
-      <div className="flex w-[86cqw] flex-1 flex-col justify-center">
+      {/* Ancho de contenido (w-max), NO fijo: si el contenedor fuera más ancho
+          que la fila más ancha, el grupo (foto+texto, alineados a la
+          izquierda ENTRE SÍ) quedaría pegado a la izquierda de esa caja con
+          un hueco muerto a la derecha. Con w-max la caja mide exactamente lo
+          que ocupa la fila más ancha, y mx-auto centra ESE conjunto como
+          bloque — foto y texto quedan simétricos respecto al centro, igual
+          que en el mock. */}
+      <div className="mx-auto flex w-max flex-1 flex-col justify-center">
         {RECETAS.map((receta, i) => (
           <div key={receta.id}>
             {i > 0 && <div className="ml-[17cqw] h-px bg-oro/25" />}
@@ -60,7 +64,10 @@ export function Recetas() {
                 height={1300}
                 className="h-[15.5cqh] w-auto shrink-0 object-contain"
               />
-              <div className="flex-1">
+              {/* max-w acota el nombre más largo (LIMÓN ALBAHACA EXTRA VIEJO)
+                  a 2 líneas como en el mock, en vez de una sola línea
+                  enorme que ensancharía el w-max de todo el grupo. */}
+              <div className="max-w-[46cqw]">
                 <h2 className="font-titulo text-[2.9cqh] font-medium uppercase leading-[1.04] text-white">
                   {receta.nombre}
                 </h2>
