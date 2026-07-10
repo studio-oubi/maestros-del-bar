@@ -10,7 +10,7 @@ import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { relabelarBotella, muestrearColor } from "./lib/etiqueta-generica.mjs";
-import { quitarFondoBlanco } from "./lib/quitar-fondo.mjs";
+import { quitarFondoBlanco, borrarRect } from "./lib/quitar-fondo.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const LEG = path.join(ROOT, "legacy/assets");
@@ -40,9 +40,27 @@ const BOTELLAS_GEMINI = [
   "soda",
 ];
 
+// Remates puntuales post quitarFondoBlanco: en zumo-limon quedaba un resto
+// de sombra de piso (color-bleed cálido de la rodaja de limón al lado,
+// saturación 40-124 — muy por encima del umbral normal) que además es
+// texturalmente casi indistinguible de la pulpa real del limón vecino (rango
+// local 34-43 vs 15-33 de la pulpa), así que ni relajar color ni relajar
+// textura de forma general lo resuelve sin arriesgar comerse la fruta. Se
+// mide a mano (grilla de coordenadas + inspección de canal alpha, no a ojo)
+// y se borra con un rect puntual. Verificado que las otras 6 botellas NO
+// tienen este defecto — sus colas de sombra son continuas/monótonas (parte
+// normal de la silueta), zumo-limon era la única con un fragmento realmente
+// desconectado y dentado.
+const REMATES = {
+  "zumo-limon": [{ x: 450, y: 1094, w: 120, h: 26, r: 10, feather: 3 }],
+};
+
 async function buildBotellasGemini() {
   for (const nombre of BOTELLAS_GEMINI) {
-    const buf = await quitarFondoBlanco(gemini(`${nombre}.png`));
+    let buf = await quitarFondoBlanco(gemini(`${nombre}.png`));
+    for (const rect of REMATES[nombre] ?? []) {
+      buf = await borrarRect(buf, rect);
+    }
     await writeFile(out(`mixer-${nombre}.png`), buf);
     console.log("stock:", `mixer-${nombre}.png`, "(gemini, fondo quitado)");
   }

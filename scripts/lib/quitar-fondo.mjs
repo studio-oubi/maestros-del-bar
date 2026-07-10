@@ -23,25 +23,30 @@
 // una muralla alrededor de cualquier zona con relieve, sin importar su
 // brillo promedio.
 //
-// Límite conocido: cuando un elemento decorativo (limón, toronja, albahaca)
-// se apoya justo contra la base de la botella, el hueco de sombra ENTRE
-// ambos queda encerrado por dos bordes reales (silueta del limón + silueta
-// de la botella) y no es alcanzable desde el borde del lienzo — el
-// flood-fill no lo puede quitar sin arriesgar comerse esos bordes reales
-// también. Es una porción chica y quedó documentada; no se encontró una
-// forma de resolverlo con heurística de color/textura sin arriesgar
-// regresiones en el cuello/tapa (ver historial de commits).
+// Remate (ver commit posterior): quedaba un parche crema/cálido de sombra
+// de piso bajo la base de algunas botellas (el peor caso, ZUMO DE LIMÓN,
+// tiene una rodaja de limón al lado que "sangra" color amarillo sobre esa
+// sombra — se midió con muestreo de píxeles y da saturación 40-124, MUY por
+// encima de SAT_MAX=22, así que fallaba el test de color de lleno, no era
+// solo un problema de conectividad). Pero esa misma zona es TEXTURALMENTE
+// PLANA (rango local 4-15, muy por debajo del rango real 15-33 de la pulpa
+// del limón) — así que se puede relajar la saturación exigida SOLO en la
+// banda baja del bbox de contenido (donde vive la sombra de piso) y seguir
+// confiando en la muralla de textura para no comerse la fruta/hoja real.
 import sharp from "sharp";
 
 const LUM_MIN = 210; // por debajo de esto ya no se considera "fondo"
 const SAT_MAX = 22; // diferencia max-min entre canales (evita comerse vidrio/líquido con tinte)
 const RANGO_LOCAL_MAX = 14; // rango local (max-min) de luminancia; por encima = "hay textura", no es fondo
 const RADIO_TEXTURA = 2; // ventana para el rango local (5x5) — chico a propósito, ver nota en quitarFondoBlanco
+const BANDA_BAJA_FRAC = 0.18; // fracción inferior del bbox de contenido con umbral relajado
+const LUM_MIN_BANDA = 180; // umbral de luminancia relajado dentro de la banda baja
+const SAT_MAX_BANDA = 130; // umbral de saturación relajado dentro de la banda baja
 
-function esFondoColor(r, g, b) {
+function esFondoColor(r, g, b, lumMin = LUM_MIN, satMax = SAT_MAX) {
   const lum = (r + g + b) / 3;
   const sat = Math.max(r, g, b) - Math.min(r, g, b);
-  return lum >= LUM_MIN && sat <= SAT_MAX;
+  return lum >= lumMin && sat <= satMax;
 }
 
 // Máx/mín local separable (pasada horizontal + vertical) sobre un array de
@@ -194,7 +199,40 @@ export async function quitarFondoBlanco(srcPath, { feather = 1.4, murallaRadio =
   const esFondoFinal = new Uint8Array(width2 * height2);
   for (let p = 0; p < width2 * height2; p++) esFondoFinal[p] = colorFondo[p] && !texturaDilatada[p] ? 1 : 0;
 
-  const fondo = floodFillFondo(esFondoFinal, width, height);
+  let fondo = floodFillFondo(esFondoFinal, width, height);
+
+  // Segunda pasada, banda baja: la sombra de piso bajo la botella puede
+  // salir cálida/densa (color bleed de una fruta al lado, p.ej. el limón) y
+  // fallar el umbral de saturación estricto de arriba de lleno — no es un
+  // problema de conectividad, el propio color no pasa. Se ubica el bbox de
+  // contenido de la primera pasada, se recalcula esFondoColor con un umbral
+  // MUY relajado (satMax 130) solo en su 18% inferior, y se re-corre el
+  // flood-fill completo con esa máscara ampliada. La muralla de textura
+  // (sin cambios) sigue bloqueando cualquier fruta/hoja real que caiga en
+  // esa banda, así que la saturación relajada no se come contenido.
+  let yMin = height, yMax = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!fondo[y * width + x]) {
+        if (y < yMin) yMin = y;
+        if (y > yMax) yMax = y;
+      }
+    }
+  }
+  if (yMax > yMin) {
+    const altoContenido = yMax - yMin;
+    const bandaDesde = Math.round(yMax - altoContenido * BANDA_BAJA_FRAC);
+    const esFondoFinal2 = esFondoFinal.slice();
+    for (let y = bandaDesde; y <= yMax; y++) {
+      for (let x = 0; x < width2; x++) {
+        const p = y * width2 + x;
+        const i = p * ch2;
+        const colorRelajado = esFondoColor(dc[i], dc[i + 1], dc[i + 2], LUM_MIN_BANDA, SAT_MAX_BANDA);
+        esFondoFinal2[p] = colorRelajado && !texturaDilatada[p] ? 1 : 0;
+      }
+    }
+    fondo = floodFillFondo(esFondoFinal2, width, height);
+  }
 
   // Canal alpha binario: 0 en fondo, 255 en el resto.
   const alphaBin = Buffer.alloc(width * height);
@@ -224,4 +262,28 @@ export async function quitarFondoBlanco(srcPath, { feather = 1.4, murallaRadio =
   }
 
   return sharp(rgba, { raw: { width, height, channels: 4 } }).png().toBuffer();
+}
+
+// Borra (alpha→0, con feather) un rectángulo redondeado puntual sobre un PNG
+// con alpha ya existente — escape hatch para remates puntuales de un caso
+// específico que quitarFondoBlanco no puede resolver de forma general sin
+// arriesgar otras regresiones (ver comentario en build-stock.mjs sobre
+// zumo-limon: un resto de sombra de piso, texturalmente indistinguible de
+// la pulpa real del limón vecino, que solo se puede quitar con coordenadas
+// medidas a mano sobre ESA imagen puntual). Coordenadas nativas (mismas que
+// la salida de quitarFondoBlanco, sin upscale).
+export async function borrarRect(buf, { x, y, w, h, r = 0, feather = 3 }) {
+  const meta = await sharp(buf).metadata();
+  const W = meta.width, H = meta.height;
+  const svg = `<svg width="${W}" height="${H}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="white"/></svg>`;
+  const alphaBin = await sharp(Buffer.from(svg)).extractChannel(0).raw().toBuffer();
+  const alphaSuave = await sharp(alphaBin, { raw: { width: W, height: H, channels: 1 } })
+    .blur(feather)
+    .extractChannel(0)
+    .raw()
+    .toBuffer();
+  const maskRgba = Buffer.alloc(W * H * 4);
+  for (let p = 0; p < W * H; p++) maskRgba[p * 4 + 3] = alphaSuave[p];
+  const maskBuf = await sharp(maskRgba, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer();
+  return sharp(buf).composite([{ input: maskBuf, blend: "dest-out" }]).png().toBuffer();
 }
