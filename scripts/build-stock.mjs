@@ -1,6 +1,7 @@
-// Genera los assets de stock/ (botellas relabeladas sin marca + 3 ingredientes
-// nuevos/retocados) a partir de fuentes de legacy/assets, "New design " y una
-// única foto externa documentada en stock/LICENCIAS.md. Se corre ANTES que
+// Genera los assets de stock/ (botellas de mezclas + 3 ingredientes
+// nuevos/retocados) a partir de fuentes de legacy/assets, "New design ",
+// fotos generadas con Gemini (Nano Banana Pro) y una única foto externa —
+// todo documentado en stock/LICENCIAS.md. Se corre ANTES que
 // build-assets.mjs (que solo empaqueta/optimiza lo que ya está en stock/ +
 // legacy + New design).
 //
@@ -9,123 +10,42 @@ import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { relabelarBotella, muestrearColor } from "./lib/etiqueta-generica.mjs";
+import { quitarFondoBlanco } from "./lib/quitar-fondo.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const LEG = path.join(ROOT, "legacy/assets");
 const ND = path.join(ROOT, "New design ");
 const STOCK = path.join(ROOT, "stock");
+const GEMINI = path.join(STOCK, "fuentes-gemini");
 const leg = (n) => path.join(LEG, n);
 const nd = (n) => path.join(ND, n);
 const out = (n) => path.join(STOCK, n);
+const gemini = (n) => path.join(GEMINI, n);
 
-// Rects medidos a mano sobre cada fuente (overlay de grilla, igual método que
-// las CROPS de build-assets.mjs) para tapar la etiqueta de marca real, sin
-// adivinar. Coordenadas nativas (pre-upscale) de cada PNG legacy. Cada
-// resultado se recorta además a la silueta ORIGINAL de la botella (ver
-// relabelarBotella) para que ninguna etiqueta sobresalga del contorno.
-const BOTELLAS = [
-  {
-    // Tropical Sun Lime Juice (verde, plástico): banda amarilla + "LIME JUICE"
-    // + foto de limones, mitad inferior de la botella (y~222-400 de 420).
-    src: leg("mixer-limon.png"),
-    out: out("mixer-zumo-limon.png"),
-    rects: [{ x: 3, y: 222, w: 100, h: 178, r: 14, nombre: "ZUMO DE LIMÓN" }],
-  },
-  {
-    // Fentimans Ginger Ale: el óvalo de etiqueta empieza más arriba de lo que
-    // parece a simple vista — "SERVE CHILLED" y las puntas de "FENTIMAN'S"
-    // arrancan en y~228 (medido con grilla 5x). Con y=250 quedaban letras de
-    // "...NTIMA..." asomando arriba; con y=228 pero radio de esquina grande
-    // (r=30) TODAVÍA quedaba un triángulo de "...ERVE CHILLE..." asomando en
-    // las esquinas redondeadas (verificado con inspección de píxeles, no solo
-    // a ojo). Con radio chico (r=12) el borde de arriba queda casi recto de
-    // punta a punta y cubre todo.
-    src: leg("mixer-ginger.png"),
-    out: out("mixer-sirope-albahaca.png"),
-    rects: [{ x: 6, y: 220, w: 114, h: 195, r: 12, nombre: "SIROPE DE ALBAHACA" }],
-  },
-  {
-    // Cartón "the berry company" Cranberry: la cara frontal es casi 100%
-    // impresa (banda roja arriba y1-para de 5, blanco impreso al medio, roja
-    // abajo — límites medidos por muestreo de color, no a ojo). En vez de
-    // taparlo todo con una sola losa navy (se veía como un bloque sin forma),
-    // se despinta cada banda a su color base real (muestreado) y se pone la
-    // etiqueta como un INSET navy centrado en la banda blanca, con margen
-    // visible arriba/abajo/lados para que se siga leyendo el envase.
-    src: leg("mixer-arandano.png"),
-    out: out("mixer-zumo-toronja.png"),
-    rects: null, // se arma a mano en buildArandano() (necesita muestreo de color)
-  },
-  {
-    // Frasco de miel "South Burnett Honey": etiqueta circular centrada
-    // (centro ~170,215 radio ~112 de un frasco de 356x420).
-    src: leg("ing-syrup.png"),
-    out: out("mixer-sirope-simple.png"),
-    rects: [{ x: 58, y: 103, w: 224, h: 224, r: 112, nombre: "SIROPE SIMPLE" }],
-  },
-  {
-    // Angostura aromatic bitters: hay DOS zonas de marca — el sello rojo
-    // pequeño en el cuello justo debajo de la tapa amarilla (y~78-166) y la
-    // etiqueta blanca grande del cuerpo (y~178-403). Se tapan juntas con un
-    // solo rectángulo alto (y~58-404 de 420) para no dejar ningún resto.
-    src: leg("ing-angostura.png"),
-    out: out("mixer-bitter-naranja.png"),
-    rects: [{ x: 6, y: 58, w: 112, h: 346, r: 12, nombre: "BITTER DE NARANJA" }],
-  },
-  {
-    // Perrier: óvalo principal "SOURCE perrier BOTTLED AT SOURCE VERGÈZE
-    // FRANCE" (y~293-605) + óvalo chico inferior con código de barras
-    // (y~725-845) + la tapa dorada, que SÍ tiene texto grabado legible
-    // ("L17" y otro código parcial, medido con grilla) pese a no tener el
-    // wordmark — se tapa con un tercer parche estilo etiqueta (sin texto).
-    src: leg("mixer-perrier.png"),
-    out: out("mixer-agua-gas.png"),
-    rects: [
-      { x: 80, y: 5, w: 165, h: 228, r: 40, nombre: "" },
-      { x: 10, y: 293, w: 305, h: 312, r: 50, nombre: "AGUA CON GAS" },
-      { x: 0, y: 725, w: 325, h: 120, r: 20, nombre: "" },
-    ],
-  },
-  {
-    // Schweppes Indian Tonic Water: el logo "Schweppes" está grabado en
-    // relieve en el PET (fantasma translúcido) POR ENCIMA de la etiqueta
-    // impresa — hay que tapar ambas cosas, así que es un solo rect alto
-    // (y~143-403 de 420) que cubre relieve + etiqueta impresa.
-    src: leg("mixer-tonica.png"),
-    out: out("mixer-soda.png"),
-    rects: [{ x: 2, y: 143, w: 115, h: 275, r: 14, nombre: "SODA" }],
-  },
+// Las 7 botellas de mezclas: primera pasada (commit 692312e) reetiquetaba
+// fotos legacy con marca tapada a mano (ver historial de git para ese
+// método, scripts/lib/etiqueta-generica.mjs). Esta pasada las REEMPLAZA con
+// fotos de producto generadas con Gemini (Nano Banana Pro) — ya vienen con
+// la etiqueta navy/oro correcta pintada por el modelo, fondo de estudio
+// blanco — así que el trabajo acá es solo quitar ese fondo (ver
+// lib/quitar-fondo.mjs) y dejarlas en el mismo nombre de archivo de salida
+// para no tocar el manifiesto ni lib/recetas.ts.
+const BOTELLAS_GEMINI = [
+  "zumo-limon",
+  "sirope-albahaca",
+  "zumo-toronja",
+  "sirope-simple",
+  "bitter-naranja",
+  "agua-gas",
+  "soda",
 ];
 
-async function buildBotellas() {
-  for (const b of BOTELLAS) {
-    if (!b.rects) continue; // arandano se arma aparte
-    const buf = await relabelarBotella(b.src, b.rects, { factor: b.src.includes("perrier") ? 2 : 3 });
-    await writeFile(b.out, buf);
-    console.log("stock:", path.basename(b.out));
+async function buildBotellasGemini() {
+  for (const nombre of BOTELLAS_GEMINI) {
+    const buf = await quitarFondoBlanco(gemini(`${nombre}.png`));
+    await writeFile(out(`mixer-${nombre}.png`), buf);
+    console.log("stock:", `mixer-${nombre}.png`, "(gemini, fondo quitado)");
   }
-}
-
-// Cartón de arándano → ZUMO DE TORONJA: despinta cada banda a su color base
-// real (muestreado con sharp, no a ojo) y pone la etiqueta como un inset
-// centrado en la banda blanca, con margen visible a los 4 lados. Así el
-// cartón conserva su forma reconocible (banda roja / blanca / roja) en vez
-// de quedar una losa navy sin silueta.
-async function buildArandano() {
-  const src = leg("mixer-arandano.png");
-  const rojo = await muestrearColor(src, { x: 138, y: 48, w: 6, h: 6 });
-  const crema = await muestrearColor(src, { x: 138, y: 118, w: 6, h: 6 });
-  const rects = [
-    // bandas despintadas a su color base (sin borde, sin texto)
-    { x: 8, y: 16, w: 165, h: 100, color: rojo }, // banda roja superior ("the berry company")
-    { x: 8, y: 106, w: 165, h: 250, color: crema }, // cuerpo blanco (badge+Cranberry+ilustración+"1 Litre")
-    { x: 8, y: 348, w: 165, h: 68, color: rojo }, // banda roja inferior (importado/barcode)
-    // etiqueta navy como INSET dentro de la banda blanca, con margen visible
-    { x: 34, y: 152, w: 112, h: 168, r: 14, nombre: "ZUMO DE TORONJA" },
-  ];
-  const buf = await relabelarBotella(src, rects, { factor: 3 });
-  await writeFile(out("mixer-zumo-toronja.png"), buf);
-  console.log("stock: mixer-zumo-toronja.png");
 }
 
 // ing-cascara: recorta el twist de naranja del borde del vaso en New
@@ -202,9 +122,30 @@ async function buildDemerara() {
 
 const LICENCIAS_MD = `# Licencias de assets externos en stock/
 
-Todo el resto de stock/ sale de fuentes YA propiedad del cliente (legacy/assets
-y "New design "/) — botellas relabeladas o recortes de sus propios renders.
-Este archivo documenta el ÚNICO asset externo usado en el juego.
+Todo el resto de stock/ sale de fuentes YA propiedad del cliente (legacy/assets,
+"New design "/, o generadas para el cliente con Gemini) — recortes de sus
+propios renders o fotos de producto generadas por nosotros. Este archivo
+documenta el ÚNICO asset externo usado en el juego.
+
+## stock/fuentes-gemini/*.png → stock/mixer-*.png (7 botellas de mezclas)
+
+Fotos de producto generadas con Gemini (Nano Banana Pro) por nosotros para
+este proyecto — sin restricción de terceros, uso exclusivo del cliente. Cada
+una viene con la etiqueta navy/oro (\`#0a1a3a\` / \`#c9a84c\`) y el texto de la
+mezcla ya generados por el modelo, sobre fondo de estudio blanco; el fondo se
+quita con \`scripts/lib/quitar-fondo.mjs\` (flood-fill + detección de textura,
+sin herramientas externas) antes de empaquetar. Reemplazan a las botellas
+reetiquetadas a mano de la primera pasada (ver commit 692312e para ese
+método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y se usa
+para ing-demerara más abajo).
+
+- zumo-limon.png → mixer-zumo-limon.png (ZUMO DE LIMÓN)
+- sirope-albahaca.png → mixer-sirope-albahaca.png (SIROPE DE ALBAHACA)
+- zumo-toronja.png → mixer-zumo-toronja.png (ZUMO DE TORONJA)
+- sirope-simple.png → mixer-sirope-simple.png (SIROPE SIMPLE)
+- bitter-naranja.png → mixer-bitter-naranja.png (BITTER DE NARANJA)
+- agua-gas.png → mixer-agua-gas.png (AGUA CON GAS)
+- soda.png → mixer-soda.png (SODA)
 
 ## stock/_fuentes/star-aniseed-pd.jpg → stock/ing-anis.png
 
@@ -221,8 +162,7 @@ Este archivo documenta el ÚNICO asset externo usado en el juego.
 
 async function run() {
   await mkdir(STOCK, { recursive: true });
-  await buildBotellas();
-  await buildArandano();
+  await buildBotellasGemini();
   await buildCascara();
   await buildAnis();
   await buildDemerara();
