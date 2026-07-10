@@ -10,9 +10,10 @@ function formato(segundos: number): string {
 }
 
 export function useCountdown(activo: boolean, segundos: number, onExpirar: () => void) {
-  const [restante, setRestante] = useState(segundos);
+  const [restante, setRestante] = useState(Math.ceil(segundos));
   const inicioRef = useRef<number | null>(null);
   const expiradoRef = useRef(false);
+  const mostradoRef = useRef(Math.ceil(segundos));
   const onExpirarRef = useRef(onExpirar);
   onExpirarRef.current = onExpirar;
 
@@ -20,7 +21,8 @@ export function useCountdown(activo: boolean, segundos: number, onExpirar: () =>
     if (!activo) {
       inicioRef.current = null;
       expiradoRef.current = false;
-      setRestante(segundos);
+      mostradoRef.current = Math.ceil(segundos);
+      setRestante(Math.ceil(segundos));
       return;
     }
 
@@ -33,7 +35,11 @@ export function useCountdown(activo: boolean, segundos: number, onExpirar: () =>
       if (inicio === null) return;
       const transcurrido = (performance.now() - inicio) / 1000;
       const nuevoRestante = Math.max(0, segundos - transcurrido);
-      setRestante(nuevoRestante);
+      const mostrado = Math.ceil(nuevoRestante);
+      if (mostrado !== mostradoRef.current) {
+        mostradoRef.current = mostrado;
+        setRestante(mostrado);
+      }
       if (nuevoRestante <= 0) {
         if (!expiradoRef.current) {
           expiradoRef.current = true;
@@ -49,5 +55,5 @@ export function useCountdown(activo: boolean, segundos: number, onExpirar: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activo, segundos]);
 
-  return { restante: Math.ceil(restante), formato: formato(restante) };
+  return { restante, formato: formato(restante) };
 }
