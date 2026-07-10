@@ -34,7 +34,7 @@ const PROY = 0.16; // s de proyección de la inercia al soltar
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
-export function Coverflow3D({ items, onSelect, alturaItem = 50, onCentroChange }: Props) {
+export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }: Props) {
   const n = items.length;
   const inicial = 0; // ruleta infinita: en 0 el primer item queda centrado con ambos vecinos
   const stageRef = useRef<HTMLDivElement>(null);

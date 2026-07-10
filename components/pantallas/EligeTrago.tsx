@@ -55,7 +55,7 @@ export function EligeTrago() {
 
       {/* Escena de barra + coverflow */}
       <BarraEscena>
-        <Coverflow3D items={items} onSelect={onSelect} onCentroChange={onCentroChange} alturaItem={47} />
+        <Coverflow3D items={items} onSelect={onSelect} onCentroChange={onCentroChange} alturaItem={37} />
       </BarraEscena>
 
       <style jsx>{`
