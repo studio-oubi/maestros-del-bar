@@ -79,31 +79,37 @@ function Confetti() {
   );
 }
 
-// Anima --rev de 0 a 104% con easing cúbico (rAF), igual que animarRevelado()
-// en legacy/index.html (sube al 104% para que el borde de la máscara salga
-// del cuadro y no quede una línea dura). Corre una sola vez al montar. Al
-// terminar, marca --rev-listo:1 (el reflejo lo usa para aparecer con fade
-// SOLO cuando el trago ya terminó de revelarse, nunca antes).
-function useRevelado<T extends HTMLElement>(duracionMs: number) {
+// Anima --rev de 0 a 104% con easing cúbico (rAF), timings EXACTOS de
+// animarRevelado()/preparar() en legacy/index.html: arranca `delayMs` (600,
+// tiempo de leer "Agitando…") después de montar, sube 0→104% en
+// `duracionMs` (104% para que el borde de la máscara salga del cuadro y no
+// quede una línea dura). Corre una sola vez. Al terminar, marca
+// --rev-listo:1 (el reflejo lo usa para aparecer con fade SOLO entonces).
+function useRevelado<T extends HTMLElement>(duracionMs: number, delayMs = 600) {
   const ref = useRef<T>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     let raf = 0;
-    const t0 = performance.now();
-    function paso(t: number) {
-      const p = Math.min(1, (t - t0) / duracionMs);
-      const ease = 1 - Math.pow(1 - p, 3);
-      el!.style.setProperty("--rev", `${(104 * ease).toFixed(2)}%`);
-      if (p < 1) {
-        raf = requestAnimationFrame(paso);
-      } else {
-        el!.style.setProperty("--rev-listo", "1");
+    const espera = setTimeout(() => {
+      const t0 = performance.now();
+      function paso(t: number) {
+        const p = Math.min(1, (t - t0) / duracionMs);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el!.style.setProperty("--rev", `${(104 * ease).toFixed(2)}%`);
+        if (p < 1) {
+          raf = requestAnimationFrame(paso);
+        } else {
+          el!.style.setProperty("--rev-listo", "1");
+        }
       }
-    }
-    raf = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(raf);
-  }, [duracionMs]);
+      raf = requestAnimationFrame(paso);
+    }, delayMs);
+    return () => {
+      clearTimeout(espera);
+      cancelAnimationFrame(raf);
+    };
+  }, [duracionMs, delayMs]);
   return ref;
 }
 
@@ -111,8 +117,14 @@ function useRevelado<T extends HTMLElement>(duracionMs: number) {
 // abajo hacia arriba según --rev.
 const MASCARA_REVELADO = "linear-gradient(to top, #000 0%, #000 calc(var(--rev, 0%) - 4%), transparent var(--rev, 0%))";
 
-// Trago con reveal de máscara (líquido "subiendo" en el vaso) + tinte por
-// ingredientes, portados de legacy/index.html (animarRevelado + preparar()).
+// Trago con reveal de máscara (líquido "subiendo" DENTRO del vaso) + tinte
+// por ingredientes, portados de legacy/index.html (preparar() / .rev-wrap):
+// capa base = receta.imgVaso (vaso vacío, visible desde el frame 0, sin
+// máscara) y encima receta.imgTrago enmascarado subiendo — sensación de que
+// el vaso se está llenando, no de que el trago aparece flotando. Las dos
+// fotos comparten el mismo encuadre (1536×2752), así que una caja con
+// aspect-ratio + object-contain las alinea automáticamente, igual que el
+// legacy (ambas con inset:0 dentro de .rev-wrap).
 // Si `elecciones` coincide EXACTO con `receta.ingredientes` el trago se ve
 // normal; si no, se aplica un hue-rotate proporcional a la desviación
 // cromática entre lo elegido y lo correcto — el fallo se lee en el vaso.
@@ -134,7 +146,7 @@ function TragoRevelado({
 }) {
   const tinte = filtroTinte(elecciones, receta.ingredientes);
   const acerto = tinte === "";
-  const revRef = useRevelado<HTMLDivElement>(acerto ? 1700 : 1300);
+  const revRef = useRevelado<HTMLDivElement>(acerto ? 3200 : 2600);
   const sombra = "drop-shadow(0 18px 30px rgba(0,0,0,.55))";
 
   return (
@@ -143,18 +155,31 @@ function TragoRevelado({
       className="relative flex flex-col items-center"
       style={{ ["--rev" as string]: "0%", ["--rev-listo" as string]: "0" }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={receta.imgTrago}
-        alt={receta.nombre}
-        draggable={false}
-        className={`pointer-events-none w-auto select-none object-contain ${alturaClase}`}
-        style={{
-          WebkitMaskImage: MASCARA_REVELADO,
-          maskImage: MASCARA_REVELADO,
-          filter: tinte ? `${tinte} ${sombra}` : sombra,
-        }}
-      />
+      <div className={`relative aspect-[1536/2752] ${alturaClase}`}>
+        {/* Vaso vacío: base siempre visible, sin máscara. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={receta.imgVaso}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+          style={{ filter: sombra }}
+        />
+        {/* Trago: se revela de abajo hacia arriba encima del vaso. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={receta.imgTrago}
+          alt={receta.nombre}
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+          style={{
+            WebkitMaskImage: MASCARA_REVELADO,
+            maskImage: MASCARA_REVELADO,
+            filter: tinte ? `${tinte} ${sombra}` : sombra,
+          }}
+        />
+      </div>
       {/* Reflejo: oculto mientras el trago se revela (--rev-listo:0) y aparece
           con fade recién cuando termina — nunca se ve "flotando" antes de
           tiempo sobre lo que haya debajo (p.ej. el checklist en "Casi"). */}
