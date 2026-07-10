@@ -15,11 +15,16 @@ void main(){
 }
 `;
 
+// Transición "humo": FBM multi-octava animado sobre el tiempo que hierve y
+// asciende durante el cambio. La botella saliente se disuelve en volutas que
+// suben mientras la entrante se condensa; el borde del frente distorsiona los
+// UV de ambas texturas (calima) y se enciende con un filo dorado sutil.
 const FRAG = `
 precision mediump float;
 varying vec2 vUv;
 uniform sampler2D uFrom; uniform sampler2D uTo;
 uniform float uProgress;            // 0..1
+uniform float uTime;                // segundos (para el hervor del ruido)
 uniform vec2 uScaleFrom; uniform vec2 uScaleTo; // para object-fit: contain por textura
 
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -29,22 +34,61 @@ float noise(vec2 p){
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
              mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
+// FBM de 4 octavas (turbulencia). Cada octava se desplaza para descorrelacionar
+// los ejes -> textura de humo, no una rejilla. Normalizado a ~0..1.
+float fbm(vec2 p){
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += a * noise(p);
+    p = p * 2.0 + vec2(37.0, 17.0);
+    a *= 0.5;
+  }
+  return v / 0.9375;
+}
 vec4 muestra(sampler2D t, vec2 uv, vec2 esc){
   vec2 p = (uv - 0.5) / esc + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return vec4(0.0);
   return texture2D(t, p);
 }
 void main(){
-  float n = noise(vUv * 6.0) * 0.7 + noise(vUv * 18.0) * 0.3;
-  float borde = 0.08;
-  float m = smoothstep(uProgress - borde, uProgress + borde, n + (1.0 - uProgress) * 0.0);
+  float p = uProgress;
+
+  // Campo de ruido que asciende (humo) y hierve lento durante la transición.
+  vec2 np = vUv * vec2(3.0, 3.6);
+  np.y -= p * 1.7;                       // el patrón sube -> volutas que ascienden
+  np += vec2(uTime * 0.035, uTime * 0.075);
+  float f = fbm(np);
+
+  // Sesgo direccional de brocha: el frente barre de abajo hacia arriba,
+  // roto por el ruido para que lea como un trazo y no como una línea recta.
+  float sweep = mix(f, 1.0 - vUv.y, 0.26);
+
+  // Umbral que recorre todo el rango para cubrir de 0% a 100%.
+  float borde = 0.15;
+  float thr = p * (1.0 + 2.0 * borde) - borde;
+  float m = smoothstep(thr - borde, thr + borde, sweep);
   // m=1 -> aún uFrom; m=0 -> ya uTo
-  vec4 a = muestra(uFrom, vUv, uScaleFrom);
-  vec4 b = muestra(uTo, vUv, uScaleTo);
+
+  // Proximidad al frente: 1 justo en el borde móvil, 0 lejos. Solo vive durante
+  // la transición (en reposo el frente está fuera del rango de sweep).
+  float edge = 1.0 - smoothstep(0.0, borde * 1.8, abs(sweep - thr));
+  float ventana = smoothstep(0.0, 0.06, p) * smoothstep(0.0, 0.06, 1.0 - p);
+  edge *= ventana;
+
+  // Distorsión tipo calima: desplaza los UV de AMBAS texturas con un vector de
+  // ruido, escalado por la cercanía al frente (2 muestras de ruido, baratas).
+  // El sesgo hacia arriba (disp.y) arrastra la imagen como humo que sube.
+  vec2 disp = vec2(noise(np * 2.0 + 5.0), noise(np * 2.0 - 9.0)) - 0.5;
+  disp.y += 0.28;                        // el calor/humo empuja hacia arriba
+  float amp = 0.045 * edge;
+  vec4 a = muestra(uFrom, vUv + disp * amp, uScaleFrom);
+  vec4 b = muestra(uTo, vUv + disp * (amp * 0.7), uScaleTo);
   vec4 col = mix(b, a, m);
-  // brillo dorado en el borde de la máscara
-  float glow = smoothstep(0.0, borde, abs(n - uProgress)) ;
-  col.rgb += (1.0 - glow) * vec3(0.79, 0.64, 0.36) * 0.35 * step(0.001, uProgress) * step(uProgress, 0.999);
+
+  // Filo dorado en el borde móvil (más intenso a mitad de transición).
+  float glow = edge * (0.7 + 0.3 * (1.0 - abs(p * 2.0 - 1.0)));
+  col.rgb += glow * vec3(0.85, 0.68, 0.38) * 0.34;
+
   gl_FragColor = col;
 }
 `;
@@ -145,6 +189,7 @@ export function crearDissolve(
   const uFrom = gl.getUniformLocation(prog, "uFrom");
   const uTo = gl.getUniformLocation(prog, "uTo");
   const uProgress = gl.getUniformLocation(prog, "uProgress");
+  const uTime = gl.getUniformLocation(prog, "uTime");
   const uScaleFrom = gl.getUniformLocation(prog, "uScaleFrom");
   const uScaleTo = gl.getUniformLocation(prog, "uScaleTo");
   gl.uniform1i(uFrom, 0);
@@ -206,7 +251,7 @@ export function crearDissolve(
   let indice = 0; // textura actualmente visible
   let faseInicio = performance.now();
   let enTransicion = false;
-  const duracionTrans = 1600;
+  const duracionTrans = 2200;
 
   const suavizar = (t: number) => t * t * (3 - 2 * t);
 
@@ -253,6 +298,9 @@ export function crearDissolve(
     gl.bindTexture(gl.TEXTURE_2D, hacia.tex);
 
     gl.uniform1f(uProgress, progreso);
+    // Tiempo en segundos acotado a 0..1000 para no perder precisión en mediump
+    // (solo alimenta la deriva lenta del hervor, no necesita rango mayor).
+    gl.uniform1f(uTime, (ahora * 0.001) % 1000.0);
     gl.uniform2f(uScaleFrom, sfx, sfy);
     gl.uniform2f(uScaleTo, stx, sty);
 
