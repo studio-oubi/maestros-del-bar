@@ -73,7 +73,7 @@ export function GridMix({ restante }: { restante: number }) {
                 aria-label={info.nombre}
                 aria-pressed={activo}
                 onClick={() => despachar({ tipo: "TOGGLE_INGREDIENTE", ing })}
-                className="flex flex-col items-center gap-[0.5cqh] transition-transform duration-100 active:scale-95"
+                className="flex flex-col items-center gap-[0.5cqh] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90"
               >
                 <span
                   className={`relative flex h-[9.5cqh] w-[9.5cqh] items-center justify-center overflow-hidden rounded-full bg-navy/70 ring-2 transition-shadow duration-200 ${

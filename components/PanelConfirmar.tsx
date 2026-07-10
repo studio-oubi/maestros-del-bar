@@ -63,7 +63,7 @@ export function PanelConfirmar({
         <button
           type="button"
           onClick={onConfirmar}
-          className="texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[15cqw] py-[0.8cqh] leading-none shadow-[0_0_50px_rgba(201,164,92,.35),0_16px_40px_rgba(0,0,0,.55)] [animation:panel-latido_2.2s_ease-in-out_infinite] active:scale-95"
+          className="texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[15cqw] py-[0.8cqh] leading-none shadow-[0_0_50px_rgba(201,164,92,.35),0_16px_40px_rgba(0,0,0,.55)] [animation:panel-latido_2.2s_ease-in-out_infinite] transition-[filter] duration-100 active:brightness-90 active:scale-95"
         >
           {textoConfirmar}
         </button>

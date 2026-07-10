@@ -35,7 +35,7 @@ export function Listo() {
         <button
           type="button"
           onClick={() => despachar({ tipo: "INICIAR_RETO" })}
-          className="flex h-[4.5cqh] w-[57cqw] items-center justify-center rounded-full bg-gradient-to-b from-oro-claro to-oro font-titulo text-[2.7cqh] font-medium uppercase text-[var(--tinta-boton)] shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95"
+          className="flex h-[4.5cqh] w-[57cqw] items-center justify-center rounded-full bg-gradient-to-b from-oro-claro to-oro font-titulo text-[2.7cqh] font-medium uppercase text-[var(--tinta-boton)] shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90"
         >
           Iniciar
         </button>

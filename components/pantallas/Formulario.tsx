@@ -176,7 +176,7 @@ export function Formulario() {
 
         <button
           type="submit"
-          className="texto-boton mt-[3cqh] w-full rounded-full bg-linear-to-r from-oro-claro to-oro py-[0.55cqh] leading-none shadow-[0_16px_34px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]"
+          className="texto-boton mt-[3cqh] w-full rounded-full bg-linear-to-r from-oro-claro to-oro py-[0.55cqh] leading-none shadow-[0_16px_34px_rgba(0,0,0,0.45)] transition-[transform,filter] duration-100 active:scale-[0.98] active:brightness-90"
         >
           Continuar
         </button>

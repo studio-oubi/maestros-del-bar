@@ -140,7 +140,7 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
             type="button"
             onClick={guardar}
             disabled={!ciudad || !establecimiento}
-            className="flex-1 rounded-full bg-linear-to-r from-oro-claro to-oro py-2.5 font-titulo text-sm uppercase text-navy-deep shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-transform active:scale-[0.98] disabled:opacity-40"
+            className="flex-1 rounded-full bg-linear-to-r from-oro-claro to-oro py-2.5 font-titulo text-sm uppercase text-navy-deep shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-100 active:scale-[0.98] active:brightness-90 disabled:opacity-40"
           >
             Guardar
           </button>

@@ -13,7 +13,7 @@ import { filtroTinte } from "@/lib/tinte-trago";
 import { useJuego } from "@/lib/juego";
 
 const BOTON =
-  "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95";
+  "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90";
 
 function Logo() {
   return (
