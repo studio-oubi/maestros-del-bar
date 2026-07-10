@@ -16,15 +16,17 @@ interface Props {
 }
 
 // Reparto/física del coverflow (ruleta infinita estilo legacy).
-const FACTOR = 0.56; // separación horizontal (× 46cqw) — laterales claramente al lado del centro
-const ROT = 40; // grados de rotateY por unidad de distancia
+const FACTOR = 0.69; // separación horizontal (× 46cqw) — laterales bien separados del centro
+// rotateY suave: la profundidad se lee por TAMAÑO y BRILLO, no por deformación.
+// Un giro fuerte estiraba los laterales; se baja a un ángulo sutil.
+const ROT = 12; // grados de rotateY por unidad de distancia
 // El encogimiento de los laterales viene sobre todo de la PROFUNDIDAD (perspectiva
 // con punto de fuga en la línea de la barra): así los pies quedan anclados a la
 // barra a cualquier tamaño. `scale` solo añade un extra pequeño (no despega la base).
 const DEPTH = 185; // px de translateZ por unidad de distancia
 const SCALE_STEP = 0.12; // reducción de escala extra por unidad (pequeña, no rompe el anclaje)
 const BRIGHT_STEP = 0.3; // oscurecimiento por unidad (centro = 1)
-const BLUR_STEP = 1.6; // px de desenfoque por unidad
+const BLUR_STEP = 0.9; // px de desenfoque por unidad (sutil: no deforma los laterales)
 const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto (útil con 5+ items)
 const K = 170; // rigidez del muelle
 const C = 26; // amortiguación (≈ crítica para k=170)
@@ -106,6 +108,44 @@ export function Coverflow3D({ items, onSelect, alturaItem = 42, onCentroChange }
   function pararRaf() {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
+  }
+
+  // Mide el "padding" transparente inferior del PNG (fracción del alto) y lo
+  // expone como var --pad en cqh sobre el nodo. Así la BASE VISIBLE del item
+  // (no el borde del lienzo con padding) se apoya en la línea de la barra a
+  // cualquier escala: sin esto, el central (escala 1) parece flotar respecto a
+  // los laterales (encogidos), porque su hueco inferior transparente es mayor.
+  function medirPad(k: number, img: HTMLImageElement) {
+    try {
+      const w = 24;
+      const h = Math.max(1, Math.round((24 * img.naturalHeight) / img.naturalWidth));
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let filaContenido = h;
+      for (let y = h - 1; y >= 0; y--) {
+        let hay = false;
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] > 16) {
+            hay = true;
+            break;
+          }
+        }
+        if (hay) {
+          filaContenido = y + 1;
+          break;
+        }
+      }
+      const padFrac = Math.max(0, (h - filaContenido) / h);
+      const padCqh = padFrac * alturaItem;
+      nodosRef.current[k]?.style.setProperty("--pad", `${padCqh.toFixed(2)}cqh`);
+    } catch {
+      // getImageData puede fallar (canvas contaminado); se ignora y queda --pad:0.
+    }
   }
 
   // Bucle de muelle críticamente amortiguado hacia objetivoRef, con inercia.
@@ -255,27 +295,35 @@ export function Coverflow3D({ items, onSelect, alturaItem = 42, onCentroChange }
             }}
             aria-label={it.nombre}
             className="absolute left-1/2 will-change-transform [transform-style:preserve-3d]"
-            style={{ bottom: "calc(100cqh - var(--linea-barra, 62cqh))", transformOrigin: "bottom center" }}
+            style={{
+              ["--pad" as string]: "0px",
+              bottom: "calc(100cqh - var(--linea-barra, 62cqh))",
+              transformOrigin: "bottom center",
+            }}
           >
             {/* Área táctil generosa alrededor del vaso sin alterar su tamaño visual */}
             <div className="relative flex flex-col items-center px-[6cqw]">
+              {/* margin-bottom negativo = --pad: sube el borde inferior de la caja
+                  hasta la base VISIBLE del vaso, para que se apoye en la barra. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={it.img}
                 alt={it.nombre}
                 draggable={false}
+                onLoad={(e) => medirPad(k, e.currentTarget)}
                 className="pointer-events-none block w-auto select-none object-contain"
-                style={{ height: "var(--altura-item)" }}
+                style={{ height: "var(--altura-item)", marginBottom: "calc(var(--pad, 0px) * -1)" }}
               />
-              {/* Reflejo sobre la superficie de la barra */}
+              {/* Reflejo sobre la superficie de la barra (arranca en la base visible) */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={it.img}
                 alt=""
                 aria-hidden
                 draggable={false}
-                className="pointer-events-none absolute left-1/2 top-full block w-auto -translate-x-1/2 select-none object-contain opacity-[0.18]"
+                className="pointer-events-none absolute left-1/2 block w-auto -translate-x-1/2 select-none object-contain opacity-[0.18]"
                 style={{
+                  top: "calc(100% - var(--pad, 0px))",
                   height: "var(--altura-item)",
                   transform: "translateX(-50%) scaleY(-1)",
                   WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
