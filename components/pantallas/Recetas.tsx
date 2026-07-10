@@ -56,7 +56,7 @@ export function Recetas() {
         {RECETAS.map((receta, i) => (
           <div key={receta.id}>
             {i > 0 && <div className="h-px bg-oro/25" />}
-            <div className="flex items-center gap-[2cqw] py-[1.2cqh]">
+            <div className="flex items-center gap-[2cqw] py-[0.7cqh]">
               <Image
                 src={receta.imgTrago}
                 alt=""
