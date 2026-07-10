@@ -81,7 +81,9 @@ function Confetti() {
 
 // Anima --rev de 0 a 104% con easing cúbico (rAF), igual que animarRevelado()
 // en legacy/index.html (sube al 104% para que el borde de la máscara salga
-// del cuadro y no quede una línea dura). Corre una sola vez al montar.
+// del cuadro y no quede una línea dura). Corre una sola vez al montar. Al
+// terminar, marca --rev-listo:1 (el reflejo lo usa para aparecer con fade
+// SOLO cuando el trago ya terminó de revelarse, nunca antes).
 function useRevelado<T extends HTMLElement>(duracionMs: number) {
   const ref = useRef<T>(null);
   useEffect(() => {
@@ -93,7 +95,11 @@ function useRevelado<T extends HTMLElement>(duracionMs: number) {
       const p = Math.min(1, (t - t0) / duracionMs);
       const ease = 1 - Math.pow(1 - p, 3);
       el!.style.setProperty("--rev", `${(104 * ease).toFixed(2)}%`);
-      if (p < 1) raf = requestAnimationFrame(paso);
+      if (p < 1) {
+        raf = requestAnimationFrame(paso);
+      } else {
+        el!.style.setProperty("--rev-listo", "1");
+      }
     }
     raf = requestAnimationFrame(paso);
     return () => cancelAnimationFrame(raf);
@@ -114,46 +120,63 @@ function TragoRevelado({
   receta,
   elecciones,
   alturaClase,
+  reflejoAlturaClase,
+  reflejoOpacidad = 0.18,
 }: {
   receta: Receta;
   elecciones: IngredienteId[];
   alturaClase: string;
+  // Alto y opacidad del reflejo se pueden ajustar por separado del trago:
+  // en "Casi" el trago es chico y flotan cerca del checklist, así que el
+  // reflejo necesita ser más corto/tenue para no pisar las filas VASO/RON/MEZCLA.
+  reflejoAlturaClase?: string;
+  reflejoOpacidad?: number;
 }) {
   const tinte = filtroTinte(elecciones, receta.ingredientes);
   const acerto = tinte === "";
-  const revRef = useRevelado<HTMLImageElement>(acerto ? 1700 : 1300);
+  const revRef = useRevelado<HTMLDivElement>(acerto ? 1700 : 1300);
   const sombra = "drop-shadow(0 18px 30px rgba(0,0,0,.55))";
 
   return (
-    <div className="relative flex flex-col items-center">
+    <div
+      ref={revRef}
+      className="relative flex flex-col items-center"
+      style={{ ["--rev" as string]: "0%", ["--rev-listo" as string]: "0" }}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        ref={revRef}
         src={receta.imgTrago}
         alt={receta.nombre}
         draggable={false}
         className={`pointer-events-none w-auto select-none object-contain ${alturaClase}`}
         style={{
-          ["--rev" as string]: "0%",
           WebkitMaskImage: MASCARA_REVELADO,
           maskImage: MASCARA_REVELADO,
           filter: tinte ? `${tinte} ${sombra}` : sombra,
         }}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={receta.imgTrago}
-        alt=""
-        aria-hidden
-        draggable={false}
-        className={`pointer-events-none absolute left-1/2 top-full w-auto -translate-x-1/2 select-none object-contain opacity-[0.18] ${alturaClase}`}
-        style={{
-          transform: "translateX(-50%) scaleY(-1)",
-          filter: tinte || undefined,
-          WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-          maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-        }}
-      />
+      {/* Reflejo: oculto mientras el trago se revela (--rev-listo:0) y aparece
+          con fade recién cuando termina — nunca se ve "flotando" antes de
+          tiempo sobre lo que haya debajo (p.ej. el checklist en "Casi"). */}
+      {reflejoOpacidad > 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={receta.imgTrago}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className={`pointer-events-none absolute left-1/2 top-full w-auto -translate-x-1/2 select-none object-contain transition-opacity duration-500 ease-out ${
+            reflejoAlturaClase ?? alturaClase
+          }`}
+          style={{
+            transform: "translateX(-50%) scaleY(-1)",
+            filter: tinte || undefined,
+            opacity: `calc(var(--rev-listo, 0) * ${reflejoOpacidad})`,
+            WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
+            maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -250,10 +273,16 @@ function Casi() {
       </div>
 
       <div className="mt-[2.2cqh]">
-        <TragoRevelado receta={receta} elecciones={estado.elecciones.ingredientes} alturaClase="h-[16cqh]" />
+        <TragoRevelado
+          receta={receta}
+          elecciones={estado.elecciones.ingredientes}
+          alturaClase="h-[16cqh]"
+          reflejoAlturaClase="h-[5cqh]"
+          reflejoOpacidad={0.1}
+        />
       </div>
 
-      <div className="mt-[3.2cqh] flex w-full flex-col items-center">
+      <div className="mt-[3.8cqh] flex w-full flex-col items-center">
         <FilaCheck etiqueta="VASO" ok={ev.vasoOk} />
         <FilaCheck etiqueta={receta.ronNombre} ok={ev.ronOk} />
         <FilaCheck etiqueta={receta.mezclaNombre} ok={ev.mezclaOk} />
