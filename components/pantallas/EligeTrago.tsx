@@ -42,7 +42,7 @@ export function EligeTrago() {
 
       {/* Epígrafe + nombre del trago centrado */}
       <div className="absolute inset-x-0 top-[18cqh] z-10 flex flex-col items-center gap-[1cqh] px-[8cqw] text-center">
-        <span className="font-cuerpo text-[1.35cqh] font-700 uppercase tracking-[0.14em] text-oro">
+        <span className="font-cuerpo text-[1.35cqh] font-bold uppercase tracking-[0.14em] text-oro">
           ELIGE TU TRAGO
         </span>
         <span

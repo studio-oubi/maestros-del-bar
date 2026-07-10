@@ -9,7 +9,10 @@ import { IMG } from "@/lib/asset-manifest";
 export function BarraEscena({ children }: { children: ReactNode }) {
   return (
     <div className="absolute inset-0 [--linea-barra:62cqh]">
-      {/* Mostrador. Su borde frontal superior cae sobre --linea-barra. */}
+      {/* Mostrador. Su borde frontal superior cae sobre --linea-barra. El borde
+          superior de la foto se difumina (mask-image) para fundirse con el fondo
+          texturizado sin costura; el degradado acaba por encima de la línea de la
+          barra para que el filo frontal quede nítido. */}
       <div className="absolute inset-x-0 bottom-0 top-[52cqh] overflow-hidden">
         <Image
           src={IMG.barra}
@@ -18,9 +21,11 @@ export function BarraEscena({ children }: { children: ReactNode }) {
           priority
           sizes="(min-width: 600px) 940px, 100vw"
           className="pointer-events-none select-none object-cover [object-position:50%_18%]"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, #000 16%)",
+            maskImage: "linear-gradient(to bottom, transparent 0%, #000 16%)",
+          }}
         />
-        {/* Fundido superior para integrar la barra con el fondo navy. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[16cqh] bg-gradient-to-b from-navy-deep to-transparent" />
       </div>
 
       {/* Capa de escena: aquí vive el coverflow, apoyado en --linea-barra. */}
