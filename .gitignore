@@ -11,3 +11,4 @@ lib/asset-manifest.ts
 public/icon-192.png
 public/icon-512.png
 *.tsbuildinfo
+.env*
