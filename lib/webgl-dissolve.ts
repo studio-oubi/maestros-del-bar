@@ -53,41 +53,56 @@ vec4 muestra(sampler2D t, vec2 uv, vec2 esc){
 void main(){
   float p = uProgress;
 
-  // Campo de ruido que asciende (humo) y hierve lento durante la transición.
-  vec2 np = vUv * vec2(3.0, 3.6);
-  np.y -= p * 1.7;                       // el patrón sube -> volutas que ascienden
-  np += vec2(uTime * 0.035, uTime * 0.075);
-  float f = fbm(np);
+  // Campo de ruido ANISÓTROPO (más fino en X que en Y -> volutas verticales)
+  // que asciende y hierve durante la transición.
+  vec2 np = vUv * vec2(5.0, 2.2);
+  np.y -= p * 1.9;                       // el patrón sube -> volutas que ascienden
+  np += vec2(uTime * 0.04, uTime * 0.09);
+  float fRaw = fbm(np);
+  // El FBM normalizado se concentra en 0.5; sin abrir su distribución todos los
+  // píxeles cruzan el umbral a la vez -> un fade global. Este remapeo lo vuelve
+  // casi binario para que se formen PARCHES que se disuelven en momentos
+  // distintos (disolución por trozos, no un crossfade).
+  float f = smoothstep(0.35, 0.65, fRaw);
 
-  // Sesgo direccional de brocha: el frente barre de abajo hacia arriba,
-  // roto por el ruido para que lea como un trazo y no como una línea recta.
-  float sweep = mix(f, 1.0 - vUv.y, 0.26);
+  // Sesgo de brocha ascendente leve, sin re-alisar el contraste del ruido.
+  float sweep = mix(f, 1.0 - vUv.y, 0.12);
 
-  // Umbral que recorre todo el rango para cubrir de 0% a 100%.
-  float borde = 0.15;
+  // Umbral ESTRECHO: manda el contraste del ruido -> frente irregular en parches.
+  float borde = 0.07;
   float thr = p * (1.0 + 2.0 * borde) - borde;
   float m = smoothstep(thr - borde, thr + borde, sweep);
   // m=1 -> aún uFrom; m=0 -> ya uTo
 
-  // Proximidad al frente: 1 justo en el borde móvil, 0 lejos. Solo vive durante
-  // la transición (en reposo el frente está fuera del rango de sweep).
-  float edge = 1.0 - smoothstep(0.0, borde * 1.8, abs(sweep - thr));
-  float ventana = smoothstep(0.0, 0.06, p) * smoothstep(0.0, 0.06, 1.0 - p);
+  // Banda del frente (para calima, filo y humo). Ancho fijo, mayor que el borde
+  // para que la distorsión y el humo sean visibles alrededor de cada parche.
+  float edge = 1.0 - smoothstep(0.0, 0.16, abs(sweep - thr));
+  float ventana = smoothstep(0.0, 0.05, p) * smoothstep(0.0, 0.05, 1.0 - p);
   edge *= ventana;
 
-  // Distorsión tipo calima: desplaza los UV de AMBAS texturas con un vector de
-  // ruido, escalado por la cercanía al frente (2 muestras de ruido, baratas).
-  // El sesgo hacia arriba (disp.y) arrastra la imagen como humo que sube.
+  // Calima: desplaza los UV de AMBAS texturas con un vector de ruido cerca del
+  // frente (sesgo hacia arriba). Amplitud alta para que la distorsión se note.
   vec2 disp = vec2(noise(np * 2.0 + 5.0), noise(np * 2.0 - 9.0)) - 0.5;
-  disp.y += 0.28;                        // el calor/humo empuja hacia arriba
-  float amp = 0.045 * edge;
-  vec4 a = muestra(uFrom, vUv + disp * amp, uScaleFrom);
-  vec4 b = muestra(uTo, vUv + disp * (amp * 0.7), uScaleTo);
+  disp.y += 0.30;                        // el calor/humo empuja hacia arriba
+  float amp = 0.08 * edge;
+  // La botella saliente SUBE mientras se disuelve: en el frente se muestrea uFrom
+  // más abajo, de modo que su contenido asciende (deriva real, no solo el patrón).
+  vec2 uvFrom = vUv + disp * amp;
+  uvFrom.y -= edge * p * 0.06;
+  vec4 a = muestra(uFrom, uvFrom, uScaleFrom);
+  vec4 b = muestra(uTo, vUv + disp * (amp * 0.6), uScaleTo);
   vec4 col = mix(b, a, m);
 
-  // Filo dorado en el borde móvil (más intenso a mitad de transición).
-  float glow = edge * (0.7 + 0.3 * (1.0 - abs(p * 2.0 - 1.0)));
-  col.rgb += glow * vec3(0.85, 0.68, 0.38) * 0.34;
+  // Filo dorado marcado en el frente (más intenso a mitad de transición).
+  float glow = edge * (0.65 + 0.35 * (1.0 - abs(p * 2.0 - 1.0)));
+  col.rgb += glow * vec3(0.85, 0.68, 0.38) * 0.5;
+
+  // Velo de humo con cuerpo propio: volutas gris-dorado en el frente, moduladas
+  // por el ruido (irregulares, no niebla uniforme). Aporta alpha propio para
+  // que se vean como humo sobre el fondo navy, no solo como tinte.
+  float humo = edge * smoothstep(0.5, 0.85, fRaw);
+  col.rgb = mix(col.rgb, vec3(0.80, 0.71, 0.55), humo * 0.35);
+  col.a = max(col.a, humo * 0.55);
 
   gl_FragColor = col;
 }
@@ -251,7 +266,7 @@ export function crearDissolve(
   let indice = 0; // textura actualmente visible
   let faseInicio = performance.now();
   let enTransicion = false;
-  const duracionTrans = 2200;
+  const duracionTrans = 2800;
 
   const suavizar = (t: number) => t * t * (3 - 2 * t);
 
