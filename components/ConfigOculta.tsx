@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Settings, X } from "lucide-react";
 import { CIUDADES } from "@/lib/establecimientos";
+import { guardarPortada, leerPortada, type Portada } from "@/lib/portada";
 
 const VIDEO_LANZAMIENTO = "/video-lanzamiento.mp4";
 
@@ -29,7 +30,11 @@ function leerConfig(): ConfigLocal | null {
 
 function guardarConfig(config: ConfigLocal): void {
   try {
-    localStorage.setItem(CLAVE_CONFIG, JSON.stringify(config));
+    // Merge: conserva otras claves de mc_config (p.ej. la portada elegida) al
+    // guardar ciudad/establecimiento.
+    const previo = localStorage.getItem(CLAVE_CONFIG);
+    const base = previo ? (JSON.parse(previo) as Record<string, unknown>) : {};
+    localStorage.setItem(CLAVE_CONFIG, JSON.stringify({ ...base, ...config }));
   } catch {
     // localStorage no disponible: no hay más que hacer.
   }
@@ -115,6 +120,7 @@ function ModalConfig({ onCerrar, onVideo }: { onCerrar: () => void; onVideo: () 
   const actual = leerConfig();
   const [ciudad, setCiudad] = useState(actual?.ciudad ?? "");
   const [establecimiento, setEstablecimiento] = useState(actual?.establecimiento ?? "");
+  const [portada, setPortada] = useState<Portada>(leerPortada);
 
   const establecimientos = CIUDADES.find((c) => c.ciudad === ciudad)?.establecimientos ?? [];
 
@@ -149,6 +155,31 @@ function ModalConfig({ onCerrar, onVideo }: { onCerrar: () => void; onVideo: () 
         >
           <Play size={15} strokeWidth={2.25} className="fill-current" /> Video
         </button>
+
+        {/* Selector de PORTADA del Home. Se guarda al instante (persiste como
+            default) y el Home reacciona al vuelo. "Evento" = imagen KV a
+            pantalla completa; "Actual" = composición de botellas de siempre. */}
+        <div className="mt-4">
+          <span className="texto-label mb-1.5 block">Portada</span>
+          <div className="flex gap-3">
+            {([["actual", "Actual"], ["kv", "Evento"]] as const).map(([valor, etiqueta]) => (
+              <button
+                key={valor}
+                type="button"
+                aria-pressed={portada === valor}
+                onClick={() => {
+                  setPortada(valor);
+                  guardarPortada(valor);
+                }}
+                className={`flex-1 rounded-2xl border py-3 font-titulo text-sm uppercase tracking-wide transition-[transform,filter,color,border-color] duration-100 active:scale-[0.98] active:brightness-90 ${
+                  portada === valor ? "border-oro bg-oro/15 text-oro" : "border-oro/25 text-crema-suave"
+                }`}
+              >
+                {etiqueta}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <label className="mt-5 block">
           <span className="texto-label mb-1.5 block">Ciudad</span>

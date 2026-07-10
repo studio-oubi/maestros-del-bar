@@ -36,6 +36,9 @@ const JOBS = [
   { out: "barra.webp", src: nd("Barra.png"), height: 1613 },
   { out: "escapate.webp", src: nd("Escapate a lo extra ordinario.png"), height: 520 },
   { out: "mix-challenge-logo.webp", src: nd("Mix Challenge Logo.png"), height: 790 }, // nativo
+  // Portada "Evento" (KV): imagen promocional a pantalla completa (1080×1920).
+  // Calidad héroe (90) porque lleva un QR que debe quedar nítido.
+  { out: "portada-kv.webp", src: nd("portada-kv.png"), height: 1920, quality: 90 },
   { out: "home-doble.webp", src: nd("Home Doble.png"), height: 2752, quality: 90 }, // nativo
   { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 2752, quality: 90 }, // nativo
   { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 2754, quality: 90 }, // nativo
@@ -129,6 +132,7 @@ const MANIFEST_KEYS = [
   ["escapate", "escapate.webp"],
   ["logoBrugal", "logo-brugal.svg"],
   ["logoMix", "mix-challenge-logo.webp"],
+  ["portadaKv", "portada-kv.webp"],
   ["homeDoble", "home-doble.webp"],
   ["homeExtraviejo", "home-extraviejo.webp"],
   ["homeTriple", "home-triple.webp"],

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { useJuego } from "@/lib/juego";
+import { EVENTO_PORTADA, leerPortada, type Portada } from "@/lib/portada";
 
 const BOTELLAS = [IMG.homeExtraviejo, IMG.homeDoble, IMG.homeTriple];
 const UMBRAL_MOV = 12; // px: más que esto se considera scroll/drag, no un toque
@@ -12,6 +13,16 @@ export function Home() {
   const inicio = useRef<{ x: number; y: number } | null>(null);
 
   const comenzar = () => despachar({ tipo: "IR", a: "formulario" });
+
+  // Portada elegida en el popup de config (persiste en localStorage). Se
+  // relee al montar y al vuelo cuando el promotor la cambia (evento propio).
+  const [portada, setPortada] = useState<Portada>(leerPortada);
+  useEffect(() => {
+    setPortada(leerPortada());
+    const alCambiar = () => setPortada(leerPortada());
+    window.addEventListener(EVENTO_PORTADA, alCambiar);
+    return () => window.removeEventListener(EVENTO_PORTADA, alCambiar);
+  }, []);
 
   return (
     <div
@@ -39,6 +50,19 @@ export function Home() {
     >
       <style>{estilos}</style>
 
+      {portada === "kv" ? (
+        // Portada de evento: la imagen KV tal cual, a pantalla completa
+        // (object-cover; misma proporción 9:16 -> recorte mínimo, el QR queda
+        // visible). Sin textos superpuestos: la imagen ya trae todo su arte.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={IMG.portadaKv}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <>
       {/* Proporciones medidas de la referencia (User Flow/1.png, 1080×1920),
           en unidades de container-query relativas a esta pantalla:
           Brugal ~33cqw centro 17.5cqh · lockup ~66cqw centro 29cqh ·
@@ -88,6 +112,8 @@ export function Home() {
       <p className="mix-latido absolute bottom-[3cqh] left-1/2 -translate-x-1/2 font-cuerpo text-[0.7rem] font-light uppercase tracking-[0.35em] text-crema/55">
         toca para comenzar
       </p>
+        </>
+      )}
     </div>
   );
 }
