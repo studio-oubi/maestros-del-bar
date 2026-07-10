@@ -11,11 +11,13 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const ND = path.join(ROOT, "New design "); // ojo: espacio final en el nombre real
 const LEG = path.join(ROOT, "legacy/assets");
+const STOCK = path.join(ROOT, "stock"); // botellas relabeladas + ingredientes propios (ver scripts/build-stock.mjs)
 const OUT = path.join(ROOT, "public/img");
 const MANIFEST_PATH = path.join(ROOT, "lib/asset-manifest.ts");
 
 const nd = (name) => path.join(ND, name);
 const leg = (name) => path.join(LEG, name);
+const stock = (name) => path.join(STOCK, name);
 
 // out: nombre de archivo en public/img; src: ruta absoluta de origen; height: alto máx de
 // resize; quality: opcional, override de calidad webp (default 86, ver loop más abajo).
@@ -46,11 +48,6 @@ const JOBS = [
   { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 2752, quality: 90 }, // nativo
   { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 2752, quality: 90 }, // nativo
   { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 2752, quality: 90 }, // nativo
-  { out: "mixer-perrier.webp", src: leg("mixer-perrier.png"), height: 1600, quality: 90 },
-  { out: "mixer-limon.webp", src: leg("mixer-limon.png"), height: 1600, quality: 90 },
-  { out: "mixer-tonica.webp", src: leg("mixer-tonica.png"), height: 1600, quality: 90 },
-  { out: "mixer-ginger.webp", src: leg("mixer-ginger.png"), height: 1600, quality: 90 },
-  { out: "mixer-arandano.webp", src: leg("mixer-arandano.png"), height: 1600, quality: 90 },
   { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 800 },
   { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 800 },
   { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 800 },
@@ -59,10 +56,27 @@ const JOBS = [
   { out: "ing-jengibre.webp", src: leg("ing-jengibre.png"), height: 800 },
   { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 800 },
   { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 800 },
-  { out: "ing-angostura.webp", src: leg("ing-angostura.png"), height: 800 },
   { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 800 },
   { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 800 },
   { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 800 },
+
+  // Botellas de mezclas RELABELADAS (stock/, generado por scripts/build-stock.mjs):
+  // fotos reales de legacy/assets con la etiqueta de marca tapada por una
+  // genérica navy/dorado propia del juego. Ver stock/LICENCIAS.md — estas 7
+  // no llevan ningún asset externo, solo re-etiquetan fotos ya del cliente.
+  { out: "mixer-zumo-limon.webp", src: stock("mixer-zumo-limon.png"), height: 1600, quality: 90 },
+  { out: "mixer-sirope-albahaca.webp", src: stock("mixer-sirope-albahaca.png"), height: 1600, quality: 90 },
+  { out: "mixer-zumo-toronja.webp", src: stock("mixer-zumo-toronja.png"), height: 1600, quality: 90 },
+  { out: "mixer-sirope-simple.webp", src: stock("mixer-sirope-simple.png"), height: 1600, quality: 90 },
+  { out: "mixer-bitter-naranja.webp", src: stock("mixer-bitter-naranja.png"), height: 1600, quality: 90 },
+  { out: "mixer-agua-gas.webp", src: stock("mixer-agua-gas.png"), height: 1600, quality: 90 },
+  { out: "mixer-soda.webp", src: stock("mixer-soda.png"), height: 1600, quality: 90 },
+
+  // Ingredientes nuevos (stock/): cáscara recortada de un render propio del
+  // cliente (sour.png), anís de la única foto externa del juego (Dominio
+  // Público, ver stock/LICENCIAS.md).
+  { out: "ing-cascara.webp", src: stock("ing-cascara.png"), height: 800 },
+  { out: "ing-anis.webp", src: stock("ing-anis.png"), height: 800 },
 ];
 
 // Tiles derivados: recorte (extract) sobre la imagen fuente a tamaño original,
@@ -134,11 +148,6 @@ const MANIFEST_KEYS = [
   ["vasoToronja", "vaso-toronja.webp"],
   ["vasoSour", "vaso-sour.webp"],
   ["vasoAlbahaca", "vaso-albahaca.webp"],
-  ["mixerPerrier", "mixer-perrier.webp"],
-  ["mixerLimon", "mixer-limon.webp"],
-  ["mixerTonica", "mixer-tonica.webp"],
-  ["mixerGinger", "mixer-ginger.webp"],
-  ["mixerArandano", "mixer-arandano.webp"],
   ["ingToronja", "ing-toronja.webp"],
   ["ingRomero", "ing-romero.webp"],
   ["ingHielo", "ing-hielo.webp"],
@@ -151,9 +160,17 @@ const MANIFEST_KEYS = [
   ["ingJengibre", "ing-jengibre.webp"],
   ["ingFrambuesa", "ing-frambuesa.webp"],
   ["ingMenta", "ing-menta.webp"],
-  ["ingAngostura", "ing-angostura.webp"],
   ["ingCafe", "ing-cafe.webp"],
   ["ingDemerara", "ing-demerara.webp"],
+  ["mixerZumoLimon", "mixer-zumo-limon.webp"],
+  ["mixerSiropeAlbahaca", "mixer-sirope-albahaca.webp"],
+  ["mixerZumoToronja", "mixer-zumo-toronja.webp"],
+  ["mixerSiropeSimple", "mixer-sirope-simple.webp"],
+  ["mixerBitterNaranja", "mixer-bitter-naranja.webp"],
+  ["mixerAguaGas", "mixer-agua-gas.webp"],
+  ["mixerSoda", "mixer-soda.webp"],
+  ["ingCascara", "ing-cascara.webp"],
+  ["ingAnis", "ing-anis.webp"],
 ];
 
 // Cache-busting: el manifiesto emite las URLs como /img/archivo.webp?v=<hash>.

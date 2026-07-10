@@ -54,28 +54,29 @@ export const VASOS: { id: VasoId; nombre: string; img: string }[] = [
   { id: "vaso-sour", nombre: "VASO TALLADO", img: IMG.vasoSour },
   { id: "vaso-albahaca", nombre: "VASO REDONDO", img: IMG.vasoAlbahaca },
 ];
-// PLACEHOLDERS de imagen: se mapean a los mixers actuales con criterio (limón,
-// agua con gas y soda calzan; el resto reusa assets). TODO: otro agente traerá
-// imágenes genéricas sin marca (zumos/siropes/bitter) y las reemplazará aquí.
+// Botellas de mezclas RELABELADAS (stock/, ver scripts/build-stock.mjs): fotos
+// reales de legacy/assets con la etiqueta de marca tapada por una genérica
+// navy/dorado propia del juego. Sin assets externos (excepto ing-anis, ver
+// stock/LICENCIAS.md).
 export const MEZCLAS: { id: MezclaId; nombre: string; img: string }[] = [
-  { id: "zumo-limon", nombre: "ZUMO DE LIMÓN", img: IMG.mixerLimon },
-  { id: "sirope-albahaca", nombre: "SIROPE DE ALBAHACA", img: IMG.mixerGinger }, // TODO placeholder
-  { id: "zumo-toronja", nombre: "ZUMO DE TORONJA", img: IMG.mixerArandano }, // TODO placeholder
-  { id: "sirope-simple", nombre: "SIROPE SIMPLE", img: IMG.mixerGinger }, // TODO placeholder
-  { id: "bitter-naranja", nombre: "BITTER DE NARANJA", img: IMG.mixerArandano }, // TODO placeholder
-  { id: "agua-gas", nombre: "AGUA CON GAS", img: IMG.mixerPerrier },
-  { id: "soda", nombre: "SODA", img: IMG.mixerTonica },
+  { id: "zumo-limon", nombre: "ZUMO DE LIMÓN", img: IMG.mixerZumoLimon },
+  { id: "sirope-albahaca", nombre: "SIROPE DE ALBAHACA", img: IMG.mixerSiropeAlbahaca },
+  { id: "zumo-toronja", nombre: "ZUMO DE TORONJA", img: IMG.mixerZumoToronja },
+  { id: "sirope-simple", nombre: "SIROPE SIMPLE", img: IMG.mixerSiropeSimple },
+  { id: "bitter-naranja", nombre: "BITTER DE NARANJA", img: IMG.mixerBitterNaranja },
+  { id: "agua-gas", nombre: "AGUA CON GAS", img: IMG.mixerAguaGas },
+  { id: "soda", nombre: "SODA", img: IMG.mixerSoda },
 ];
-// EXACTAMENTE 12 (grid 3×4). cascara/anis usan placeholders (TODO: assets propios).
+// EXACTAMENTE 12 (grid 3×4).
 export const INGREDIENTES: Record<IngredienteId, { nombre: string; img: string }> = {
   toronja: { nombre: "TORONJA", img: IMG.ingToronja },
   romero: { nombre: "ROMERO", img: IMG.ingRomero },
-  cascara: { nombre: "CÁSCARA DE NARANJA", img: IMG.ingNaranja }, // TODO placeholder
+  cascara: { nombre: "CÁSCARA DE NARANJA", img: IMG.ingCascara },
   albahaca: { nombre: "ALBAHACA", img: IMG.ingAlbahaca },
   hielo: { nombre: "HIELO", img: IMG.ingHielo },
   menta: { nombre: "MENTA", img: IMG.ingMenta },
   canela: { nombre: "CANELA", img: IMG.ingCanela },
-  anis: { nombre: "ANÍS", img: IMG.ingAngostura }, // TODO placeholder
+  anis: { nombre: "ANÍS", img: IMG.ingAnis },
   frambuesa: { nombre: "FRAMBUESA", img: IMG.ingFrambuesa },
   jengibre: { nombre: "JENGIBRE", img: IMG.ingJengibre },
   cafe: { nombre: "CAFÉ", img: IMG.ingCafe },
