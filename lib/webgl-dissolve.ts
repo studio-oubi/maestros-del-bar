@@ -153,7 +153,7 @@ export function crearDissolve(
   let anchoCanvas = 1;
   let altoCanvas = 1;
   const dimensionar = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
     const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
     if (w === canvas.width && h === canvas.height) return;
