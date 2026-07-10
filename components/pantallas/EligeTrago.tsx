@@ -19,7 +19,7 @@ export function EligeTrago() {
     () => RECETAS.map((r) => ({ id: r.id, img: r.imgTrago, nombre: r.nombre })),
     [],
   );
-  const [centro, setCentro] = useState(() => Math.floor((RECETAS.length - 1) / 2));
+  const [centro, setCentro] = useState(0); // ruleta infinita: arranca en el primer trago
 
   const onCentroChange = useCallback((_it: CoverflowItem, i: number) => setCentro(i), []);
 

@@ -15,14 +15,14 @@ interface Props {
   onCentroChange?: (item: CoverflowItem, index: number) => void; // opcional: snap
 }
 
-// Reparto/física del coverflow (afinado visualmente contra el mock 7).
-const FACTOR = 0.44; // separación horizontal (× 46cqw)
+// Reparto/física del coverflow (ruleta infinita estilo legacy).
+const FACTOR = 0.34; // separación horizontal (× 46cqw) — laterales bien dentro del encuadre
 const ROT = 38; // grados de rotateY por unidad de distancia
 const DEPTH = 175; // px de translateZ por unidad de distancia
-const SCALE_STEP = 0.2; // reducción de escala por unidad
+const SCALE_STEP = 0.28; // reducción de escala por unidad (marcada: "cambia de tamaño" al rotar)
 const BRIGHT_STEP = 0.3; // oscurecimiento por unidad (centro = 1)
 const BLUR_STEP = 1.6; // px de desenfoque por unidad
-const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto
+const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto (útil con 5+ items)
 const K = 170; // rigidez del muelle
 const C = 26; // amortiguación (≈ crítica para k=170)
 const PROY = 0.16; // s de proyección de la inercia al soltar
@@ -31,7 +31,7 @@ const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi 
 
 export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }: Props) {
   const n = items.length;
-  const inicial = Math.floor((n - 1) / 2); // arranca centrado (ambos vecinos visibles)
+  const inicial = 0; // ruleta infinita: en 0 el primer item queda centrado con ambos vecinos
   const stageRef = useRef<HTMLDivElement>(null);
   const nodosRef = useRef<(HTMLDivElement | null)[]>([]);
   const [centro, setCentro] = useState(inicial);
@@ -61,29 +61,34 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     for (let k = 0; k < n; k++) {
       const el = nodos[k];
       if (!el) continue;
-      const d = k - pos;
+      // Distancia envuelta al centro (ruleta infinita): el item aparece en su
+      // copia más cercana, en [-n/2, n/2]. Al pasar el último reaparece el primero.
+      let d = k - pos;
+      d = d - n * Math.round(d / n);
       const a = Math.abs(d);
       const sign = Math.sign(d);
-      // Comprime el reparto de los items lejanos para que no se disparen.
+      // Comprime el reparto de los items lejanos para que no se disparen (5+ items).
       const aSuave = a <= SUAVE_DESDE ? a : SUAVE_DESDE + (a - SUAVE_DESDE) * 0.45;
       const txCqw = sign * aSuave * 46 * FACTOR;
       const ry = clamp(-d * ROT, -52, 52);
       const tz = -aSuave * DEPTH;
-      const sc = Math.max(0.4, 1 - a * SCALE_STEP);
+      const sc = Math.max(0.34, 1 - a * SCALE_STEP);
       const brillo = Math.max(0.5, 1 - a * BRIGHT_STEP);
       const blur = Math.min(4.5, a * BLUR_STEP);
       // Sombra fuerte y centrada en el item central; se diluye hacia los lados.
       const sombra = Math.max(0, 1 - a) * 22;
+      // Funde los items que se van al fondo (costura de la ruleta con pocos items).
+      const opacidad = a < 2 ? 1 : Math.max(0, 1 - (a - 2) / 0.6);
       el.style.transform =
         `translateX(-50%) translateX(${txCqw}cqw) rotateY(${ry}deg) ` +
         `translateZ(${tz}px) scale(${sc})`;
       el.style.filter =
         `brightness(${brillo.toFixed(3)}) blur(${blur.toFixed(2)}px) ` +
         `drop-shadow(0 ${(6 + sombra).toFixed(0)}px ${(10 + sombra).toFixed(0)}px rgba(0,0,0,.55))`;
-      el.style.opacity = a > 2.6 ? "0" : "1";
+      el.style.opacity = opacidad.toFixed(2);
       el.style.zIndex = String(200 - Math.round(a * 10));
     }
-    const c = clamp(Math.round(pos), 0, n - 1);
+    const c = ((Math.round(pos) % n) + n) % n; // índice centrado envuelto
     if (c !== centroRef.current) {
       centroRef.current = c;
       setCentro(c);
@@ -122,8 +127,13 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     rafRef.current = requestAnimationFrame(paso);
   }
 
+  // Anima hacia un índice (posiblemente envuelto). Elige la copia más cercana a
+  // la posición actual para que gire por el camino corto.
   function irA(indice: number) {
-    objetivoRef.current = clamp(indice, 0, n - 1);
+    const pos = posRef.current;
+    let objetivo = indice;
+    objetivo = objetivo - n * Math.round((objetivo - pos) / n);
+    objetivoRef.current = objetivo;
     correrMuelle();
   }
 
@@ -156,11 +166,8 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     p.vpx = (e.clientX - p.xPrev) / dtm; // px/ms
     p.xPrev = e.clientX;
     p.tPrev = t;
-    let pos = p.pos0 - (e.clientX - p.x0) / pasoPx();
-    // Rebote elástico en los extremos (sin wrap).
-    if (pos < 0) pos = pos * 0.35;
-    else if (pos > n - 1) pos = n - 1 + (pos - (n - 1)) * 0.35;
-    posRef.current = pos;
+    // Ruleta infinita: la posición no se acota (el render envuelve al índice).
+    posRef.current = p.pos0 - (e.clientX - p.x0) / pasoPx();
     pintar();
   }
 
@@ -172,18 +179,20 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     const dx = e.clientX - p.x0;
     const dy = e.clientY - p.y0;
     const mov = Math.hypot(dx, dy);
+    const centroActual = ((Math.round(posRef.current) % n) + n) % n; // índice envuelto centrado
     if (mov < 8) {
       // Tap: sobre el central -> seleccionar; sobre un lateral -> ir hacia él.
-      const idx = p.idx >= 0 ? p.idx : clamp(Math.round(posRef.current), 0, n - 1);
-      if (idx === clamp(Math.round(posRef.current), 0, n - 1)) onSelect(items[idx].id);
+      const idx = p.idx >= 0 ? p.idx : centroActual;
+      if (idx === centroActual) onSelect(items[idx].id);
       else irA(idx);
       return;
     }
-    // Inercia: proyecta con la velocidad medida y engancha al índice más cercano.
+    // Inercia: proyecta con la velocidad medida y engancha al índice más cercano
+    // (sin límites: la ruleta puede dar vueltas completas).
     const velIdx = (-p.vpx * 1000) / pasoPx(); // índice/seg
     velRef.current = velIdx;
     const proyectado = posRef.current + velIdx * PROY;
-    objetivoRef.current = clamp(Math.round(proyectado), 0, n - 1);
+    objetivoRef.current = Math.round(proyectado);
     correrMuelle();
   }
 
@@ -195,7 +204,8 @@ export function Coverflow3D({ items, onSelect, alturaItem = 34, onCentroChange }
     if (!arrastreRef.current || e.pointerId !== p.id) return;
     arrastreRef.current = false;
     p.id = -1;
-    irA(clamp(Math.round(posRef.current), 0, n - 1));
+    objetivoRef.current = Math.round(posRef.current); // reencaja al índice más cercano
+    correrMuelle();
   }
 
   // Pintado inicial y en cambios de tamaño / lista.
