@@ -5,9 +5,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { BarraEscena } from "@/components/BarraEscena";
 import { IMG } from "@/lib/asset-manifest";
 import { INGREDIENTES } from "@/lib/recetas";
-import type { IngredienteId } from "@/lib/recetas";
+import type { IngredienteId, Receta } from "@/lib/recetas";
 import { enviarPartida } from "@/lib/partida-cliente";
 import { reintentarPendiente } from "@/lib/registro-cliente";
+import { filtroTinte } from "@/lib/tinte-trago";
 import { useJuego } from "@/lib/juego";
 
 const BOTON =
@@ -78,6 +79,85 @@ function Confetti() {
   );
 }
 
+// Anima --rev de 0 a 104% con easing cúbico (rAF), igual que animarRevelado()
+// en legacy/index.html (sube al 104% para que el borde de la máscara salga
+// del cuadro y no quede una línea dura). Corre una sola vez al montar.
+function useRevelado<T extends HTMLElement>(duracionMs: number) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const t0 = performance.now();
+    function paso(t: number) {
+      const p = Math.min(1, (t - t0) / duracionMs);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el!.style.setProperty("--rev", `${(104 * ease).toFixed(2)}%`);
+      if (p < 1) raf = requestAnimationFrame(paso);
+    }
+    raf = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(raf);
+  }, [duracionMs]);
+  return ref;
+}
+
+// Misma máscara que .rev-trago en legacy/index.html: revela la imagen de
+// abajo hacia arriba según --rev.
+const MASCARA_REVELADO = "linear-gradient(to top, #000 0%, #000 calc(var(--rev, 0%) - 4%), transparent var(--rev, 0%))";
+
+// Trago con reveal de máscara (líquido "subiendo" en el vaso) + tinte por
+// ingredientes, portados de legacy/index.html (animarRevelado + preparar()).
+// Si `elecciones` coincide EXACTO con `receta.ingredientes` el trago se ve
+// normal; si no, se aplica un hue-rotate proporcional a la desviación
+// cromática entre lo elegido y lo correcto — el fallo se lee en el vaso.
+function TragoRevelado({
+  receta,
+  elecciones,
+  alturaClase,
+}: {
+  receta: Receta;
+  elecciones: IngredienteId[];
+  alturaClase: string;
+}) {
+  const tinte = filtroTinte(elecciones, receta.ingredientes);
+  const acerto = tinte === "";
+  const revRef = useRevelado<HTMLImageElement>(acerto ? 1700 : 1300);
+  const sombra = "drop-shadow(0 18px 30px rgba(0,0,0,.55))";
+
+  return (
+    <div className="relative flex flex-col items-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={revRef}
+        src={receta.imgTrago}
+        alt={receta.nombre}
+        draggable={false}
+        className={`pointer-events-none w-auto select-none object-contain ${alturaClase}`}
+        style={{
+          ["--rev" as string]: "0%",
+          WebkitMaskImage: MASCARA_REVELADO,
+          maskImage: MASCARA_REVELADO,
+          filter: tinte ? `${tinte} ${sombra}` : sombra,
+        }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={receta.imgTrago}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className={`pointer-events-none absolute left-1/2 top-full w-auto -translate-x-1/2 select-none object-contain opacity-[0.18] ${alturaClase}`}
+        style={{
+          transform: "translateX(-50%) scaleY(-1)",
+          filter: tinte || undefined,
+          WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
+          maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
+        }}
+      />
+    </div>
+  );
+}
+
 // Variante "gano" (mock 13): título gigante, confetti sutil, trago sobre la
 // barra con su tarjeta de receta al lado.
 function Ganaste() {
@@ -102,28 +182,7 @@ function Ganaste() {
           className="absolute inset-x-0 z-10 flex items-end justify-center gap-[4cqw] px-[6cqw]"
           style={{ bottom: "calc(100cqh - var(--linea-barra, 62cqh))" }}
         >
-          <div className="relative flex flex-col items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={receta.imgTrago}
-              alt={receta.nombre}
-              draggable={false}
-              className="pointer-events-none h-[26cqh] w-auto select-none object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,.55)]"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={receta.imgTrago}
-              alt=""
-              aria-hidden
-              draggable={false}
-              className="pointer-events-none absolute left-1/2 top-full h-[26cqh] w-auto -translate-x-1/2 select-none object-contain opacity-[0.18]"
-              style={{
-                transform: "translateX(-50%) scaleY(-1)",
-                WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-                maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-              }}
-            />
-          </div>
+          <TragoRevelado receta={receta} elecciones={estado.elecciones.ingredientes} alturaClase="h-[26cqh]" />
 
           <div className="mb-[3.4cqh] flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
             <h2 className="font-titulo text-[2.1cqh] font-medium uppercase leading-[1.04] text-white">
@@ -188,6 +247,10 @@ function Casi() {
       <div className="mt-[10cqh] flex flex-col items-center gap-[0.8cqh]">
         <h1 className="texto-titulo">CASI...</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
+      </div>
+
+      <div className="mt-[2.2cqh]">
+        <TragoRevelado receta={receta} elecciones={estado.elecciones.ingredientes} alturaClase="h-[16cqh]" />
       </div>
 
       <div className="mt-[3.2cqh] flex w-full flex-col items-center">
