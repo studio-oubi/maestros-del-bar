@@ -75,10 +75,43 @@ function calcularEscala(iw: number, ih: number, cw: number, ch: number): [number
   return [(iw * escala) / cw, (ih * escala) / ch];
 }
 
+// Cache de imágenes decodificadas a nivel de módulo, compartido entre montajes.
+// Así la decodificación (cara con imágenes grandes) ocurre una sola vez por
+// sesión: al volver al Home solo se re-suben las texturas, no se re-decodifican.
+const cacheImagenes = new Map<string, Promise<HTMLImageElement>>();
+
+function cargarImagen(url: string): Promise<HTMLImageElement> {
+  let p = cacheImagenes.get(url);
+  if (!p) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = url;
+    // decode() garantiza que el bitmap está completamente decodificado antes
+    // de resolver, de modo que el texImage2D posterior no bloquea.
+    p = img
+      .decode()
+      .then(() => img)
+      .catch(
+        () =>
+          new Promise<HTMLImageElement>((resolve, reject) => {
+            if (img.complete && img.naturalWidth > 0) return resolve(img);
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`No se pudo cargar ${url}`));
+          }),
+      );
+    cacheImagenes.set(url, p);
+  }
+  return p;
+}
+
 export function crearDissolve(
   canvas: HTMLCanvasElement,
   urls: string[],
   intervaloMs: number,
+  // Se invoca una vez, cuando el shader pinta su primer frame con contenido
+  // real (la textura del índice 0 ya subida). El caller lo usa para ocultar el
+  // placeholder sin dejar hueco.
+  onPrimerContenido?: () => void,
 ): DissolveController | null {
   const opciones: WebGLContextAttributes = {
     premultipliedAlpha: false,
@@ -137,17 +170,18 @@ export function crearDissolve(
 
   let destruido = false;
   urls.forEach((url, i) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (destruido) return;
-      gl.bindTexture(gl.TEXTURE_2D, texturas[i].tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      texturas[i].w = img.naturalWidth;
-      texturas[i].h = img.naturalHeight;
-      texturas[i].lista = true;
-    };
-    img.src = url;
+    cargarImagen(url)
+      .then((img) => {
+        if (destruido) return;
+        gl.bindTexture(gl.TEXTURE_2D, texturas[i].tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        texturas[i].w = img.naturalWidth;
+        texturas[i].h = img.naturalHeight;
+        texturas[i].lista = true;
+      })
+      .catch(() => {
+        /* imagen no disponible: se queda con el placeholder transparente */
+      });
   });
 
   let anchoCanvas = 1;
@@ -176,6 +210,7 @@ export function crearDissolve(
 
   const suavizar = (t: number) => t * t * (3 - 2 * t);
 
+  let notificado = false;
   let raf = 0;
   const dibujar = (ahora: number) => {
     if (destruido) return;
@@ -223,6 +258,13 @@ export function crearDissolve(
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Primer frame con contenido real (la textura visible ya está subida):
+    // avisa al caller para que retire el placeholder sin dejar hueco.
+    if (!notificado && desde.lista) {
+      notificado = true;
+      onPrimerContenido?.();
+    }
   };
   raf = requestAnimationFrame(dibujar);
 

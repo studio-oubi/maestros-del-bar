@@ -18,6 +18,10 @@ type Modo = "webgl" | "css-mascara" | "css-simple";
 export function ShaderBotellas({ imagenes, intervaloMs = 6000, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [modo, setModo] = useState<Modo>("webgl");
+  // El placeholder (primera botella) se muestra hasta que el shader pinta su
+  // primer frame con contenido. Empieza en true en cada montaje para que al
+  // volver al Home la botella se vea al instante, sin el hueco vacío.
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,7 +37,9 @@ export function ShaderBotellas({ imagenes, intervaloMs = 6000, className }: Prop
       return;
     }
 
-    const ctrl = crearDissolve(canvas, imagenes, intervaloMs);
+    const ctrl = crearDissolve(canvas, imagenes, intervaloMs, () =>
+      setPlaceholderVisible(false),
+    );
     if (!ctrl) {
       setModo("css-mascara");
       return;
@@ -49,6 +55,17 @@ export function ShaderBotellas({ imagenes, intervaloMs = 6000, className }: Prop
         style={{ display: modo === "webgl" ? "block" : "none" }}
         aria-hidden
       />
+      {/* Placeholder instantáneo: misma imagen y mismo object-contain que pinta
+          el shader, así el reemplazo es imperceptible (sin flash ni salto). */}
+      {modo === "webgl" && placeholderVisible && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imagenes[0]}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+        />
+      )}
       {modo !== "webgl" && (
         <FallbackCss
           imagenes={imagenes}
