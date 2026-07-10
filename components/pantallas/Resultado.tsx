@@ -192,6 +192,17 @@ function TragoRevelado({
 // dominar la escena sin invadir el título GANASTE!! (ver comentario abajo).
 const ALTURA_TRAGO_GANASTE_CQH = 45;
 
+// Alto de la CAJA del trago revelado en "Casi". Los PNG del set traen mucho
+// alpha (25-32% arriba, 18-26% abajo): a 58cqh de caja el vaso VISIBLE queda
+// en ~25-30cqh. El crecimiento respecto al alto de referencia se absorbe con
+// margen superior negativo, así el vaso crece hacia ARRIBA (hacia el hueco
+// bajo el subtítulo) y la ficha de ingredientes no se mueve.
+const ALTURA_TRAGO_CASI_CQH = 58;
+// Alto de caja con el que se calibró la posición actual de la ficha: el
+// margen superior negativo mantiene el final de layout del bloque idéntico
+// al que produce esta referencia.
+const ALTURA_REF_CASI_CQH = 40;
+
 // Variante "gano" (mock 13): título gigante, confetti sutil, trago sobre la
 // barra con su tarjeta de receta al lado.
 function Ganaste() {
@@ -310,21 +321,36 @@ function Casi() {
   const ev = estado.evaluacion;
   if (!receta || !ev) return null;
 
+  // Igual que en Ganaste: los PNG traen padding transparente inferior, así
+  // que a este tamaño el trago quedaría "despegado" del checklist de abajo.
+  // El margin-bottom negativo recorta el alto de layout a la base VISIBLE.
+  const imgVasoBase =
+    (estado.elecciones.vaso && VASOS.find((v) => v.id === estado.elecciones.vaso)?.img) || receta.imgVaso;
+  const padFracCasi = PAD_INFERIOR[imgVasoBase] ?? 0;
+  const padCasiCqh = padFracCasi * ALTURA_TRAGO_CASI_CQH;
+  // Mantiene el final de layout del bloque (y con él la ficha de abajo) en el
+  // punto que produce la caja de referencia: todo el alto extra se proyecta
+  // hacia arriba. Incluye el mt-[2cqh] original del contenedor.
+  const mtCasiCqh = 2 + (1 - padFracCasi) * (ALTURA_REF_CASI_CQH - ALTURA_TRAGO_CASI_CQH);
+
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[3.5cqh] pt-[5cqh] text-center">
       <Logo />
 
-      <div className="mt-[7cqh] flex flex-col items-center gap-[0.8cqh]">
+      {/* relative z-10: el trago agrandado sube hasta esta zona (el garnish
+          puede cruzarla); el texto debe pintarse ENCIMA para seguir legible. */}
+      <div className="relative z-10 mt-[7cqh] flex flex-col items-center gap-[0.8cqh]">
         <h1 className="texto-titulo">CASI...</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
 
-      <div className="mt-[2cqh]">
+      <div style={{ marginTop: `${mtCasiCqh}cqh` }}>
         <TragoRevelado
           receta={receta}
           elecciones={estado.elecciones.ingredientes}
           vasoElegido={estado.elecciones.vaso}
-          alturaClase="h-[23cqh]"
+          alturaClase=""
+          style={{ height: `${ALTURA_TRAGO_CASI_CQH}cqh`, marginBottom: `${-padCasiCqh}cqh` }}
         />
       </div>
 
