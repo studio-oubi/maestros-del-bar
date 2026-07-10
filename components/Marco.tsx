@@ -29,7 +29,7 @@ export function Marco({ children }: { children: ReactNode }) {
           sizes="(orientation: landscape) 940px, 100vw"
           className="pointer-events-none select-none object-cover"
         />
-        <div className="pointer-events-none absolute inset-[8px] rounded-[18px] border-[3px] border-oro/70" />
+        <div className="pointer-events-none absolute inset-[8px] rounded-[18px] border-[5px] border-oro/70" />
         <div className="relative z-10 h-full w-full">{children}</div>
       </div>
     </div>
