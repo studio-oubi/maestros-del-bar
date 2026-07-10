@@ -57,7 +57,7 @@ const JOBS = [
   { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 800 },
   { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 800 },
   { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 800 },
-  { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 800 },
+  { out: "ing-demerara.webp", src: stock("ing-demerara.png"), height: 800 }, // logo Shamrock despintado, ver build-stock.mjs
   { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 800 },
 
   // Botellas de mezclas RELABELADAS (stock/, generado por scripts/build-stock.mjs):

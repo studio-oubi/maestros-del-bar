@@ -1,8 +1,8 @@
 // Genera una etiqueta genérica (rectángulo redondeado navy + borde dorado +
-// nombre en mayúsculas doradas) y la compone sobre una foto de botella
-// existente, para tapar la etiqueta de marca original. Usado por
-// scripts/build-stock.mjs para producir los mixer-* de stock/ a partir de
-// fuentes de legacy/assets.
+// nombre en mayúsculas doradas) o un parche de color liso, y los compone
+// sobre una foto de botella existente para tapar la etiqueta de marca
+// original. Usado por scripts/build-stock.mjs para producir los mixer-* de
+// stock/ a partir de fuentes de legacy/assets.
 import sharp from "sharp";
 
 const NAVY = "#0a1a3a";
@@ -38,13 +38,11 @@ function svgEtiqueta({ w, h, r, nombre }) {
   const padX = w * 0.12;
   const anchoDisponible = w - padX * 2;
   const altoDisponible = h * 0.7;
-  // font-size que hace caber la línea más larga en el ancho disponible.
   const charsMax = Math.max(...lineas.map((l) => l.length));
   let fontSize = anchoDisponible / (charsMax * ANCHO_CAR);
-  // limitado también por el alto disponible repartido entre líneas.
   const fontSizeAlto = (altoDisponible / lineas.length) * 0.78;
   fontSize = Math.min(fontSize, fontSizeAlto);
-  fontSize = Math.max(fontSize, 8); // piso de legibilidad
+  fontSize = Math.max(fontSize, 8);
 
   const lineHeight = fontSize * 1.12;
   const bloqueAlto = lineHeight * lineas.length;
@@ -73,8 +71,29 @@ function svgEtiqueta({ w, h, r, nombre }) {
   </svg>`;
 }
 
-// Compone una o más etiquetas genéricas sobre una imagen fuente.
-// rects: [{ x, y, w, h, r, nombre }] en coordenadas nativas de la imagen fuente.
+// Parche liso (sin borde ni texto): para tapar restos de marca con el color
+// base del envase en vez de agrandar la etiqueta (p.ej. las bandas rojas del
+// cartón de arándano, o el óvalo de un logo sobre la bolsa de demerara).
+function svgParche({ w, h, r, color, shape }) {
+  const [cr, cg, cb] = color;
+  const fill = `rgb(${cr},${cg},${cb})`;
+  if (shape === "ellipse") {
+    return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="${w / 2}" cy="${h / 2}" rx="${w / 2}" ry="${h / 2}" fill="${fill}"/>
+    </svg>`;
+  }
+  return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="${w}" height="${h}" rx="${r ?? 0}" ry="${r ?? 0}" fill="${fill}"/>
+  </svg>`;
+}
+
+// Compone etiquetas genéricas y/o parches lisos sobre una imagen fuente, y
+// al final recorta todo el resultado a la silueta ORIGINAL de la botella
+// (canal alpha de la fuente, vía blend dest-in) para que ninguna etiqueta ni
+// parche sobresalga del contorno real del envase.
+//
+// rects: cada elemento es o bien una etiqueta ({ x,y,w,h,r,nombre }) o un
+// parche liso ({ x,y,w,h,r?,color:[r,g,b],shape?:"ellipse" }).
 // factor: upscale aplicado antes de componer (fuentes legacy son chicas; se
 // sube de resolución para que el texto vectorial de la etiqueta salga nítido).
 export async function relabelarBotella(srcPath, rects, { factor = 3 } = {}) {
@@ -88,8 +107,11 @@ export async function relabelarBotella(srcPath, rects, { factor = 3 } = {}) {
   for (const rect of rects) {
     const w = Math.round(rect.w * factor);
     const h = Math.round(rect.h * factor);
-    const r = Math.round((rect.r ?? Math.min(rect.w, rect.h) * 0.12) * factor);
-    const svg = svgEtiqueta({ w, h, r, nombre: rect.nombre });
+    const r = rect.r != null ? Math.round(rect.r * factor) : undefined;
+    const esParche = rect.color != null;
+    const svg = esParche
+      ? svgParche({ w, h, r, color: rect.color, shape: rect.shape })
+      : svgEtiqueta({ w, h, r: r ?? Math.round(Math.min(rect.w, rect.h) * 0.12 * factor), nombre: rect.nombre });
     composites.push({
       input: Buffer.from(svg),
       left: Math.round(rect.x * factor),
@@ -97,5 +119,27 @@ export async function relabelarBotella(srcPath, rects, { factor = 3 } = {}) {
     });
   }
 
-  return sharp(upscaled).composite(composites).png().toBuffer();
+  const compuesto = await sharp(upscaled).composite(composites).png().toBuffer();
+  // Recorte final a la silueta real: cualquier píxel de etiqueta/parche que
+  // haya caído fuera del contorno de la botella (donde la fuente original
+  // es transparente) queda transparente también.
+  return sharp(compuesto).composite([{ input: upscaled, blend: "dest-in" }]).png().toBuffer();
+}
+
+// Color promedio de un pequeño parche de la imagen fuente (para que los
+// parches lisos calcen con el tono real del envase en vez de adivinar).
+export async function muestrearColor(srcPath, { x, y, w = 4, h = 4 }) {
+  const { data, info } = await sharp(srcPath)
+    .extract({ left: x, top: y, width: w, height: h })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { channels } = info;
+  let r = 0, g = 0, b = 0, n = 0;
+  for (let i = 0; i < data.length; i += channels) {
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+    n++;
+  }
+  return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
 }

@@ -11,6 +11,7 @@ Este archivo documenta el ÚNICO asset externo usado en el juego.
 - **URL**: https://commons.wikimedia.org/wiki/File:Star_aniseed.jpg
 - **URL directa del archivo**: https://upload.wikimedia.org/wikipedia/commons/a/a9/Star_aniseed.jpg
 - **Licencia**: Dominio Público (Public Domain) — sin atribución obligatoria, uso comercial permitido.
-- **Uso en el juego**: recorte cuadrado de 2-3 piezas de anís estrellado,
+- **Uso en el juego**: recorte cuadrado de 2-3 piezas de anís estrellado
+  (con exposición/contraste subidos para que se lea como medallón chico),
   `stock/ing-anis.png`, empaquetado como `public/img/ing-anis.webp` por
   scripts/build-assets.mjs. Ingrediente "ANÍS" del grid de Completa.
