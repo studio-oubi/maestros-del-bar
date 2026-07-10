@@ -16,48 +16,52 @@ const MANIFEST_PATH = path.join(ROOT, "lib/asset-manifest.ts");
 const nd = (name) => path.join(ND, name);
 const leg = (name) => path.join(LEG, name);
 
-// out: nombre de archivo en public/img; src: ruta absoluta de origen; height: alto máx de resize.
+// out: nombre de archivo en public/img; src: ruta absoluta de origen; height: alto máx de
+// resize; quality: opcional, override de calidad webp (default 86, ver loop más abajo).
 //
-// Alturas subidas (feedback de usuario: se veían de baja resolución). Las
-// alturas originales del plan estaban pensadas en px CSS, pero en móviles
-// con DPR 2-3 la imagen se muestra al doble/triple del tamaño CSS y quedaba
-// corta de resolución real. `background` se deja igual: la fuente es
-// 1080x1920 (no hay más resolución para sacar) y es una textura difusa de
-// fondo donde no se nota.
+// Alturas subidas dos veces por feedback de usuario ("se ven de baja resolución" /
+// "pixeladas"). Ronda 1: las alturas del plan original estaban pensadas en px CSS y
+// quedaban cortas en DPR 2-3. Ronda 2 (esta): el tótem real corre a DPR alto sobre
+// fuentes de hasta 2752px, así que las imágenes héroe (home/ron/trago/vaso/mixer) pasan
+// a resolución NATIVA de su fuente (withoutEnlargement asegura que nunca se solicite más
+// de lo que la fuente tiene), y esas mismas categorías héroe suben a quality 90. `ing-*`,
+// `barra`, `background`, `escapate` y el logo quedan en quality 86 (no son el foco del
+// reclamo de nitidez). `background` se deja en 1920: la fuente es 1080x1920 (no hay más
+// resolución que sacar) y es una textura difusa de fondo donde no se nota.
 const JOBS = [
   { out: "background.webp", src: nd("Background.png"), height: 1920 },
   { out: "barra.webp", src: nd("Barra.png"), height: 1613 },
   { out: "escapate.webp", src: nd("Escapate a lo extra ordinario.png"), height: 520 },
-  { out: "mix-challenge-logo.webp", src: nd("Mix Challenge Logo.png"), height: 760 },
-  { out: "home-doble.webp", src: nd("Home Doble.png"), height: 2200 },
-  { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 2200 },
-  { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 2200 },
-  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 1600 },
-  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 1600 },
-  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 1600 },
-  { out: "trago-toronja.webp", src: nd("toronja.png"), height: 1300 },
-  { out: "trago-sour.webp", src: nd("sour.png"), height: 1300 },
-  { out: "trago-albahaca.webp", src: nd("basir.png"), height: 1300 },
-  { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 1300 },
-  { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 1300 },
-  { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 1300 },
-  { out: "mixer-perrier.webp", src: leg("mixer-perrier.png"), height: 1000 },
-  { out: "mixer-limon.webp", src: leg("mixer-limon.png"), height: 1000 },
-  { out: "mixer-tonica.webp", src: leg("mixer-tonica.png"), height: 1000 },
-  { out: "mixer-ginger.webp", src: leg("mixer-ginger.png"), height: 1000 },
-  { out: "mixer-arandano.webp", src: leg("mixer-arandano.png"), height: 1000 },
-  { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 640 },
-  { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 640 },
-  { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 640 },
-  { out: "ing-clara.webp", src: leg("ing-clara.png"), height: 640 },
-  { out: "ing-canela.webp", src: leg("ing-canela.png"), height: 640 },
-  { out: "ing-jengibre.webp", src: leg("ing-jengibre.png"), height: 640 },
-  { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 640 },
-  { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 640 },
-  { out: "ing-angostura.webp", src: leg("ing-angostura.png"), height: 640 },
-  { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 640 },
-  { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 640 },
-  { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 640 },
+  { out: "mix-challenge-logo.webp", src: nd("Mix Challenge Logo.png"), height: 790 }, // nativo
+  { out: "home-doble.webp", src: nd("Home Doble.png"), height: 2752, quality: 90 }, // nativo
+  { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 2752, quality: 90 }, // nativo
+  { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 2754, quality: 90 }, // nativo
+  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 2539, quality: 90 }, // nativo
+  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 2297, quality: 90 }, // nativo
+  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 2077, quality: 90 }, // nativo
+  { out: "trago-toronja.webp", src: nd("toronja.png"), height: 2752, quality: 90 }, // nativo
+  { out: "trago-sour.webp", src: nd("sour.png"), height: 2752, quality: 90 }, // nativo
+  { out: "trago-albahaca.webp", src: nd("basir.png"), height: 2752, quality: 90 }, // nativo
+  { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 2752, quality: 90 }, // nativo
+  { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 2752, quality: 90 }, // nativo
+  { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 2752, quality: 90 }, // nativo
+  { out: "mixer-perrier.webp", src: leg("mixer-perrier.png"), height: 1600, quality: 90 },
+  { out: "mixer-limon.webp", src: leg("mixer-limon.png"), height: 1600, quality: 90 },
+  { out: "mixer-tonica.webp", src: leg("mixer-tonica.png"), height: 1600, quality: 90 },
+  { out: "mixer-ginger.webp", src: leg("mixer-ginger.png"), height: 1600, quality: 90 },
+  { out: "mixer-arandano.webp", src: leg("mixer-arandano.png"), height: 1600, quality: 90 },
+  { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 800 },
+  { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 800 },
+  { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 800 },
+  { out: "ing-clara.webp", src: leg("ing-clara.png"), height: 800 },
+  { out: "ing-canela.webp", src: leg("ing-canela.png"), height: 800 },
+  { out: "ing-jengibre.webp", src: leg("ing-jengibre.png"), height: 800 },
+  { out: "ing-frambuesa.webp", src: leg("ing-frambuesa.png"), height: 800 },
+  { out: "ing-menta.webp", src: leg("ing-menta.png"), height: 800 },
+  { out: "ing-angostura.webp", src: leg("ing-angostura.png"), height: 800 },
+  { out: "ing-cafe.webp", src: leg("ing-cafe.png"), height: 800 },
+  { out: "ing-demerara.webp", src: leg("ing-demerara.png"), height: 800 },
+  { out: "ing-sirope.webp", src: leg("ing-syrup.png"), height: 800 },
 ];
 
 // Tiles derivados: recorte (extract) sobre la imagen fuente a tamaño original,
@@ -86,7 +90,7 @@ const CROPS = [
     src: nd("toronja.png"),
     extract: { left: 333, top: 563, width: 349, height: 305 },
     pad: { top: 22, bottom: 22, left: 0, right: 0 },
-    height: 640,
+    height: 800,
   },
   {
     // Par de hojas de albahaca: bbox real ~(305,745)-(715,878) (punta hoja
@@ -98,7 +102,7 @@ const CROPS = [
     src: nd("basir.png"),
     extract: { left: 305, top: 740, width: 410, height: 138 },
     pad: { top: 136, bottom: 136, left: 0, right: 0 },
-    height: 640,
+    height: 800,
   },
   {
     // Rodaja de limón: recorte ya cuadrado, centrado en la rueda de limón
@@ -106,7 +110,7 @@ const CROPS = [
     out: "ing-limon.webp",
     src: nd("basir.png"),
     extract: { left: 780, top: 1100, width: 350, height: 350 },
-    height: 640,
+    height: 800,
   },
 ];
 
@@ -160,7 +164,7 @@ async function run() {
     const outPath = path.join(OUT, job.out);
     await sharp(job.src)
       .resize({ height: job.height, withoutEnlargement: true })
-      .webp({ quality: 86 })
+      .webp({ quality: job.quality ?? 86 })
       .toFile(outPath);
     results.push(outPath);
   }
