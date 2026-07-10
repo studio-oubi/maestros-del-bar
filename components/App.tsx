@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { JuegoProvider, useJuego } from "@/lib/juego";
 import { EVENTO_PORTADA, leerPortada, type Portada } from "@/lib/portada";
 import { Marco } from "@/components/Marco";
@@ -90,6 +90,21 @@ function Juego() {
   // El overlay de video vive a nivel de App (hermano del Marco) para cubrir la
   // pantalla completa, por encima del marco y de NavBotones (ver VideoOverlay).
   const [videoAbierto, setVideoAbierto] = useState(false);
+
+  // Video de ARRANQUE: la primera vez que la app llega al Home (tras la precarga
+  // del Preloader) se muestra el video en loop; el usuario lo cierra con la X y
+  // cae al Home. Solo una vez por carga (no en REINICIAR). En reduced-motion se
+  // salta directo al Home. useLayoutEffect para montar el overlay antes del
+  // primer paint del Home (sin flash de la pantalla de abajo).
+  const bootVideoConsumido = useRef(false);
+  useLayoutEffect(() => {
+    if (estado.pantalla !== "home" || bootVideoConsumido.current) return;
+    bootVideoConsumido.current = true;
+    const reducido =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reducido) setVideoAbierto(true);
+  }, [estado.pantalla]);
 
   return (
     <>

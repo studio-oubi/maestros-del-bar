@@ -88,15 +88,23 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
         pediFullscreen.current = true;
       })
       .catch(() => {});
-    // Refuerza el autoplay (algunos navegadores ignoran el atributo).
-    videoRef.current?.play?.().catch(() => {});
+    // Reproducir: intenta con SONIDO; si el navegador lo bloquea (arranque sin
+    // gesto), cae a MUTED (attract, loop ambiente). Si ni muted reproduce
+    // (p.ej. arranque offline sin caché aún), cierra -> Home, sin pantalla negra.
+    const v = videoRef.current;
+    if (v) {
+      v.play().catch(() => {
+        v.muted = true;
+        v.play().catch(() => onCerrar());
+      });
+    }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (pediFullscreen.current && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
     };
-  }, []);
+  }, [onCerrar]);
 
   // Muestra la X y programa ocultarla tras 3s sin interacción.
   const revelarControles = () => {
@@ -105,10 +113,21 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
     timerRef.current = window.setTimeout(() => setControlesVisibles(false), 3000);
   };
 
+  // Primer toque: además de revelar la X, si el video venía MUTED (attract sin
+  // sonido por la política de autoplay), activa el sonido.
+  const alTocar = () => {
+    const v = videoRef.current;
+    if (v && v.muted) {
+      v.muted = false;
+      v.play().catch(() => {});
+    }
+    revelarControles();
+  };
+
   return (
     <div
       ref={contenedorRef}
-      onPointerDown={revelarControles}
+      onPointerDown={alTocar}
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
     >
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -118,6 +137,7 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
         autoPlay
         loop
         playsInline
+        onError={onCerrar}
         className="h-full w-full object-contain"
       />
       <button

@@ -2,7 +2,7 @@
   "name": "Mix Challenge — Brugal",
   "short_name": "Mix Challenge — Brugal",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#060d1f",
   "theme_color": "#0a1a3a",
