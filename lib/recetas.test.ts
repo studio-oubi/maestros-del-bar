@@ -1,20 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { RECETAS, armarGrid, evaluar, SENUELOS } from "./recetas";
+import { RECETAS, INGREDIENTES, armarGrid, evaluar } from "./recetas";
 
 const toronja = RECETAS[0];
 
 describe("armarGrid", () => {
-  it("devuelve 9 sin duplicados incluyendo los 3 correctos", () => {
+  it("devuelve 12 sin duplicados incluyendo los 3 correctos", () => {
     const grid = armarGrid(toronja, () => 0.5);
-    expect(grid).toHaveLength(9);
-    expect(new Set(grid).size).toBe(9);
+    expect(grid).toHaveLength(12);
+    expect(new Set(grid).size).toBe(12);
     for (const ing of toronja.ingredientes) expect(grid).toContain(ing);
   });
-  it("los 6 restantes salen del pool de señuelos", () => {
+  it("los 9 restantes salen de los ingredientes que no son de la receta", () => {
     const grid = armarGrid(toronja, () => 0.5);
     const extras = grid.filter((g) => !toronja.ingredientes.includes(g));
-    expect(extras).toHaveLength(6);
-    for (const e of extras) expect(SENUELOS).toContain(e);
+    expect(extras).toHaveLength(9);
+    const idsValidos = (Object.keys(INGREDIENTES) as (keyof typeof INGREDIENTES)[]).filter(
+      (id) => !toronja.ingredientes.includes(id)
+    );
+    for (const e of extras) expect(idsValidos).toContain(e);
   });
 });
 

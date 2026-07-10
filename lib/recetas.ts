@@ -65,10 +65,14 @@ export const INGREDIENTES: Record<IngredienteId, { nombre: string; img: string }
 };
 export const SENUELOS: IngredienteId[] = ["canela", "jengibre", "frambuesa", "menta", "angostura", "cafe", "demerara"];
 
+// Grid de 12: los 3 ingredientes correctos + 9 señuelos elegidos entre todos
+// los IngredienteId que no pertenecen a la receta (siempre hay 12 candidatos).
 export function armarGrid(receta: Receta, rng: () => number = Math.random): IngredienteId[] {
-  const decoyPool = [...SENUELOS];
+  const decoyPool = (Object.keys(INGREDIENTES) as IngredienteId[]).filter(
+    (id) => !receta.ingredientes.includes(id)
+  );
   const decoys: IngredienteId[] = [];
-  for (let i = 0; i < 6 && decoyPool.length > 0; i++) {
+  for (let i = 0; i < 9 && decoyPool.length > 0; i++) {
     const idx = Math.floor(rng() * decoyPool.length);
     decoys.push(decoyPool.splice(idx, 1)[0]);
   }

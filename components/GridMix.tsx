@@ -11,7 +11,7 @@ import { useJuego } from "@/lib/juego";
 // El resto son PNG aislados sobre fondo transparente (object-contain, con aire).
 const RECORTES_FOTO = new Set<IngredienteId>(["toronja", "albahaca", "limon"]);
 
-// Última pantalla del reto (mock 12): grid 3×3 de ingredientes, sin límite de
+// Última pantalla del reto (mock 12): grid 3×4 de ingredientes, sin límite de
 // selección (elegir de más = "sobraron", lo evalúa el reducer). MEZCLAR evalúa.
 export function GridMix({ restante }: { restante: number }) {
   const { estado, despachar } = useJuego();
@@ -35,7 +35,7 @@ export function GridMix({ restante }: { restante: number }) {
       </div>
 
       <div className="flex w-full flex-1 flex-col items-center justify-center">
-        <div className="grid w-full max-w-[86cqw] grid-cols-3 gap-x-[3.5cqw] gap-y-[2.6cqh]">
+        <div className="grid w-full max-w-[80cqw] grid-cols-3 gap-x-[2.4cqw] gap-y-[1.2cqh]">
           {estado.grid.map((ing) => {
             const info = INGREDIENTES[ing];
             const activo = seleccionados.includes(ing);
@@ -45,10 +45,10 @@ export function GridMix({ restante }: { restante: number }) {
                 key={ing}
                 type="button"
                 onClick={() => despachar({ tipo: "TOGGLE_INGREDIENTE", ing })}
-                className="flex flex-col items-center gap-[0.8cqh]"
+                className="flex flex-col items-center gap-[0.5cqh]"
               >
                 <span
-                  className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-full bg-navy/70 ring-2 transition-shadow duration-200 ${
+                  className={`relative flex h-[9.5cqh] w-[9.5cqh] items-center justify-center overflow-hidden rounded-full bg-navy/70 ring-2 transition-shadow duration-200 ${
                     activo ? "ring-oro shadow-[0_0_0_3px_rgba(201,164,92,.25)]" : "ring-crema/15"
                   }`}
                 >
@@ -56,11 +56,11 @@ export function GridMix({ restante }: { restante: number }) {
                     src={info.img}
                     alt=""
                     fill
-                    sizes="30vw"
+                    sizes="20vw"
                     className={cover ? "object-cover" : "object-contain p-[14%]"}
                   />
                   {activo && (
-                    <span className="absolute right-[4%] top-[4%] flex h-[20%] min-h-[16px] w-[20%] min-w-[16px] items-center justify-center rounded-full bg-oro text-navy-deep shadow-[0_2px_6px_rgba(0,0,0,.4)]">
+                    <span className="absolute right-[4%] top-[4%] flex h-[20%] min-h-[14px] w-[20%] min-w-[14px] items-center justify-center rounded-full bg-oro text-navy-deep shadow-[0_2px_6px_rgba(0,0,0,.4)]">
                       <svg
                         viewBox="0 0 24 24"
                         className="h-[65%] w-[65%]"
@@ -75,7 +75,7 @@ export function GridMix({ restante }: { restante: number }) {
                     </span>
                   )}
                 </span>
-                <span className="font-cuerpo text-[clamp(9px,2.6cqw,11px)] font-medium uppercase tracking-[0.04em] text-crema">
+                <span className="font-cuerpo text-[1.1cqh] font-medium uppercase tracking-[0.04em] text-crema">
                   {info.nombre}
                 </span>
               </button>
