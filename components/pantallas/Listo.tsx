@@ -9,18 +9,27 @@ export function Listo() {
   const { despachar } = useJuego();
 
   return (
-    <div className="flex h-full w-full flex-col items-center px-[8cqw] text-center">
-      <div className="pt-[5cqh]">
+    <div className="relative flex h-full w-full flex-col items-center justify-center px-[8cqw] text-center">
+      {/* Logo fuera del flujo centrado: así el bloque título+botón se centra
+          respecto a TODA la pantalla (no solo al espacio bajo el logo) y el
+          botón INICIAR cae cerca del centro vertical, como pide el mock. */}
+      <div className="absolute left-1/2 top-[5cqh] -translate-x-1/2">
         <Image
           src={IMG.logoBrugal}
           alt="Brugal"
           width={220}
           height={90}
-          className="h-auto w-[33cqw] max-w-[155px]"
+          className="h-auto w-[42cqw] max-w-[220px]"
         />
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-[4.5cqh]">
+      {/* El grupo se centra respecto a TODA la pantalla (justify-center del
+          contenedor), pero el título (3 líneas) pesa más que el botón, así
+          que sin ayuda el botón quedaría por debajo del centro real. Un
+          "fantasma" invisible del título, del mismo alto, espeja el bloque
+          bajo el botón para que el botón —no el conjunto— caiga en el
+          centro vertical exacto de la pantalla. */}
+      <div className="flex flex-col items-center gap-[4.5cqh]">
         <h1 className="texto-titulo max-w-[80cqw]">
           ¿Listo para
           <br />
@@ -35,6 +44,13 @@ export function Listo() {
         >
           Iniciar
         </button>
+        <div aria-hidden className="texto-titulo invisible max-w-[80cqw]">
+          ¿Listo para
+          <br />
+          armar el mix
+          <br />
+          perfecto?
+        </div>
       </div>
     </div>
   );
