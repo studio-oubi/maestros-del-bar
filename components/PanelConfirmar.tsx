@@ -70,7 +70,7 @@ export function PanelConfirmar({
         <button
           type="button"
           onClick={onVolver}
-          className="font-cuerpo text-[1.5cqh] font-medium uppercase tracking-[0.18em] text-crema/70 underline decoration-crema/30 underline-offset-4 transition-colors hover:text-crema"
+          className="font-cuerpo text-[1.5cqh] font-medium uppercase tracking-[0.18em] text-crema/70 underline decoration-crema/30 underline-offset-4 transition-[transform,color] duration-100 hover:text-crema active:scale-[0.98] active:text-crema"
         >
           {textoVolver}
         </button>

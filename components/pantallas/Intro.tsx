@@ -45,7 +45,7 @@ export function Intro() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="relative h-full w-full cursor-pointer select-none px-[8cqw] text-center outline-none"
+      className="relative h-full w-full cursor-pointer select-none px-[8cqw] text-center outline-none transition-transform duration-150 active:scale-[0.995]"
     >
       {/* Logo fuera del flujo, centrado a 17.5cqh (igual que Home). */}
       <div className="absolute left-1/2 top-[17.5cqh] -translate-x-1/2 -translate-y-1/2">

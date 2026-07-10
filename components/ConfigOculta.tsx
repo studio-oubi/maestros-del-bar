@@ -49,7 +49,7 @@ async function alternarFullscreen(): Promise<void> {
 // quita la nativa, y color-scheme:dark para que el listado de opciones
 // respete la paleta oscura en navegadores que lo permiten (Chrome/Edge).
 const CAMPO =
-  "w-full appearance-none rounded-full border border-oro/25 bg-black/40 bg-no-repeat px-[5cqw] py-[1.6cqh] pr-11 font-cuerpo text-[15px] text-crema outline-none transition-colors focus:border-oro disabled:opacity-40 [color-scheme:dark] [&>option]:bg-navy [&>option]:text-crema";
+  "w-full appearance-none rounded-full border border-oro/25 bg-black/40 bg-no-repeat px-[5cqw] py-[1.6cqh] pr-11 font-cuerpo text-[15px] text-crema outline-none transition-colors focus:border-oro focus:ring-2 focus:ring-oro/40 disabled:opacity-40 [color-scheme:dark] [&>option]:bg-navy [&>option]:text-crema";
 
 // Flecha en style (no en clase Tailwind) para no depender del escapado de
 // una data URI dentro de un valor arbitrario: aquí es una cadena normal.
@@ -132,7 +132,7 @@ function ModalConfig({ onCerrar }: { onCerrar: () => void }) {
           <button
             type="button"
             onClick={onCerrar}
-            className="flex-1 rounded-full border border-oro/30 py-2.5 font-cuerpo text-sm text-crema-suave transition-colors active:border-oro active:text-oro"
+            className="flex-1 rounded-full border border-oro/30 py-2.5 font-cuerpo text-sm text-crema-suave transition-[transform,color,border-color] duration-100 active:scale-[0.98] active:border-oro active:text-oro"
           >
             Cerrar
           </button>

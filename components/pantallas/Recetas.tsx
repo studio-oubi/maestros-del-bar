@@ -35,7 +35,7 @@ export function Recetas() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="flex h-full w-full cursor-pointer select-none flex-col items-center pt-[14cqh] pb-[9.5cqh] outline-none"
+      className="flex h-full w-full cursor-pointer select-none flex-col items-center pt-[14cqh] pb-[9.5cqh] outline-none transition-transform duration-150 active:scale-[0.995]"
     >
       <Image
         src={IMG.logoBrugal}

@@ -183,7 +183,7 @@ export function Formulario() {
         <button
           type="button"
           onClick={omitir}
-          className="mt-[1.4cqh] block w-full text-center font-cuerpo text-[1.1cqh] text-crema/60 underline decoration-crema/30 underline-offset-2 transition-colors hover:text-crema/80"
+          className="mt-[1.4cqh] block w-full text-center font-cuerpo text-[1.1cqh] text-crema/60 underline decoration-crema/30 underline-offset-2 transition-[transform,color] duration-100 hover:text-crema/80 active:scale-[0.98] active:text-crema"
         >
           Omitir
         </button>
@@ -257,7 +257,7 @@ function Campo({
         value={valor}
         onChange={manejarCambio}
         placeholder={placeholder}
-        className="texto-input w-full rounded-full border border-oro/25 bg-black/40 px-[5cqw] py-[1.6cqh] text-crema outline-none transition-colors focus:border-oro"
+        className="texto-input w-full rounded-full border border-oro/25 bg-black/40 px-[5cqw] py-[1.6cqh] text-crema outline-none transition-colors focus:border-oro focus:ring-2 focus:ring-oro/40"
       />
       {error && <span className="mt-[0.5cqh] block text-[clamp(10px,2.6cqw,12px)] text-[#ff6b6b]">{error}</span>}
     </label>

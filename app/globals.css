@@ -36,6 +36,24 @@ body {
 img { -webkit-user-drag: none; }
 
 /* ============================================================
+   Feedback táctil (kiosko touch, sin hover). El tap-highlight ya
+   está desactivado en <body>; touch-action:manipulation quita el
+   retardo de ~300ms y el zoom por doble tap en los interactivos.
+   El estado "pressed" (hundir + atenuar) se aplica por elemento
+   con utilidades active:scale/brightness (patrón de los botones
+   dorados); aquí solo se centraliza que en prefers-reduced-motion
+   no haya movimiento al presionar.
+   ============================================================ */
+button, a, [role="button"], label, select, summary, input, textarea {
+  touch-action: manipulation;
+}
+@media (prefers-reduced-motion: reduce) {
+  button:active, a:active, [role="button"]:active, select:active {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
    Roles tipográficos (spec del diseño, artboard 1080×1920).
    Tamaños en cqh (relativos al alto del Marco, container-type:size)
    para que se vean idénticos en cualquier dispositivo vertical.

@@ -65,7 +65,7 @@ export default async function PaginaRegistros() {
           </div>
           <a
             href="/registros/export"
-            className="rounded-full bg-oro px-5 py-2 font-titulo text-sm text-navy-deep transition hover:bg-oro-claro"
+            className="inline-block rounded-full bg-oro px-5 py-2 font-titulo text-sm text-navy-deep transition duration-100 hover:bg-oro-claro active:scale-[0.98] active:bg-oro-claro"
           >
             Exportar CSV
           </a>

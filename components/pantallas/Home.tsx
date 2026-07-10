@@ -34,7 +34,7 @@ export function Home() {
           comenzar();
         }
       }}
-      className="relative h-full w-full cursor-pointer overflow-hidden select-none outline-none"
+      className="relative h-full w-full cursor-pointer select-none overflow-hidden outline-none transition-transform duration-150 active:scale-[0.995]"
       style={{ containerType: "size" }}
     >
       <style>{estilos}</style>

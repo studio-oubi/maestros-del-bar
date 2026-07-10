@@ -13,13 +13,13 @@ export function FormularioLogin() {
         placeholder="Contraseña"
         required
         autoFocus
-        className="w-full rounded-full border border-oro/40 bg-navy-deep px-5 py-3 text-center text-crema placeholder:text-crema-suave focus:border-oro focus:outline-none"
+        className="w-full rounded-full border border-oro/40 bg-navy-deep px-5 py-3 text-center text-crema placeholder:text-crema-suave focus:border-oro focus:outline-none focus:ring-2 focus:ring-oro/40"
       />
       {estado?.error && <p className="text-sm text-neon">{estado.error}</p>}
       <button
         type="submit"
         disabled={pendiente}
-        className="w-full rounded-full bg-oro px-5 py-3 font-titulo tracking-wide text-navy-deep transition hover:bg-oro-claro disabled:opacity-60"
+        className="w-full rounded-full bg-oro px-5 py-3 font-titulo tracking-wide text-navy-deep transition duration-100 hover:bg-oro-claro active:scale-[0.98] active:bg-oro-claro disabled:opacity-60"
       >
         {pendiente ? "Entrando…" : "Entrar"}
       </button>

@@ -27,8 +27,8 @@ const CON_HOME: Pantalla[] = [
 
 const BOTON =
   "pointer-events-auto grid h-9 w-9 place-items-center rounded-full border border-oro/30 " +
-  "bg-navy-deep/45 text-crema/80 backdrop-blur-sm transition-colors " +
-  "active:border-oro active:text-oro";
+  "bg-navy-deep/45 text-crema/80 backdrop-blur-sm transition-[transform,color,border-color] duration-100 " +
+  "active:scale-90 active:border-oro active:text-oro";
 
 export function NavBotones() {
   const { estado, despachar } = useJuego();
