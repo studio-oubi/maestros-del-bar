@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
 import { BarraEscena } from "@/components/BarraEscena";
 import { IMG } from "@/lib/asset-manifest";
-import { INGREDIENTES } from "@/lib/recetas";
-import type { IngredienteId, Receta } from "@/lib/recetas";
+import { INGREDIENTES, VASOS } from "@/lib/recetas";
+import type { IngredienteId, Receta, VasoId } from "@/lib/recetas";
 import { enviarPartida } from "@/lib/partida-cliente";
 import { reintentarPendiente } from "@/lib/registro-cliente";
 import { filtroTinte } from "@/lib/tinte-trago";
@@ -119,24 +119,31 @@ const MASCARA_REVELADO = "linear-gradient(to top, #000 0%, #000 calc(var(--rev, 
 
 // Trago con reveal de máscara (líquido "subiendo" DENTRO del vaso) + tinte
 // por ingredientes, portados de legacy/index.html (preparar() / .rev-wrap):
-// capa base = receta.imgVaso (vaso vacío, visible desde el frame 0, sin
-// máscara) y encima receta.imgTrago enmascarado subiendo — sensación de que
-// el vaso se está llenando, no de que el trago aparece flotando. Las dos
-// fotos comparten el mismo encuadre (1536×2752), así que una caja con
-// aspect-ratio + object-contain las alinea automáticamente, igual que el
-// legacy (ambas con inset:0 dentro de .rev-wrap).
+// capa base = el vaso vacío QUE ELIGIÓ el jugador (visible desde el frame 0,
+// sin máscara — igual que `sel.vaso===r.vasoId ? r.imgVaso : vasoElegido.img`
+// en preparar(): si acertó el vaso coincide con el correcto, si no se ve SU
+// vaso llenándose con el trago tintado, para que el error se lea ahí mismo)
+// y encima receta.imgTrago enmascarado subiendo. Las fotos comparten el
+// mismo encuadre (1536×2752), así que una caja con aspect-ratio +
+// object-contain las alinea automáticamente, igual que el legacy (ambas con
+// inset:0 dentro de .rev-wrap).
 // Si `elecciones` coincide EXACTO con `receta.ingredientes` el trago se ve
 // normal; si no, se aplica un hue-rotate proporcional a la desviación
 // cromática entre lo elegido y lo correcto — el fallo se lee en el vaso.
 function TragoRevelado({
   receta,
   elecciones,
+  vasoElegido,
   alturaClase,
   reflejoAlturaClase,
   reflejoOpacidad = 0.18,
 }: {
   receta: Receta;
   elecciones: IngredienteId[];
+  // Vaso que el jugador eligió (estado.elecciones.vaso). Si es null (no
+  // debería llegar a "resultado" sin elegir vaso, pero por si acaso) cae al
+  // vaso correcto de la receta.
+  vasoElegido: VasoId | null;
   alturaClase: string;
   // Alto y opacidad del reflejo se pueden ajustar por separado del trago:
   // en "Casi" el trago es chico y flotan cerca del checklist, así que el
@@ -148,6 +155,7 @@ function TragoRevelado({
   const acerto = tinte === "";
   const revRef = useRevelado<HTMLDivElement>(acerto ? 3200 : 2600);
   const sombra = "drop-shadow(0 18px 30px rgba(0,0,0,.55))";
+  const imgVasoBase = (vasoElegido && VASOS.find((v) => v.id === vasoElegido)?.img) || receta.imgVaso;
 
   return (
     <div
@@ -156,10 +164,10 @@ function TragoRevelado({
       style={{ ["--rev" as string]: "0%", ["--rev-listo" as string]: "0" }}
     >
       <div className={`relative aspect-[1536/2752] ${alturaClase}`}>
-        {/* Vaso vacío: base siempre visible, sin máscara. */}
+        {/* Vaso vacío QUE ELIGIÓ el jugador: base siempre visible, sin máscara. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={receta.imgVaso}
+          src={imgVasoBase}
           alt=""
           aria-hidden
           draggable={false}
@@ -230,7 +238,12 @@ function Ganaste() {
           className="absolute inset-x-0 z-10 flex items-end justify-center gap-[4cqw] px-[6cqw]"
           style={{ bottom: "calc(100cqh - var(--linea-barra, 62cqh))" }}
         >
-          <TragoRevelado receta={receta} elecciones={estado.elecciones.ingredientes} alturaClase="h-[26cqh]" />
+          <TragoRevelado
+            receta={receta}
+            elecciones={estado.elecciones.ingredientes}
+            vasoElegido={estado.elecciones.vaso}
+            alturaClase="h-[26cqh]"
+          />
 
           <div className="mb-[3.4cqh] flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
             <h2 className="font-titulo text-[2.1cqh] font-medium uppercase leading-[1.04] text-white">
@@ -301,6 +314,7 @@ function Casi() {
         <TragoRevelado
           receta={receta}
           elecciones={estado.elecciones.ingredientes}
+          vasoElegido={estado.elecciones.vaso}
           alturaClase="h-[16cqh]"
           reflejoAlturaClase="h-[5cqh]"
           reflejoOpacidad={0.1}
