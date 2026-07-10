@@ -84,6 +84,15 @@ function PasoMezclas() {
     [],
   );
   const marcados = useMemo(() => new Set<string>(seleccionadas), [seleccionadas]);
+  // Resumen visual de las mezclas marcadas para el panel de confirmación (botellas).
+  const itemsMezclas = useMemo(
+    () =>
+      seleccionadas.map((id) => {
+        const m = MEZCLAS.find((x) => x.id === id);
+        return { img: m?.img ?? "", nombre: m?.nombre ?? id };
+      }),
+    [seleccionadas],
+  );
   const [centro, setCentro] = useState(() => Math.floor((items.length - 1) / 2));
   const onCentroChange = useCallback((_it: CoverflowItem, i: number) => setCentro(i), []);
   const onToggle = useCallback(
@@ -119,10 +128,13 @@ function PasoMezclas() {
 
       {confirmando && (
         <PanelConfirmar
+          titulo="TU MEZCLA ESTÁ LISTA"
+          items={itemsMezclas}
+          forma="botella"
           onConfirmar={() => despachar({ tipo: "CONFIRMA_MEZCLAS" })}
-          onVolver={() => setConfirmando(false)}
           textoConfirmar="Continuar"
-          textoVolver="Volver"
+          onVolver={() => setConfirmando(false)}
+          textoVolver="Cambiar mezclas"
         />
       )}
 

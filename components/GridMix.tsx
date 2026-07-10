@@ -33,6 +33,14 @@ export function GridMix({ restante }: { restante: number }) {
 
   const contador = restantes === 1 ? "TE FALTA 1" : `TE FALTAN ${restantes}`;
 
+  // Resumen visual de lo elegido para el panel de confirmación (medallones,
+  // mismo lenguaje que el grid).
+  const itemsElegidos = seleccionados.map((id) => ({
+    img: INGREDIENTES[id].img,
+    nombre: INGREDIENTES[id].nombre,
+    cover: RECORTES_FOTO.has(id),
+  }));
+
   return (
     <div className="relative flex h-full w-full flex-col items-center px-[7cqw] pt-[7cqh] pb-[4cqh] text-center">
       <div className="relative h-[5cqh] w-[38cqw]">
@@ -109,10 +117,13 @@ export function GridMix({ restante }: { restante: number }) {
 
       {confirmando && (
         <PanelConfirmar
+          titulo="TU MIX ESTÁ LISTO"
+          items={itemsElegidos}
+          forma="medallon"
           onConfirmar={onMezclar}
+          textoConfirmar="Preparar"
           onVolver={() => setConfirmando(false)}
-          textoConfirmar="Mezclar"
-          textoVolver="Volver atrás"
+          textoVolver="Cambiar ingredientes"
         />
       )}
     </div>
