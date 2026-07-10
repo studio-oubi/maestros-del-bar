@@ -86,7 +86,7 @@ export function Recetas() {
         ))}
       </div>
 
-      <p className="mb-[0.8cqh] animate-pulse font-cuerpo text-[1cqh] text-crema/60 [animation-duration:2.4s]">
+      <p className="mb-[0.8cqh] animate-pulse font-cuerpo text-[1.2cqh] font-light uppercase tracking-[0.35em] text-crema/55 [animation-duration:2.4s]">
         toca para continuar....
       </p>
 

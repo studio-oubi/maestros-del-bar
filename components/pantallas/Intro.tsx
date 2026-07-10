@@ -76,7 +76,7 @@ export function Intro() {
         </p>
       </div>
 
-      <p className="absolute left-1/2 top-[62cqh] -translate-x-1/2 animate-pulse font-titulo text-[2.3cqh] font-medium text-crema/45 [animation-duration:2.4s]">
+      <p className="absolute left-1/2 top-[62cqh] -translate-x-1/2 animate-pulse font-cuerpo text-[1.2cqh] font-light uppercase tracking-[0.35em] text-crema/55 [animation-duration:2.4s]">
         toca para continuar....
       </p>
     </div>

@@ -400,10 +400,10 @@ function TiempoAgotado() {
     <div className="relative h-full w-full overflow-hidden">
       <Logo />
       <div className="absolute inset-x-0 top-[16cqh] z-10 flex flex-col items-center gap-[3.6cqh] px-[9cqw] text-center">
-        <h1 className="texto-titulo">
-          UPP.. SE ACABO
+        <h1 className="font-titulo text-[7.7cqh] font-medium uppercase leading-[1.02] text-white">
+          PERDISTE..
           <br />
-          EL TIEMPO
+          TIEMPO AGOTADO
         </h1>
         <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
           INICIO
