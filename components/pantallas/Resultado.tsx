@@ -29,17 +29,21 @@ function Logo() {
   );
 }
 
-// Confetti CSS: partículas doradas cayendo una sola vez (sin librería).
+// Paleta del confetti: oro/oro claro/blanco/azul medio/azul claro, repartida
+// por índice (determinista, sin depender de Math.random() para el color).
+const PALETA_CONFETTI = ["#c9a84c", "#e7cf9f", "#ffffff", "#2f4d8a", "#7ea1d4"];
+
+// Confetti CSS: partículas cayendo una sola vez (sin librería).
 function Confetti() {
   const piezas = useMemo(
     () =>
-      Array.from({ length: 26 }, () => ({
+      Array.from({ length: 26 }, (_, i) => ({
         left: Math.random() * 100,
         delay: Math.random() * 0.5,
         duracion: 1.6 + Math.random() * 0.9,
         ancho: 4 + Math.random() * 4,
         deriva: (Math.random() - 0.5) * 50,
-        dorado: Math.random() > 0.4,
+        color: PALETA_CONFETTI[i % PALETA_CONFETTI.length],
       })),
     [],
   );
@@ -48,13 +52,12 @@ function Confetti() {
       {piezas.map((p, i) => (
         <span
           key={i}
-          className={`absolute top-[-6%] rounded-[1px] [animation:resultado-confetti-caer_var(--dur)_ease-in_var(--delay)_1_forwards] ${
-            p.dorado ? "bg-oro-claro" : "bg-oro"
-          }`}
+          className="absolute top-[-6%] rounded-[1px] [animation:resultado-confetti-caer_var(--dur)_ease-in_var(--delay)_1_forwards]"
           style={{
             left: `${p.left}%`,
             width: p.ancho,
             height: p.ancho * 1.7,
+            backgroundColor: p.color,
             ["--dur" as string]: `${p.duracion}s`,
             ["--delay" as string]: `${p.delay}s`,
             ["--deriva" as string]: `${p.deriva}px`,
@@ -213,7 +216,10 @@ function Ganaste() {
       <Logo />
 
       <div className="absolute inset-x-0 top-[13cqh] z-10 flex justify-center px-[6cqw] text-center">
-        <h1 className="texto-titulo">GANASTE!!</h1>
+        {/* Mismo tamaño que los títulos de Intro/Listo (7.7cqh): el peso
+            visual de fondo aquí es el trago, así que el título no puede
+            quedarse en la escala de texto.texto-titulo (4.99cqh). */}
+        <h1 className="font-titulo text-[7.7cqh] font-medium uppercase leading-[1.02] text-white">GANASTE!!</h1>
       </div>
 
       <BarraEscena>
