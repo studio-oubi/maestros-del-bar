@@ -164,11 +164,42 @@ function shortHash(buf) {
   return createHash("md5").update(buf).digest("hex").slice(0, 8);
 }
 
+// Padding transparente INFERIOR de un webp con alpha, como fracción del alto
+// (0..1). Replica exactamente el escaneo que Coverflow3D hacía en runtime
+// (umbral alpha > 16, se busca desde abajo la primera fila con contenido) pero
+// sobre el buffer de salida final, en tiempo de build. Devuelve null si la
+// imagen no tiene canal alpha (no aplica anclaje). Así el coverflow puede
+// anclar la base VISIBLE del item a la barra desde el primer frame, sin el
+// canvas-scan asíncrono que provocaba el salto vertical al cargar.
+async function padInferiorFrac(buf) {
+  const meta = await sharp(buf).metadata();
+  if (!meta.hasAlpha) return null;
+  const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const aIdx = channels - 1; // último canal = alpha
+  let filaContenido = height;
+  for (let y = height - 1; y >= 0; y--) {
+    let hay = false;
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * channels + aIdx] > 16) {
+        hay = true;
+        break;
+      }
+    }
+    if (hay) {
+      filaContenido = y + 1;
+      break;
+    }
+  }
+  return Math.max(0, (height - filaContenido) / height);
+}
+
 async function run() {
   await mkdir(OUT, { recursive: true });
 
   const results = [];
   const hashes = {}; // nombre de archivo en public/img -> hash corto de su contenido
+  const pads = {}; // nombre de archivo -> fracción de padding transparente inferior (solo webp con alpha)
 
   for (const job of JOBS) {
     const outPath = path.join(OUT, job.out);
@@ -178,6 +209,8 @@ async function run() {
       .toBuffer();
     await writeFile(outPath, buf);
     hashes[job.out] = shortHash(buf);
+    const frac = await padInferiorFrac(buf);
+    if (frac != null) pads[job.out] = frac;
     results.push(outPath);
   }
 
@@ -204,6 +237,8 @@ async function run() {
       .toBuffer();
     await writeFile(outPath, webpBuf);
     hashes[crop.out] = shortHash(webpBuf);
+    const frac = await padInferiorFrac(webpBuf);
+    if (frac != null) pads[crop.out] = frac;
     results.push(outPath);
   }
 
@@ -221,12 +256,26 @@ async function run() {
     if (!hash) throw new Error(`Falta hash de cache-busting para ${file}`);
     return `  ${key}: "/img/${file}?v=${hash}",`;
   }).join("\n");
+  // PAD_INFERIOR: fracción (0..1) del alto que es padding transparente inferior
+  // de cada imagen con alpha, keyed por la MISMA URL con cache-busting que IMG.
+  // Coverflow3D lo usa para anclar la base visible del item a la barra desde el
+  // primer frame (antes se medía con un canvas-scan asíncrono → salto vertical).
+  const padLines = MANIFEST_KEYS.filter(([, file]) => pads[file] != null)
+    .map(([, file]) => {
+      const hash = hashes[file];
+      return `  "/img/${file}?v=${hash}": ${pads[file].toFixed(4)},`;
+    })
+    .join("\n");
   const manifestSrc = `// Generado por scripts/build-assets.mjs. No editar a mano.
 export const IMG = {
 ${lines}
 } as const;
 
 export const ALL_IMAGES: string[] = Object.values(IMG);
+
+export const PAD_INFERIOR: Record<string, number> = {
+${padLines}
+};
 `;
   await mkdir(path.dirname(MANIFEST_PATH), { recursive: true });
   await writeFile(MANIFEST_PATH, manifestSrc, "utf8");

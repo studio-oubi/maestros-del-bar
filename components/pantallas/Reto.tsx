@@ -116,7 +116,7 @@ export function Reto() {
           <PasoCoverflow eyebrow="ELIGE TU RÓN" items={ronItems} onSelect={onSelectRon} alturaItem={35} />
         )}
         {estado.pantalla === "reto-mezcla" && (
-          <PasoCoverflow eyebrow="ELIGE TU MEZCLA" items={mezclaItems} onSelect={onSelectMezcla} alturaItem={35} />
+          <PasoCoverflow eyebrow="ELIGE TU MEZCLA" items={mezclaItems} onSelect={onSelectMezcla} alturaItem={29} />
         )}
         {estado.pantalla === "reto-mix" && <GridMix restante={restante} />}
       </div>

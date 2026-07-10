@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PAD_INFERIOR } from "@/lib/asset-manifest";
 
 export interface CoverflowItem {
   id: string;
@@ -26,7 +27,8 @@ const ROT = 12; // grados de rotateY por unidad de distancia
 const DEPTH = 185; // px de translateZ por unidad de distancia
 const SCALE_STEP = 0.12; // reducción de escala extra por unidad (pequeña, no rompe el anclaje)
 const BRIGHT_STEP = 0.3; // oscurecimiento por unidad (centro = 1)
-const BLUR_STEP = 0.9; // px de desenfoque por unidad (sutil: no deforma los laterales)
+// Sin blur: es el filtro más caro en GPUs débiles (tótems/tablets de gama baja)
+// y provocaba jank en los snaps. La profundidad se lee por TAMAÑO + BRILLO.
 const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto (útil con 5+ items)
 const K = 170; // rigidez del muelle
 const C = 26; // amortiguación (≈ crítica para k=170)
@@ -79,7 +81,6 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
       const tz = -aSuave * DEPTH;
       const sc = Math.max(0.34, 1 - a * SCALE_STEP);
       const brillo = Math.max(0.5, 1 - a * BRIGHT_STEP);
-      const blur = Math.min(4.5, a * BLUR_STEP);
       // Sombra fuerte y centrada en el item central; se diluye hacia los lados.
       const sombra = Math.max(0, 1 - a) * 22;
       // Funde los items que se van al fondo (costura de la ruleta con pocos items).
@@ -92,7 +93,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
         `translateX(-50%) translateX(${txCqw}cqw) translateZ(${tz}px) ` +
         `rotateY(${ry}deg) scale(${sc})`;
       el.style.filter =
-        `brightness(${brillo.toFixed(3)}) blur(${blur.toFixed(2)}px) ` +
+        `brightness(${brillo.toFixed(3)}) ` +
         `drop-shadow(0 ${(6 + sombra).toFixed(0)}px ${(10 + sombra).toFixed(0)}px rgba(0,0,0,.55))`;
       el.style.opacity = opacidad.toFixed(2);
       el.style.zIndex = String(200 - Math.round(a * 10));
@@ -108,44 +109,6 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
   function pararRaf() {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
-  }
-
-  // Mide el "padding" transparente inferior del PNG (fracción del alto) y lo
-  // expone como var --pad en cqh sobre el nodo. Así la BASE VISIBLE del item
-  // (no el borde del lienzo con padding) se apoya en la línea de la barra a
-  // cualquier escala: sin esto, el central (escala 1) parece flotar respecto a
-  // los laterales (encogidos), porque su hueco inferior transparente es mayor.
-  function medirPad(k: number, img: HTMLImageElement) {
-    try {
-      const w = 24;
-      const h = Math.max(1, Math.round((24 * img.naturalHeight) / img.naturalWidth));
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext("2d", { willReadFrequently: true });
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0, w, h);
-      const data = ctx.getImageData(0, 0, w, h).data;
-      let filaContenido = h;
-      for (let y = h - 1; y >= 0; y--) {
-        let hay = false;
-        for (let x = 0; x < w; x++) {
-          if (data[(y * w + x) * 4 + 3] > 16) {
-            hay = true;
-            break;
-          }
-        }
-        if (hay) {
-          filaContenido = y + 1;
-          break;
-        }
-      }
-      const padFrac = Math.max(0, (h - filaContenido) / h);
-      const padCqh = padFrac * alturaItem;
-      nodosRef.current[k]?.style.setProperty("--pad", `${padCqh.toFixed(2)}cqh`);
-    } catch {
-      // getImageData puede fallar (canvas contaminado); se ignora y queda --pad:0.
-    }
   }
 
   // Bucle de muelle críticamente amortiguado hacia objetivoRef, con inercia.
@@ -285,43 +248,64 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange }
         perspectiveOrigin: "50% var(--linea-barra, 62cqh)",
       }}
     >
-      <div className="absolute inset-0 [transform-style:preserve-3d]">
-        {items.map((it, k) => (
-          <div
-            key={it.id}
-            data-idx={k}
-            ref={(el) => {
-              nodosRef.current[k] = el;
-            }}
-            aria-label={it.nombre}
-            className="absolute left-1/2 will-change-transform [transform-style:preserve-3d]"
-            style={{
-              ["--pad" as string]: "0px",
-              bottom: "calc(100cqh - var(--linea-barra, 62cqh))",
-              transformOrigin: "bottom center",
-            }}
-          >
-            {/* Área táctil generosa alrededor del vaso sin alterar su tamaño visual */}
-            <div className="relative flex flex-col items-center px-[6cqw]">
-              {/* margin-bottom negativo = --pad: sube el borde inferior de la caja
-                  hasta la base VISIBLE del vaso, para que se apoye en la barra. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={it.img}
-                alt={it.nombre}
-                draggable={false}
-                onLoad={(e) => medirPad(k, e.currentTarget)}
-                className="pointer-events-none block w-auto select-none object-contain"
-                style={{ height: "var(--altura-item)", marginBottom: "calc(var(--pad, 0px) * -1)" }}
-              />
+      {/* Entrada suave: fundido de todo el coverflow YA ANCLADO (sin movimiento
+          vertical). No pisa la opacidad por-item que escribe pintar(): la
+          animación va sobre el contenedor, no sobre los nodos. */}
+      <div className="absolute inset-0 [animation:coverflow-aparece_.25s_ease-out] [transform-style:preserve-3d]">
+        {items.map((it, k) => {
+          // Padding transparente inferior precomputado (fracción del alto). Anclar
+          // la base VISIBLE del item a la barra desde el PRIMER frame, sin scan.
+          const padFrac = PAD_INFERIOR[it.img] ?? 0;
+          return (
+            <div
+              key={it.id}
+              data-idx={k}
+              ref={(el) => {
+                nodosRef.current[k] = el;
+              }}
+              aria-label={it.nombre}
+              className="absolute left-1/2 will-change-transform [transform-style:preserve-3d]"
+              style={{
+                bottom: "calc(100cqh - var(--linea-barra, 62cqh))",
+                transformOrigin: "bottom center",
+              }}
+            >
+              {/* Área táctil generosa alrededor del vaso sin alterar su tamaño visual */}
+              <div className="relative flex flex-col items-center px-[6cqw]">
+                {/* margin-bottom negativo = padding transparente: sube el borde
+                    inferior de la caja hasta la base VISIBLE del vaso, para que
+                    se apoye en la barra a cualquier escala. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={it.img}
+                  alt={it.nombre}
+                  draggable={false}
+                  className="pointer-events-none block w-auto select-none object-contain"
+                  style={{
+                    height: "var(--altura-item)",
+                    marginBottom: `calc(var(--altura-item) * ${(-padFrac).toFixed(4)})`,
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {/* centro expuesto por accesibilidad; el título lo pinta el consumidor */}
       <span className="sr-only" aria-live="polite">
         {items[centro]?.nombre}
       </span>
+
+      <style jsx>{`
+        @keyframes coverflow-aparece {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
