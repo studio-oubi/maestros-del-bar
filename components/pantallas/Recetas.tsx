@@ -35,14 +35,14 @@ export function Recetas() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") continuar();
       }}
-      className="flex h-full w-full cursor-pointer select-none flex-col items-center pt-[14.5cqh] pb-[12cqh] outline-none"
+      className="flex h-full w-full cursor-pointer select-none flex-col items-center pt-[14cqh] pb-[9.5cqh] outline-none"
     >
       <Image
         src={IMG.logoBrugal}
         alt="Brugal"
         width={220}
         height={90}
-        className="h-auto w-[33cqw] max-w-[155px] shrink-0"
+        className="h-auto w-[42cqw] max-w-[210px] shrink-0"
       />
 
       {/* Ancho de contenido (w-max), NO fijo: si el contenedor fuera más ancho
@@ -55,14 +55,14 @@ export function Recetas() {
       <div className="mx-auto flex w-max flex-1 flex-col justify-center">
         {RECETAS.map((receta, i) => (
           <div key={receta.id}>
-            {i > 0 && <div className="ml-[17cqw] h-px bg-oro/25" />}
-            <div className="flex items-center gap-[2cqw] py-[1.8cqh]">
+            {i > 0 && <div className="h-px bg-oro/25" />}
+            <div className="flex items-center gap-[2cqw] py-[1.2cqh]">
               <Image
                 src={receta.imgTrago}
                 alt=""
                 width={726}
                 height={1300}
-                className="h-[15.5cqh] w-auto shrink-0 object-contain"
+                className="h-[18.5cqh] w-auto shrink-0 object-contain"
               />
               {/* max-w acota el nombre más largo (LIMÓN ALBAHACA EXTRA VIEJO)
                   a 2 líneas como en el mock, en vez de una sola línea
@@ -84,7 +84,7 @@ export function Recetas() {
         ))}
       </div>
 
-      <p className="mb-[1.2cqh] animate-pulse font-cuerpo text-[1cqh] text-crema/60 [animation-duration:2.4s]">
+      <p className="mb-[0.8cqh] animate-pulse font-cuerpo text-[1cqh] text-crema/60 [animation-duration:2.4s]">
         toca para continuar....
       </p>
 
