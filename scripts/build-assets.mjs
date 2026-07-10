@@ -4,7 +4,8 @@
 // Uso: npm run assets
 
 import sharp from "sharp";
-import { mkdir, copyFile, writeFile, readdir, stat } from "node:fs/promises";
+import { mkdir, copyFile, writeFile, readFile, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -155,17 +156,28 @@ const MANIFEST_KEYS = [
   ["ingDemerara", "ing-demerara.webp"],
 ];
 
+// Cache-busting: el manifiesto emite las URLs como /img/archivo.webp?v=<hash>.
+// Los archivos físicos NO cambian de nombre (Cache-Control: immutable en
+// /img sigue sirviendo igual), solo cambia la query string cuando cambia el
+// contenido, así el navegador/tótem deja de servir una versión vieja cacheada.
+function shortHash(buf) {
+  return createHash("md5").update(buf).digest("hex").slice(0, 8);
+}
+
 async function run() {
   await mkdir(OUT, { recursive: true });
 
   const results = [];
+  const hashes = {}; // nombre de archivo en public/img -> hash corto de su contenido
 
   for (const job of JOBS) {
     const outPath = path.join(OUT, job.out);
-    await sharp(job.src)
+    const buf = await sharp(job.src)
       .resize({ height: job.height, withoutEnlargement: true })
       .webp({ quality: job.quality ?? 86 })
-      .toFile(outPath);
+      .toBuffer();
+    await writeFile(outPath, buf);
+    hashes[job.out] = shortHash(buf);
     results.push(outPath);
   }
 
@@ -186,20 +198,29 @@ async function run() {
     // bbox real + pad) suelen quedar por debajo de los 400px objetivo, y
     // deben escalarse hacia arriba para quedar del mismo tamaño que el
     // resto de los tiles ing-*.
-    await sharp(buf)
+    const webpBuf = await sharp(buf)
       .resize({ height: crop.height })
       .webp({ quality: 86 })
-      .toFile(outPath);
+      .toBuffer();
+    await writeFile(outPath, webpBuf);
+    hashes[crop.out] = shortHash(webpBuf);
     results.push(outPath);
   }
 
-  // Copia el SVG del logo tal cual, sin procesar.
+  // Copia el SVG del logo tal cual, sin procesar (el hash se calcula sobre
+  // el contenido fuente, que es idéntico byte a byte al que queda copiado).
+  const svgSrc = nd("logo brugal.svg");
   const svgOut = path.join(OUT, "logo-brugal.svg");
-  await copyFile(nd("logo brugal.svg"), svgOut);
+  await copyFile(svgSrc, svgOut);
+  hashes["logo-brugal.svg"] = shortHash(await readFile(svgSrc));
   results.push(svgOut);
 
-  // Manifiesto tipado.
-  const lines = MANIFEST_KEYS.map(([key, file]) => `  ${key}: "/img/${file}",`).join("\n");
+  // Manifiesto tipado, con cache-busting por hash de contenido en cada URL.
+  const lines = MANIFEST_KEYS.map(([key, file]) => {
+    const hash = hashes[file];
+    if (!hash) throw new Error(`Falta hash de cache-busting para ${file}`);
+    return `  ${key}: "/img/${file}?v=${hash}",`;
+  }).join("\n");
   const manifestSrc = `// Generado por scripts/build-assets.mjs. No editar a mano.
 export const IMG = {
 ${lines}
