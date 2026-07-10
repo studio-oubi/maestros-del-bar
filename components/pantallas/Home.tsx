@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IMG } from "@/lib/asset-manifest";
 import { useJuego } from "@/lib/juego";
-import { ShaderBotellas } from "@/components/ShaderBotellas";
 
 const BOTELLAS = [IMG.homeExtraviejo, IMG.homeDoble, IMG.homeTriple];
 const UMBRAL_MOV = 12; // px: más que esto se considera scroll/drag, no un toque
@@ -59,12 +58,13 @@ export function Home() {
         <img src={IMG.escapate} alt="Escápate a lo extraordinario" className="w-full" />
       </h1>
 
-      {/* Botella compacta (dissolve) — ocupa de 40cqh a 88cqh.
-          Contra-tilt (rotate) en este contenedor y bob (translateY) por dentro,
-          en capas separadas para no pisarse el transform. El contra-tilt usa el
-          mismo ciclo que el tilt del neón pero invertido, como contrapeso. */}
+      {/* Botella compacta — ocupa de 40cqh a 88cqh. Crossfade CSS entre las
+          botellas (cada 12s). Contra-tilt (rotate) en este contenedor y bob
+          (translateY) por dentro, en capas separadas para no pisarse el
+          transform. El contra-tilt usa el mismo ciclo que el tilt del neón pero
+          invertido, como contrapeso. */}
       <div className="mix-contratilt absolute left-0 top-[40cqh] h-[48cqh] w-full">
-        <ShaderBotellas imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
+        <BotellasCrossfade imagenes={BOTELLAS} intervaloMs={12000} className="mix-bob h-full w-full" />
       </div>
 
       {/* Logo neón: centrado, cruza el tercio inferior de la botella. Posición
@@ -88,6 +88,46 @@ export function Home() {
       <p className="mix-latido absolute bottom-[3cqh] left-1/2 -translate-x-1/2 font-cuerpo text-[0.7rem] font-light uppercase tracking-[0.35em] text-crema/55">
         toca para comenzar
       </p>
+    </div>
+  );
+}
+
+/**
+ * Crossfade entre las botellas del Home (opacidad, sin WebGL). La primera
+ * imagen se pinta al instante al montar (opacity 1): como lib/precarga.ts
+ * retiene los bitmaps decodificados, el <img> con la misma URL aparece sin
+ * hueco al volver al Home. Con una sola imagen no hay ciclo.
+ */
+function BotellasCrossfade({
+  imagenes,
+  intervaloMs,
+  className,
+}: {
+  imagenes: string[];
+  intervaloMs: number;
+  className?: string;
+}) {
+  const [activo, setActivo] = useState(0);
+
+  useEffect(() => {
+    if (imagenes.length < 2) return;
+    const id = setInterval(() => setActivo((i) => (i + 1) % imagenes.length), intervaloMs);
+    return () => clearInterval(id);
+  }, [imagenes.length, intervaloMs]);
+
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {imagenes.map((src, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-contain transition-opacity duration-[1600ms] ease-in-out"
+          style={{ opacity: i === activo ? 1 : 0 }}
+        />
+      ))}
     </div>
   );
 }
