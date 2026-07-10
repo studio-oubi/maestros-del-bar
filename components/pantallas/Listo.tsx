@@ -9,11 +9,9 @@ export function Listo() {
   const { despachar } = useJuego();
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center px-[8cqw] text-center">
-      {/* Logo fuera del flujo centrado: así el bloque título+botón se centra
-          respecto a TODA la pantalla (no solo al espacio bajo el logo) y el
-          botón INICIAR cae cerca del centro vertical, como pide el mock. */}
-      <div className="absolute left-1/2 top-[5cqh] -translate-x-1/2">
+    <div className="relative h-full w-full px-[8cqw] text-center">
+      {/* Logo fuera del flujo, centrado a 17.5cqh (igual que Home/Intro). */}
+      <div className="absolute left-1/2 top-[17.5cqh] -translate-x-1/2 -translate-y-1/2">
         <Image
           src={IMG.logoBrugal}
           alt="Brugal"
@@ -23,14 +21,11 @@ export function Listo() {
         />
       </div>
 
-      {/* El grupo se centra respecto a TODA la pantalla (justify-center del
-          contenedor), pero el título (3 líneas) pesa más que el botón, así
-          que sin ayuda el botón quedaría por debajo del centro real. Un
-          "fantasma" invisible del título, del mismo alto, espeja el bloque
-          bajo el botón para que el botón —no el conjunto— caiga en el
-          centro vertical exacto de la pantalla. */}
-      <div className="flex flex-col items-center gap-[4.5cqh]">
-        <h1 className="texto-titulo max-w-[80cqw]">
+      {/* Bloque título+botón anclado cerca del tercio medio-superior (no
+          centrado verticalmente): el vacío queda abajo, como en la
+          referencia de diseño. */}
+      <div className="absolute left-1/2 top-[33cqh] flex w-full -translate-x-1/2 flex-col items-center gap-[3cqh]">
+        <h1 className="max-w-[80cqw] font-titulo text-[7.7cqh] font-medium leading-[1.02] uppercase text-white">
           ¿Listo para
           <br />
           armar el mix
@@ -40,17 +35,10 @@ export function Listo() {
         <button
           type="button"
           onClick={() => despachar({ tipo: "INICIAR_RETO" })}
-          className="texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[11cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95"
+          className="flex h-[4.5cqh] w-[57cqw] items-center justify-center rounded-full bg-gradient-to-b from-oro-claro to-oro font-titulo text-[2.7cqh] font-medium uppercase text-[var(--tinta-boton)] shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-transform active:scale-95"
         >
           Iniciar
         </button>
-        <div aria-hidden className="texto-titulo invisible max-w-[80cqw]">
-          ¿Listo para
-          <br />
-          armar el mix
-          <br />
-          perfecto?
-        </div>
       </div>
     </div>
   );
