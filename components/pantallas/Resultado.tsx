@@ -22,7 +22,7 @@ function Logo() {
         alt="Brugal"
         width={220}
         height={90}
-        className="h-auto w-[33cqw] max-w-[155px]"
+        className="h-auto w-[42cqw] max-w-[195px]"
       />
     </div>
   );
@@ -79,12 +79,12 @@ function Confetti() {
   );
 }
 
-// Anima --rev de 0 a 104% con easing cúbico (rAF), timings EXACTOS de
-// animarRevelado()/preparar() en legacy/index.html: arranca `delayMs` (600,
-// tiempo de leer "Agitando…") después de montar, sube 0→104% en
-// `duracionMs` (104% para que el borde de la máscara salga del cuadro y no
-// quede una línea dura). Corre una sola vez. Al terminar, marca
-// --rev-listo:1 (el reflejo lo usa para aparecer con fade SOLO entonces).
+// Anima --rev de 0 a 104% con easing cúbico (rAF), timings del legacy
+// (animarRevelado()/preparar() en legacy/index.html) ×1.5 más lento a
+// pedido del usuario: arranca `delayMs` (600, igual que el legacy — tiempo
+// de leer "Agitando…") después de montar, sube 0→104% en `duracionMs`
+// (104% para que el borde de la máscara salga del cuadro y no quede una
+// línea dura). Corre una sola vez.
 function useRevelado<T extends HTMLElement>(duracionMs: number, delayMs = 600) {
   const ref = useRef<T>(null);
   useEffect(() => {
@@ -97,11 +97,7 @@ function useRevelado<T extends HTMLElement>(duracionMs: number, delayMs = 600) {
         const p = Math.min(1, (t - t0) / duracionMs);
         const ease = 1 - Math.pow(1 - p, 3);
         el!.style.setProperty("--rev", `${(104 * ease).toFixed(2)}%`);
-        if (p < 1) {
-          raf = requestAnimationFrame(paso);
-        } else {
-          el!.style.setProperty("--rev-listo", "1");
-        }
+        if (p < 1) raf = requestAnimationFrame(paso);
       }
       raf = requestAnimationFrame(paso);
     }, delayMs);
@@ -126,7 +122,7 @@ const MASCARA_REVELADO = "linear-gradient(to top, #000 0%, #000 calc(var(--rev, 
 // y encima receta.imgTrago enmascarado subiendo. Las fotos comparten el
 // mismo encuadre (1536×2752), así que una caja con aspect-ratio +
 // object-contain las alinea automáticamente, igual que el legacy (ambas con
-// inset:0 dentro de .rev-wrap).
+// inset:0 dentro de .rev-wrap). Sin reflejo (quitado de toda la app).
 // Si `elecciones` coincide EXACTO con `receta.ingredientes` el trago se ve
 // normal; si no, se aplica un hue-rotate proporcional a la desviación
 // cromática entre lo elegido y lo correcto — el fallo se lee en el vaso.
@@ -135,8 +131,6 @@ function TragoRevelado({
   elecciones,
   vasoElegido,
   alturaClase,
-  reflejoAlturaClase,
-  reflejoOpacidad = 0.18,
 }: {
   receta: Receta;
   elecciones: IngredienteId[];
@@ -145,71 +139,38 @@ function TragoRevelado({
   // vaso correcto de la receta.
   vasoElegido: VasoId | null;
   alturaClase: string;
-  // Alto y opacidad del reflejo se pueden ajustar por separado del trago:
-  // en "Casi" el trago es chico y flotan cerca del checklist, así que el
-  // reflejo necesita ser más corto/tenue para no pisar las filas VASO/RON/MEZCLA.
-  reflejoAlturaClase?: string;
-  reflejoOpacidad?: number;
 }) {
   const tinte = filtroTinte(elecciones, receta.ingredientes);
   const acerto = tinte === "";
-  const revRef = useRevelado<HTMLDivElement>(acerto ? 3200 : 2600);
+  const revRef = useRevelado<HTMLDivElement>(acerto ? 4800 : 3900);
   const sombra = "drop-shadow(0 18px 30px rgba(0,0,0,.55))";
   const imgVasoBase = (vasoElegido && VASOS.find((v) => v.id === vasoElegido)?.img) || receta.imgVaso;
 
   return (
-    <div
-      ref={revRef}
-      className="relative flex flex-col items-center"
-      style={{ ["--rev" as string]: "0%", ["--rev-listo" as string]: "0" }}
-    >
-      <div className={`relative aspect-[1536/2752] ${alturaClase}`}>
-        {/* Vaso vacío QUE ELIGIÓ el jugador: base siempre visible, sin máscara. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imgVasoBase}
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
-          style={{ filter: sombra }}
-        />
-        {/* Trago: se revela de abajo hacia arriba encima del vaso. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={receta.imgTrago}
-          alt={receta.nombre}
-          draggable={false}
-          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
-          style={{
-            WebkitMaskImage: MASCARA_REVELADO,
-            maskImage: MASCARA_REVELADO,
-            filter: tinte ? `${tinte} ${sombra}` : sombra,
-          }}
-        />
-      </div>
-      {/* Reflejo: oculto mientras el trago se revela (--rev-listo:0) y aparece
-          con fade recién cuando termina — nunca se ve "flotando" antes de
-          tiempo sobre lo que haya debajo (p.ej. el checklist en "Casi"). */}
-      {reflejoOpacidad > 0 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={receta.imgTrago}
-          alt=""
-          aria-hidden
-          draggable={false}
-          className={`pointer-events-none absolute left-1/2 top-full w-auto -translate-x-1/2 select-none object-contain transition-opacity duration-500 ease-out ${
-            reflejoAlturaClase ?? alturaClase
-          }`}
-          style={{
-            transform: "translateX(-50%) scaleY(-1)",
-            filter: tinte || undefined,
-            opacity: `calc(var(--rev-listo, 0) * ${reflejoOpacidad})`,
-            WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-            maskImage: "linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,0) 55%)",
-          }}
-        />
-      )}
+    <div ref={revRef} className={`relative aspect-[1536/2752] ${alturaClase}`} style={{ ["--rev" as string]: "0%" }}>
+      {/* Vaso vacío QUE ELIGIÓ el jugador: base siempre visible, sin máscara. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imgVasoBase}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+        style={{ filter: sombra }}
+      />
+      {/* Trago: se revela de abajo hacia arriba encima del vaso. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={receta.imgTrago}
+        alt={receta.nombre}
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+        style={{
+          WebkitMaskImage: MASCARA_REVELADO,
+          maskImage: MASCARA_REVELADO,
+          filter: tinte ? `${tinte} ${sombra}` : sombra,
+        }}
+      />
     </div>
   );
 }
@@ -226,11 +187,8 @@ function Ganaste() {
       <Confetti />
       <Logo />
 
-      <div className="absolute inset-x-0 top-[13cqh] z-10 flex flex-col items-center gap-[3cqh] px-[6cqw] text-center">
+      <div className="absolute inset-x-0 top-[13cqh] z-10 flex justify-center px-[6cqw] text-center">
         <h1 className="texto-titulo">GANASTE!!</h1>
-        <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
-          INICIO
-        </button>
       </div>
 
       <BarraEscena>
@@ -242,7 +200,7 @@ function Ganaste() {
             receta={receta}
             elecciones={estado.elecciones.ingredientes}
             vasoElegido={estado.elecciones.vaso}
-            alturaClase="h-[26cqh]"
+            alturaClase="h-[35cqh]"
           />
 
           <div className="mb-[3.4cqh] flex max-w-[50cqw] flex-col items-start gap-[1cqh] text-left">
@@ -257,6 +215,17 @@ function Ganaste() {
               ))}
             </ul>
           </div>
+        </div>
+
+        {/* Botón bajo la línea de la barra (zona del frente de la mesa),
+            no flotando arriba junto al título. */}
+        <div
+          className="absolute inset-x-0 z-10 flex justify-center"
+          style={{ top: "calc(var(--linea-barra, 62cqh) + 8cqh)" }}
+        >
+          <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
+            INICIO
+          </button>
         </div>
       </BarraEscena>
     </div>
@@ -305,23 +274,21 @@ function Casi() {
     <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[3.5cqh] pt-[5cqh] text-center">
       <Logo />
 
-      <div className="mt-[10cqh] flex flex-col items-center gap-[0.8cqh]">
+      <div className="mt-[7cqh] flex flex-col items-center gap-[0.8cqh]">
         <h1 className="texto-titulo">CASI...</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
 
-      <div className="mt-[2.2cqh]">
+      <div className="mt-[2cqh]">
         <TragoRevelado
           receta={receta}
           elecciones={estado.elecciones.ingredientes}
           vasoElegido={estado.elecciones.vaso}
-          alturaClase="h-[16cqh]"
-          reflejoAlturaClase="h-[5cqh]"
-          reflejoOpacidad={0.1}
+          alturaClase="h-[23cqh]"
         />
       </div>
 
-      <div className="mt-[3.8cqh] flex w-full flex-col items-center">
+      <div className="mt-[3cqh] flex w-full flex-col items-center">
         <FilaCheck etiqueta="VASO" ok={ev.vasoOk} />
         <FilaCheck etiqueta={receta.ronNombre} ok={ev.ronOk} />
         <FilaCheck etiqueta={receta.mezclaNombre} ok={ev.mezclaOk} />
