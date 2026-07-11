@@ -15,9 +15,9 @@ import { useJuego } from "@/lib/juego";
 const BOTON =
   "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.55cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90";
 
-function Logo() {
+function Logo({ topCqh = 5 }: { topCqh?: number }) {
   return (
-    <div className="absolute inset-x-0 top-[5cqh] z-10 flex justify-center">
+    <div className="absolute inset-x-0 z-10 flex justify-center" style={{ top: `${topCqh}cqh` }}>
       <Image
         src={IMG.logoBrugal}
         alt="Brugal"
@@ -396,12 +396,13 @@ function Casi() {
   const sobro = [...ev.mezclasSobraron.map(nombreMezcla), ...ev.sobraron.map((id) => INGREDIENTES[id].nombre)];
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[2.5cqh] pt-[5cqh] text-center">
-      <Logo />
+    <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[2.5cqh] pt-[7cqh] text-center">
+      <Logo topCqh={7} />
 
       {/* relative z-10: el trago agrandado sube hasta esta zona (el garnish
-          puede cruzarla); el texto debe pintarse ENCIMA para seguir legible. */}
-      <div className="relative z-10 mt-[4.5cqh] flex flex-col items-center gap-[0.6cqh]">
+          puede cruzarla); el texto debe pintarse ENCIMA para seguir legible.
+          mt amplio para despegar el título del logo. */}
+      <div className="relative z-10 mt-[7.5cqh] flex flex-col items-center gap-[0.6cqh]">
         <h1 className="texto-titulo">{titulo}</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
@@ -430,7 +431,9 @@ function Casi() {
         ))}
       </div>
 
-      <div className="mt-[1.4cqh] w-full">
+      {/* Mismo contenedor/centrado que la ficha de checks para que tabla y ficha
+          se lean como un bloque continuo (divisores alineados). */}
+      <div className="mt-[1.4cqh] flex w-full flex-col items-center">
         <TablaFaltoSobro falto={falto} sobro={sobro} />
       </div>
     </div>
