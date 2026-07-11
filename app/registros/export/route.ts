@@ -4,7 +4,7 @@ import { escaparCsv } from "@/lib/csv";
 import { obtenerRegistrosConResultado } from "../consultas";
 
 const ETIQUETA: Record<string, string> = { gano: "Ganó", fallo: "Falló", tiempo: "Tiempo" };
-const formateador = new Intl.DateTimeFormat("es-DO", { dateStyle: "short", timeStyle: "short" });
+const formateador = new Intl.DateTimeFormat("es-DO", { dateStyle: "short", timeStyle: "short", timeZone: "America/Santo_Domingo" });
 
 export async function GET() {
   const secreto = process.env.ADMIN_SECRET;

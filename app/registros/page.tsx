@@ -5,7 +5,7 @@ import { FormularioLogin, TablaRegistros, type FilaRegistro } from "./interactiv
 
 export const dynamic = "force-dynamic";
 
-const formateador = new Intl.DateTimeFormat("es-DO", { dateStyle: "short", timeStyle: "short" });
+const formateador = new Intl.DateTimeFormat("es-DO", { dateStyle: "short", timeStyle: "short", timeZone: "America/Santo_Domingo" });
 
 async function obtenerFilas(): Promise<FilaRegistro[]> {
   const filas = await obtenerRegistrosConResultado();
