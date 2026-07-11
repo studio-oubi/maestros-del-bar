@@ -11,6 +11,7 @@ export interface RegistroConResultado {
   correo: string;
   ciudad: string;
   establecimiento: string;
+  regalo: string;
   createdAt: Date;
   resultado: string | null;
 }
@@ -48,6 +49,7 @@ export async function obtenerRegistrosConResultado(): Promise<RegistroConResulta
     correo: r.correo,
     ciudad: r.ciudad,
     establecimiento: r.establecimiento,
+    regalo: r.regalo,
     createdAt: r.createdAt,
     resultado: mejorPorRegistro.get(r.id)?.resultado ?? null,
   }));

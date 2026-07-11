@@ -8,6 +8,10 @@ export const registros = pgTable("registros", {
   correo: text("correo").notNull(),
   ciudad: text("ciudad").default("").notNull(),
   establecimiento: text("establecimiento").default("").notNull(),
+  // Regalo asignado desde el panel (solo panel; el juego no lo toca). "" = sin
+  // asignar. La asignación es única: se garantiza en el servidor con
+  // UPDATE ... WHERE regalo = '' (ver app/api/regalo/route.ts).
+  regalo: text("regalo").default("").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

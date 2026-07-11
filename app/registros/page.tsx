@@ -17,6 +17,7 @@ async function obtenerFilas(): Promise<FilaRegistro[]> {
     correo: r.correo,
     ciudad: r.ciudad,
     establecimiento: r.establecimiento,
+    regalo: r.regalo,
     fecha: formateador.format(r.createdAt),
     resultado: r.resultado,
   }));
@@ -57,7 +58,7 @@ export default async function PaginaRegistros() {
 
   return (
     <main className="min-h-dvh bg-navy-deep px-4 py-8 font-cuerpo text-crema sm:px-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-titulo text-2xl tracking-wide text-oro">Registros — Mix Challenge</h1>
