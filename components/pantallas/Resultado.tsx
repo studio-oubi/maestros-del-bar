@@ -414,7 +414,7 @@ function Casi() {
       </div>
 
       {/* Botones inmediatamente debajo del vaso, antes de la ficha. */}
-      <div className="mt-[1.4cqh]">
+      <div className="mt-[4cqh]">
         <AccionesPerder />
       </div>
 
