@@ -193,11 +193,17 @@ function TragoRevelado({
 const ALTURA_TRAGO_GANASTE_CQH = 45;
 
 // Alto de la CAJA del trago revelado en "Casi". Los PNG del set traen mucho
-// alpha (25-32% arriba, 18-26% abajo): a 58cqh de caja el vaso VISIBLE queda
-// en ~25-30cqh. El crecimiento respecto al alto de referencia se absorbe con
-// margen superior negativo, así el vaso crece hacia ARRIBA (hacia el hueco
-// bajo el subtítulo) y la ficha de ingredientes no se mueve.
-const ALTURA_TRAGO_CASI_CQH = 46;
+// alpha (25-32% arriba, 18-26% abajo): a esta caja el vaso VISIBLE queda más
+// pequeño. Como la HUELLA de layout es fija (2 + (1-padFrac)·REF, ver abajo) y
+// la base va anclada por el margen negativo por alpha, bajar este valor encoge
+// el trago HACIA ARRIBA (la base no se mueve, la ficha tampoco): así el TOP
+// visible del trago —incluido el garnish alto de toronja/albahaca (rodaja +
+// romero)— baja por DEBAJO del subtítulo "ASÍ ERA EL..." con margen, en vez de
+// taparlo. Valor calibrado con medición pixel-real del garnish (canvas):
+// toronja (romero, el más alto: solo ~11% de alpha superior) queda ~1.9cqh por
+// debajo del subtítulo; albahaca, más holgado. Verificado en ambos viewports +
+// Sour perdido sin scroll.
+const ALTURA_TRAGO_CASI_CQH = 28;
 // Alto de caja con el que se calibró la posición de la ficha: el margen superior
 // negativo mantiene el final de layout del bloque en el punto que produce esta
 // referencia. La HUELLA de layout del bloque es 2 + (1-padFrac)·REF (independiente
