@@ -297,12 +297,27 @@ function nombreMezcla(id: MezclaId): string {
   return MEZCLAS.find((m) => m.id === id)?.nombre ?? id;
 }
 
-// Chip tachado "TE SOBRÓ: X" (mezcla o ingrediente elegido de más).
-function ChipSobrante({ etiqueta }: { etiqueta: string }) {
+// Tabla de dos columnas TE FALTÓ / TE SOBRÓ (mezclas + complementos juntos).
+// Texto centrado, sin división vertical entre columnas; solo divisores
+// horizontales finos entre filas (mismo lenguaje que la ficha de checks). Si una
+// columna queda vacía muestra un "—" para no romper la tabla.
+function TablaFaltoSobro({ falto, sobro }: { falto: string[]; sobro: string[] }) {
+  const filas = Math.max(falto.length, sobro.length, 1);
+  const celda = (lista: string[], i: number) => lista[i] ?? (lista.length === 0 && i === 0 ? "—" : "");
+  const CELDA = "px-[1cqw] text-center font-cuerpo text-[clamp(10px,2.7cqw,13px)] font-medium uppercase tracking-[0.03em]";
   return (
-    <span className="rounded-full bg-crema/5 px-[3.4cqw] py-[0.9cqh] font-cuerpo text-[clamp(9px,2.4cqw,11px)] font-medium uppercase tracking-[0.02em] text-crema/40 line-through">
-      TE SOBRÓ: {etiqueta}
-    </span>
+    <div className="w-full max-w-[74cqw]">
+      <div className="grid grid-cols-2 border-b border-oro/25 pb-[0.55cqh]">
+        <span className="texto-label text-center">TE FALTÓ</span>
+        <span className="texto-label text-center">TE SOBRÓ</span>
+      </div>
+      {Array.from({ length: filas }, (_, i) => (
+        <div key={i} className="grid grid-cols-2 border-b border-crema/10 py-[0.5cqh] last:border-b-0">
+          <span className={`${CELDA} text-red-400/90`}>{celda(falto, i)}</span>
+          <span className={`${CELDA} text-crema/55`}>{celda(sobro, i)}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -320,21 +335,6 @@ function FilaCheck({ etiqueta, ok }: { etiqueta: string; ok: boolean }) {
   );
 }
 
-function ChipIngrediente({ id, correcto }: { id: IngredienteId; correcto: boolean }) {
-  const info = INGREDIENTES[id];
-  return (
-    <span
-      className={`flex items-center gap-[1.4cqw] rounded-full px-[3.4cqw] py-[0.9cqh] font-cuerpo text-[clamp(10px,2.6cqw,12px)] font-medium uppercase tracking-[0.03em] ${
-        correcto ? "bg-oro/15 text-oro ring-1 ring-oro/50" : "bg-red-500/10 text-red-400 ring-1 ring-red-400/50"
-      }`}
-    >
-      <span aria-hidden>{correcto ? "✓" : "✗"}</span>
-      {info.nombre}
-      {!correcto && " · TE FALTÓ"}
-    </span>
-  );
-}
-
 const BOTON_PRIMARIO =
   "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.7cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90";
 const BOTON_GHOST =
@@ -342,8 +342,8 @@ const BOTON_GHOST =
 
 // Acciones al perder (CASI y TIEMPO AGOTADO): solo en el PRIMER intento perdido
 // aparece "VOLVER A INTENTAR" (2ª partida al MISMO registro, ver reducer
-// REINTENTAR) con "VOLVER AL INICIO" como ghost debajo. En el 2º intento (o más)
-// queda únicamente "VOLVER AL INICIO" como botón primario.
+// REINTENTAR) con "IR A INICIO" como ghost debajo. En el 2º intento (o más)
+// queda únicamente "IR A INICIO" como botón primario.
 function AccionesPerder() {
   const { estado, despachar } = useJuego();
   const puedeReintentar = estado.intento === 1;
@@ -359,7 +359,7 @@ function AccionesPerder() {
         onClick={() => despachar({ tipo: "REINICIAR" })}
         className={puedeReintentar ? BOTON_GHOST : BOTON_PRIMARIO}
       >
-        VOLVER AL INICIO
+        IR A INICIO
       </button>
     </div>
   );
@@ -386,14 +386,20 @@ function Casi() {
   // hacia arriba. Incluye el mt-[2cqh] original del contenedor.
   const mtCasiCqh = 2 + (1 - padFracCasi) * (ALTURA_REF_CASI_CQH - ALTURA_TRAGO_CASI_CQH);
 
+  // Intento 1: invita a reintentar; 2º intento perdido: cierre.
+  const titulo = estado.intento === 1 ? "VUELVE A INTENTARLO" : "INTENTO FALLIDO";
+  // Todo lo que faltó / sobró (mezclas + complementos juntos) para la tabla.
+  const falto = [...ev.mezclasFaltaron.map(nombreMezcla), ...ev.faltaron.map((id) => INGREDIENTES[id].nombre)];
+  const sobro = [...ev.mezclasSobraron.map(nombreMezcla), ...ev.sobraron.map((id) => INGREDIENTES[id].nombre)];
+
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-y-auto overflow-x-hidden px-[7cqw] pb-[2.5cqh] pt-[5cqh] text-center">
       <Logo />
 
       {/* relative z-10: el trago agrandado sube hasta esta zona (el garnish
           puede cruzarla); el texto debe pintarse ENCIMA para seguir legible. */}
-      <div className="relative z-10 mt-[5cqh] flex flex-col items-center gap-[0.8cqh]">
-        <h1 className="texto-titulo">CASI...</h1>
+      <div className="relative z-10 mt-[4.5cqh] flex flex-col items-center gap-[0.6cqh]">
+        <h1 className="texto-titulo">{titulo}</h1>
         <p className="texto-sub">ASÍ ERA EL {receta.nombre}</p>
       </div>
 
@@ -407,40 +413,22 @@ function Casi() {
         />
       </div>
 
-      <div className="mt-[2cqh] flex w-full flex-col items-center">
+      {/* Botones inmediatamente debajo del vaso, antes de la ficha. */}
+      <div className="mt-[1.4cqh]">
+        <AccionesPerder />
+      </div>
+
+      {/* Filas ✓/✗ de vaso/rón/mezclas de la receta (se mantienen). */}
+      <div className="mt-[1.6cqh] flex w-full flex-col items-center">
         <FilaCheck etiqueta="VASO" ok={ev.vasoOk} />
         <FilaCheck etiqueta={receta.ronNombre} ok={ev.ronOk} />
-        {/* Una fila por CADA mezcla de la receta: ✓ si la eligió, ✗ si no. */}
         {receta.mezclas.map((m) => (
           <FilaCheck key={m} etiqueta={nombreMezcla(m)} ok={estado.elecciones.mezclas.includes(m)} />
         ))}
-        {ev.mezclasSobraron.length > 0 && (
-          <div className="mt-[1cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
-            {ev.mezclasSobraron.map((m) => (
-              <ChipSobrante key={m} etiqueta={nombreMezcla(m)} />
-            ))}
-          </div>
-        )}
       </div>
 
-      <div className="mt-[1.6cqh] flex w-full flex-col items-center gap-[1cqh]">
-        <span className="texto-label">INGREDIENTES</span>
-        <div className="flex flex-wrap items-center justify-center gap-[1.6cqw]">
-          {receta.ingredientes.map((id) => (
-            <ChipIngrediente key={id} id={id} correcto={!ev.faltaron.includes(id)} />
-          ))}
-        </div>
-        {ev.sobraron.length > 0 && (
-          <div className="mt-[0.4cqh] flex flex-wrap items-center justify-center gap-[1.6cqw]">
-            {ev.sobraron.map((id) => (
-              <ChipSobrante key={id} etiqueta={INGREDIENTES[id].nombre} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-[1.3cqh]">
-        <AccionesPerder />
+      <div className="mt-[1.4cqh] w-full">
+        <TablaFaltoSobro falto={falto} sobro={sobro} />
       </div>
     </div>
   );
