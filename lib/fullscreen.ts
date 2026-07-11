@@ -15,22 +15,13 @@ function soportaFullscreen(): boolean {
   return typeof document !== "undefined" && typeof document.documentElement.requestFullscreen === "function";
 }
 
-// ¿Ya estamos a pantalla completa, por la Fullscreen API o por PWA instalada
-// (display-mode fullscreen/standalone)? En esos casos no hay que pedir nada.
+// ¿Ya estamos a pantalla completa según la Fullscreen API? OJO: NO tratamos el
+// display-mode fullscreen/standalone de la PWA instalada como "ya está": en el
+// tótem real la PWA instalada seguía mostrando la barra de notificaciones y solo
+// requestFullscreen (modo inmersivo) la esconde. Pedirlo cuando ya se está
+// inmersivo es un no-op inofensivo.
 function yaEnPantallaCompleta(): boolean {
-  if (document.fullscreenElement) return true;
-  try {
-    if (
-      window.matchMedia("(display-mode: fullscreen)").matches ||
-      window.matchMedia("(display-mode: standalone)").matches
-    ) {
-      return true;
-    }
-  } catch {
-    // matchMedia no disponible: seguimos
-  }
-  // iOS PWA instalada
-  return "standalone" in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true;
+  return Boolean(document.fullscreenElement);
 }
 
 // Se llama en CADA pointerdown global (ver App.tsx). Entra a fullscreen si toca;
@@ -43,7 +34,12 @@ export function autoFullscreenEnGesto(): void {
   const ahora = Date.now();
   if (ahora - ultimoIntento < 1000) return; // throttle
   ultimoIntento = ahora;
-  document.documentElement.requestFullscreen().catch(() => {});
+  // navigationUI:"hide" esconde también la UI del sistema en Android; si el
+  // navegador no soporta las opciones, cae al request simple.
+  const raiz = document.documentElement;
+  raiz.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+    raiz.requestFullscreen().catch(() => {});
+  });
 }
 
 // Botón manual del staff (esquina inferior derecha): alterna y RECUERDA su
