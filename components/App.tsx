@@ -17,6 +17,7 @@ import { Reto } from "@/components/pantallas/Reto";
 import { Resultado } from "@/components/pantallas/Resultado";
 import { procesarCola } from "@/lib/registro-cliente";
 import { registrarServiceWorker } from "@/lib/sw-registro";
+import { autoFullscreenEnGesto } from "@/lib/fullscreen";
 
 function Pantallas() {
   const { estado } = useJuego();
@@ -71,6 +72,16 @@ function Juego() {
       window.removeEventListener("online", alVolverRed);
       window.clearInterval(intervalo);
     };
+  }, []);
+
+  // Pantalla completa "siempre": en cada gesto del usuario se entra (y se
+  // recupera si el usuario/sistema salió) al fullscreen del navegador. La PWA
+  // instalada ya arranca fullscreen; esto cubre el caso navegador. Respeta la
+  // salida manual del staff y hace no-op en iOS (ver lib/fullscreen.ts).
+  useEffect(() => {
+    const alGesto = () => autoFullscreenEnGesto();
+    window.addEventListener("pointerdown", alGesto);
+    return () => window.removeEventListener("pointerdown", alGesto);
   }, []);
 
   // Portada elegida (persiste en localStorage). En el Home con portada "kv" la

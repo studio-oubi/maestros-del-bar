@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Settings, X } from "lucide-react";
 import { CIUDADES } from "@/lib/establecimientos";
+import { alternarFullscreenStaff } from "@/lib/fullscreen";
 import { guardarPortada, leerPortada, type Portada } from "@/lib/portada";
 
 const VIDEO_LANZAMIENTO = "/video-lanzamiento.mp4";
@@ -40,18 +41,6 @@ function guardarConfig(config: ConfigLocal): void {
   }
 }
 
-async function alternarFullscreen(): Promise<void> {
-  try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await document.documentElement.requestFullscreen();
-    }
-  } catch {
-    // navegador sin soporte o gesto insuficiente: se ignora en silencio.
-  }
-}
-
 // Mismo pill que los inputs de Formulario.tsx (borde oro/25, fondo negro
 // translúcido, texto crema) + flecha dorada propia porque appearance-none
 // quita la nativa, y color-scheme:dark para que el listado de opciones
@@ -71,23 +60,16 @@ const ESTILO_FLECHA = {
 // Se renderiza a nivel de App (hermano del Marco, ver App.tsx), NO dentro del
 // Marco: así escapa de su container-type:size y de su borde dorado (z-30), y
 // cubre la pantalla de borde a borde —por encima del marco y de NavBotones— sin
-// filo dorado visible. Pide fullscreen real del contenedor si el navegador lo
-// permite y sale al cerrar. El ÚNICO cierre es la X, que empieza OCULTA (y no
+// filo dorado visible. El fullscreen real lo gestiona App a nivel global (ver
+// lib/fullscreen.ts): el overlay NO lo pide ni sale, para no romper el "siempre
+// fullscreen" al cerrarse. El ÚNICO cierre es la X, que empieza OCULTA (y no
 // clickeable) y reaparece al tocar la pantalla, ocultándose tras 3s sin tocar.
 export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
-  const contenedorRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const pediFullscreen = useRef(false);
   const timerRef = useRef<number | null>(null);
   const [controlesVisibles, setControlesVisibles] = useState(false);
 
   useEffect(() => {
-    const el = contenedorRef.current;
-    el?.requestFullscreen?.()
-      .then(() => {
-        pediFullscreen.current = true;
-      })
-      .catch(() => {});
     // Reproducir: intenta con SONIDO; si el navegador lo bloquea (arranque sin
     // gesto), cae a MUTED (attract, loop ambiente). Si ni muted reproduce
     // (p.ej. arranque offline sin caché aún), cierra -> Home, sin pantalla negra.
@@ -100,9 +82,6 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (pediFullscreen.current && document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
     };
   }, [onCerrar]);
 
@@ -126,7 +105,6 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
 
   return (
     <div
-      ref={contenedorRef}
       onPointerDown={alTocar}
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
     >
@@ -303,7 +281,7 @@ export function ConfigOculta({ onAbrirVideo }: { onAbrirVideo: () => void }) {
       <button
         type="button"
         aria-label="Pantalla completa"
-        onClick={() => void alternarFullscreen()}
+        onClick={() => void alternarFullscreenStaff()}
         className="pointer-events-auto absolute bottom-0 right-0 z-50 h-[56px] w-[56px] opacity-0"
       />
       {modalAbierto && (
