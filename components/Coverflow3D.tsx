@@ -28,8 +28,14 @@ const ROT = 12; // grados de rotateY por unidad de distancia
 const DEPTH = 185; // px de translateZ por unidad de distancia
 const SCALE_STEP = 0.12; // reducción de escala extra por unidad (pequeña, no rompe el anclaje)
 const BRIGHT_STEP = 0.3; // oscurecimiento por unidad (centro = 1)
-// Sin blur: es el filtro más caro en GPUs débiles (tótems/tablets de gama baja)
-// y provocaba jank en los snaps. La profundidad se lee por TAMAÑO + BRILLO.
+// Profundidad de campo: desenfoque proporcional a la distancia al centro (0px
+// nítido en el centro; laterales hasta BLUR_MAX). El blur es el filtro más caro
+// en GPUs débiles, así que se CUANTIZA a pasos de BLUR_CUANTO para no
+// re-rasterizarlo en cada micro-cambio al rotar (el raster se reusa entre pasos)
+// y el nodo lleva will-change:filter + translateZ para componerlo en GPU.
+const BLUR_MAX = 2.5; // px máximos (sutil: sensación de foco sin verse borroso)
+const BLUR_POR_UNIDAD = 2.0; // px de blur por unidad de distancia al centro
+const BLUR_CUANTO = 0.25; // cuantización del radio de blur (px)
 const SUAVE_DESDE = 1.5; // a partir de esta distancia se comprime el reparto (útil con 5+ items)
 const K = 170; // rigidez del muelle
 const C = 26; // amortiguación (≈ crítica para k=170)
@@ -93,6 +99,11 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
       const tz = -aSuave * DEPTH;
       const sc = Math.max(0.34, 1 - a * SCALE_STEP);
       const brillo = Math.max(0.5, 1 - a * BRIGHT_STEP);
+      // Desenfoque de profundidad, cuantizado a BLUR_CUANTO: al rotar, el radio
+      // solo cambia en saltos de 0.25px, así el navegador reusa el raster del
+      // blur entre esos saltos (evita re-rasterizar cada frame en gama baja).
+      const blurCrudo = Math.min(BLUR_MAX, a * BLUR_POR_UNIDAD);
+      const blur = Math.round(blurCrudo / BLUR_CUANTO) * BLUR_CUANTO;
       // Sombra fuerte y centrada en el item central; se diluye hacia los lados.
       const sombra = Math.max(0, 1 - a) * 22;
       // Funde los items que se van al fondo (costura de la ruleta con pocos items).
@@ -104,8 +115,11 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
       el.style.transform =
         `translateX(-50%) translateX(${txCqw}cqw) translateZ(${tz}px) ` +
         `rotateY(${ry}deg) scale(${sc})`;
+      // El blur va PRIMERO en el filtro compuesto; se omite en el centro (blur 0)
+      // para no procesar un filtro de más en el item focal (el más mirado).
+      const desenfoque = blur > 0 ? `blur(${blur.toFixed(2)}px) ` : "";
       el.style.filter =
-        `brightness(${brillo.toFixed(3)}) ` +
+        `${desenfoque}brightness(${brillo.toFixed(3)}) ` +
         `drop-shadow(0 ${(6 + sombra).toFixed(0)}px ${(10 + sombra).toFixed(0)}px rgba(0,0,0,.55))`;
       el.style.opacity = opacidad.toFixed(2);
       el.style.zIndex = String(200 - Math.round(a * 10));
@@ -323,7 +337,7 @@ export function Coverflow3D({ items, onSelect, alturaItem = 40, onCentroChange, 
                 nodosRef.current[k] = el;
               }}
               aria-label={it.nombre}
-              className="absolute left-1/2 will-change-transform [transform-style:preserve-3d]"
+              className="absolute left-1/2 will-change-[transform,filter] [transform-style:preserve-3d]"
               style={{
                 bottom: "calc(100cqh - var(--linea-barra, 62cqh))",
                 transformOrigin: "bottom center",
