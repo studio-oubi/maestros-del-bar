@@ -45,12 +45,16 @@ const JOBS = [
   { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 2539, quality: 90 }, // nativo
   { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 2297, quality: 90 }, // nativo
   { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 2077, quality: 90 }, // nativo
-  { out: "trago-toronja.webp", src: nd("toronja.png"), height: 2752, quality: 90 }, // nativo
-  { out: "trago-sour.webp", src: nd("sour.png"), height: 2752, quality: 90 }, // nativo
-  { out: "trago-albahaca.webp", src: nd("basir.png"), height: 2752, quality: 90 }, // nativo
-  { out: "vaso-toronja.webp", src: nd("toronja glas.png"), height: 2752, quality: 90 }, // nativo
-  { out: "vaso-sour.webp", src: nd("sour glass.png"), height: 2752, quality: 90 }, // nativo
-  { out: "vaso-albahaca.webp", src: nd("basir glass.png"), height: 2752, quality: 90 }, // nativo
+  // Cristalería + tragos (v2, stock/): recorte manual de Oscar (alpha real),
+  // ver build-stock.mjs — reemplazan los renders nativos de "New design "/.
+  // Cada trago/vaso es el MISMO vidrio calzado píxel a píxel (el reveal del
+  // Resultado depende de esto), así que van sin extract/pad, solo resize.
+  { out: "trago-toronja.webp", src: stock("trago-toronja.png"), height: 2752, quality: 90 },
+  { out: "trago-sour.webp", src: stock("trago-sour.png"), height: 2752, quality: 90 },
+  { out: "trago-albahaca.webp", src: stock("trago-albahaca.png"), height: 2752, quality: 90 },
+  { out: "vaso-toronja.webp", src: stock("vaso-toronja.png"), height: 2752, quality: 90 },
+  { out: "vaso-sour.webp", src: stock("vaso-sour.png"), height: 2752, quality: 90 },
+  { out: "vaso-albahaca.webp", src: stock("vaso-albahaca.png"), height: 2752, quality: 90 },
   { out: "ing-romero.webp", src: leg("ing-romero.png"), height: 800 },
   { out: "ing-hielo.webp", src: leg("ing-hielo.png"), height: 800 },
   { out: "ing-naranja.webp", src: leg("ing-naranja.png"), height: 800 },

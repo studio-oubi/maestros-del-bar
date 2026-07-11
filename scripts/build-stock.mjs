@@ -100,6 +100,34 @@ async function buildAnis() {
   console.log("stock: ing-anis.png (gemini v2 navy, full-bleed)");
 }
 
+// Cristalería + tragos (v2): reemplaza los renders de "New design "/ (toronja
+// glas.png, sour glass.png, basir glass.png, toronja.png, sour.png,
+// basir.png) por 6 fotos recortadas A MANO por Oscar en Photoshop (canal
+// alpha real, mismo criterio que las botellas) — passthrough sin
+// quitarFondoNavy, igual que el resto del set v2. CLAVE: cada vaso vacío y
+// su trago son EL MISMO vidrio calzado píxel a píxel (verificado por
+// team-lead con overlays al 50%) — el reveal del Resultado (vaso elegido +
+// trago subiendo con máscara dentro del vidrio) depende de esa alineación.
+// Por eso este build NO recorta, mueve ni reescala nada: copia el canvas
+// 1536×2752 tal cual llega. PAD_INFERIOR/DIMENSIONES del manifiesto se
+// recalculan solos en build-assets.mjs a partir del webp final.
+const CRISTALERIA = [
+  ["vaso-tallado-final", "vaso-sour"],
+  ["vaso-acanalado-final", "vaso-toronja"],
+  ["vaso-curvo-final", "vaso-albahaca"],
+  ["trago-sour-v4", "trago-sour"],
+  ["trago-toronja-v4", "trago-toronja"],
+  ["trago-albahaca-v4", "trago-albahaca"],
+];
+
+async function buildCristaleria() {
+  for (const [fuente, salida] of CRISTALERIA) {
+    const buf = await sharp(gemini(`${fuente}.png`)).png().toBuffer();
+    await writeFile(out(`${salida}.png`), buf);
+    console.log("stock:", `${salida}.png`, "(recorte manual de Oscar, alpha respetado tal cual, sin mover/reescalar)");
+  }
+}
+
 // Bonus: ing-demerara (asset legacy YA existente) tiene un óvalo rojo con el
 // logo "Shamrock" impreso en la bolsa. Se despinta con el color crema de la
 // bolsa (muestreado) igual que las bandas del cartón — parche elíptico, sin
@@ -163,6 +191,22 @@ toronja). En los tres casos el trabajo de nuestro lado es solo empaquetar
 tal cual — sin recorte, sin pad alfa adicional. Reemplazan a los recortes con
 pad transparente de sour.png/basir.png (cascara/albahaca) y al crop de la
 foto de Wikimedia con exposición subida (anís) de pasadas anteriores.
+
+## stock/fuentes-gemini/{vasos,tragos}-*.png → stock/{vaso,trago}-*.png (cristalería)
+
+Reemplazan los renders de "New design "/ (toronja glas.png, sour glass.png,
+basir glass.png, toronja.png, sour.png, basir.png) por 6 fotos recortadas A
+MANO por Oscar en Photoshop (alpha real), passthrough sin ningún proceso
+automático. Cada vaso vacío y su trago comparten el MISMO vidrio calzado
+píxel a píxel (el reveal del Resultado depende de esto) — no se recorta,
+mueve ni reescala nada de nuestro lado.
+
+- vaso-tallado-final.png → vaso-sour.png
+- vaso-acanalado-final.png → vaso-toronja.png
+- vaso-curvo-final.png → vaso-albahaca.png
+- trago-sour-v4.png → trago-sour.png
+- trago-toronja-v4.png → trago-toronja.png
+- trago-albahaca-v4.png → trago-albahaca.png
 `;
 
 async function run() {
@@ -171,6 +215,7 @@ async function run() {
   await buildCascara();
   await buildAlbahaca();
   await buildAnis();
+  await buildCristaleria();
   await buildDemerara();
   await writeFile(path.join(STOCK, "LICENCIAS.md"), LICENCIAS_MD, "utf8");
   console.log("LICENCIAS.md escrito");

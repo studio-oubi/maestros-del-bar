@@ -42,3 +42,19 @@ toronja). En los tres casos el trabajo de nuestro lado es solo empaquetar
 tal cual — sin recorte, sin pad alfa adicional. Reemplazan a los recortes con
 pad transparente de sour.png/basir.png (cascara/albahaca) y al crop de la
 foto de Wikimedia con exposición subida (anís) de pasadas anteriores.
+
+## stock/fuentes-gemini/{vasos,tragos}-*.png → stock/{vaso,trago}-*.png (cristalería)
+
+Reemplazan los renders de "New design "/ (toronja glas.png, sour glass.png,
+basir glass.png, toronja.png, sour.png, basir.png) por 6 fotos recortadas A
+MANO por Oscar en Photoshop (alpha real), passthrough sin ningún proceso
+automático. Cada vaso vacío y su trago comparten el MISMO vidrio calzado
+píxel a píxel (el reveal del Resultado depende de esto) — no se recorta,
+mueve ni reescala nada de nuestro lado.
+
+- vaso-tallado-final.png → vaso-sour.png
+- vaso-acanalado-final.png → vaso-toronja.png
+- vaso-curvo-final.png → vaso-albahaca.png
+- trago-sour-v4.png → trago-sour.png
+- trago-toronja-v4.png → trago-toronja.png
+- trago-albahaca-v4.png → trago-albahaca.png
