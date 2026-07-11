@@ -308,7 +308,7 @@ function ChipSobrante({ etiqueta }: { etiqueta: string }) {
 
 function FilaCheck({ etiqueta, ok }: { etiqueta: string; ok: boolean }) {
   return (
-    <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[0.9cqh]">
+    <div className="flex w-full max-w-[74cqw] items-center justify-between gap-[3cqw] border-b border-crema/10 py-[0.7cqh]">
       <span className="font-titulo text-[clamp(12px,3.6cqw,15px)] font-medium uppercase tracking-[0.06em] text-crema">
         {etiqueta}
       </span>
@@ -335,11 +335,41 @@ function ChipIngrediente({ id, correcto }: { id: IngredienteId; correcto: boolea
   );
 }
 
+const BOTON_PRIMARIO =
+  "texto-boton rounded-full bg-gradient-to-b from-oro-claro to-oro px-[12cqw] py-[0.7cqh] leading-none shadow-[0_12px_32px_rgba(0,0,0,.55)] transition-[transform,filter] duration-100 active:scale-95 active:brightness-90";
+const BOTON_GHOST =
+  "font-cuerpo text-[1.5cqh] font-medium uppercase tracking-[0.16em] text-crema/70 underline decoration-crema/30 underline-offset-4 transition-[transform,color] duration-100 hover:text-crema active:scale-[0.98] active:text-crema";
+
+// Acciones al perder (CASI y TIEMPO AGOTADO): solo en el PRIMER intento perdido
+// aparece "VOLVER A INTENTAR" (2ª partida al MISMO registro, ver reducer
+// REINTENTAR) con "VOLVER AL INICIO" como ghost debajo. En el 2º intento (o más)
+// queda únicamente "VOLVER AL INICIO" como botón primario.
+function AccionesPerder() {
+  const { estado, despachar } = useJuego();
+  const puedeReintentar = estado.intento === 1;
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-[1.1cqh]">
+      {puedeReintentar && (
+        <button type="button" onClick={() => despachar({ tipo: "REINTENTAR" })} className={BOTON_PRIMARIO}>
+          VOLVER A INTENTAR
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => despachar({ tipo: "REINICIAR" })}
+        className={puedeReintentar ? BOTON_GHOST : BOTON_PRIMARIO}
+      >
+        VOLVER AL INICIO
+      </button>
+    </div>
+  );
+}
+
 // Variante "fallo": desglose de lo que se eligió mal (checklist vaso/rón/mezcla
 // + ingredientes correctos/faltantes/sobrantes). Sin mock; mismo lenguaje
 // visual que "gano" (logo, Oswald gigante, dorado).
 function Casi() {
-  const { estado, despachar } = useJuego();
+  const { estado } = useJuego();
   const receta = estado.receta;
   const ev = estado.evaluacion;
   if (!receta || !ev) return null;
@@ -393,7 +423,7 @@ function Casi() {
         )}
       </div>
 
-      <div className="mt-[2cqh] flex w-full flex-col items-center gap-[1.2cqh]">
+      <div className="mt-[1.6cqh] flex w-full flex-col items-center gap-[1cqh]">
         <span className="texto-label">INGREDIENTES</span>
         <div className="flex flex-wrap items-center justify-center gap-[1.6cqw]">
           {receta.ingredientes.map((id) => (
@@ -409,13 +439,9 @@ function Casi() {
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => despachar({ tipo: "REINICIAR" })}
-        className={`mt-[2.4cqh] shrink-0 ${BOTON}`}
-      >
-        VOLVER AL INICIO
-      </button>
+      <div className="mt-[1.3cqh]">
+        <AccionesPerder />
+      </div>
     </div>
   );
 }
@@ -423,7 +449,6 @@ function Casi() {
 // Variante "tiempo" (mock 14): título + botón en la mitad superior, barra
 // decorativa (sin trago) debajo.
 function TiempoAgotado() {
-  const { despachar } = useJuego();
   return (
     <div className="relative h-full w-full overflow-hidden">
       <Logo />
@@ -433,9 +458,7 @@ function TiempoAgotado() {
           <br />
           TIEMPO AGOTADO
         </h1>
-        <button type="button" onClick={() => despachar({ tipo: "REINICIAR" })} className={BOTON}>
-          INICIO
-        </button>
+        <AccionesPerder />
       </div>
       <BarraEscena>{null}</BarraEscena>
     </div>
@@ -457,7 +480,7 @@ export function Resultado() {
       trago: estado.receta?.id ?? "",
       resultado: estado.resultado,
       tiempoRestante: estado.tiempoRestante,
-      detalles: { elecciones: estado.elecciones, evaluacion: estado.evaluacion },
+      detalles: { elecciones: estado.elecciones, evaluacion: estado.evaluacion, intento: estado.intento },
     });
     reintentarPendiente();
     // eslint-disable-next-line react-hooks/exhaustive-deps

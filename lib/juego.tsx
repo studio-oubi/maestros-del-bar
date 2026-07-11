@@ -27,6 +27,7 @@ interface EstadoJuego {
   resultado: ResultadoTipo | null;
   evaluacion: Evaluacion | null;
   tiempoRestante: number;         // segundos al terminar (para guardar)
+  intento: number;                // 1 en el primer juego, +1 con REINTENTAR (mismo registro)
 }
 
 type Accion =
@@ -41,11 +42,12 @@ type Accion =
   | { tipo: "TOGGLE_INGREDIENTE"; ing: IngredienteId }
   | { tipo: "MEZCLAR"; tiempoRestante: number }      // evalúa y va a resultado
   | { tipo: "TIEMPO_AGOTADO" }                        // resultado = 'tiempo'
+  | { tipo: "REINTENTAR" }                            // 2º intento: mismo registro, vuelve a recetas
   | { tipo: "REINICIAR" };                            // vuelve a home, limpia registro (kiosko: no hereda el del jugador anterior)
 
 const elecionesVacias: Elecciones = { vaso: null, ron: null, mezclas: [], ingredientes: [] };
 
-const estadoInicial: EstadoJuego = {
+export const estadoInicial: EstadoJuego = {
   pantalla: "loading",
   registroId: null,
   registroHecho: false,
@@ -55,9 +57,10 @@ const estadoInicial: EstadoJuego = {
   resultado: null,
   evaluacion: null,
   tiempoRestante: 0,
+  intento: 1,
 };
 
-function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
+export function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
   switch (accion.tipo) {
     case "CARGA_LISTA":
       return { ...estado, pantalla: "home" };
@@ -108,6 +111,22 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
     }
     case "TIEMPO_AGOTADO":
       return { ...estado, resultado: "tiempo", evaluacion: null, tiempoRestante: 0, pantalla: "resultado" };
+    case "REINTENTAR":
+      // 2º intento del MISMO participante: conserva registroId/registroHecho
+      // (enviarPartida ya reporta a estado.registroId, así que la 2ª partida
+      // queda en el mismo registro) y vuelve a "recetas" para memorizar de nuevo
+      // y seguir el flujo normal. Solo resetea lo de la partida.
+      return {
+        ...estado,
+        receta: null,
+        grid: [],
+        elecciones: elecionesVacias,
+        resultado: null,
+        evaluacion: null,
+        tiempoRestante: 0,
+        intento: estado.intento + 1,
+        pantalla: "recetas",
+      };
     case "REINICIAR":
       // Kiosko: el siguiente jugador no debe heredar el registro del anterior.
       return {
@@ -121,6 +140,7 @@ function reducer(estado: EstadoJuego, accion: Accion): EstadoJuego {
         resultado: null,
         evaluacion: null,
         tiempoRestante: 0,
+        intento: 1,
       };
     default:
       return estado;

@@ -3,10 +3,11 @@ export interface PartidaInput {
   trago: string;
   resultado: "gano" | "fallo" | "tiempo";
   tiempoRestante: number;
-  // jsonb libre (la API no valida su forma): { elecciones, evaluacion }. Con el
-  // rediseño de mezclas multi, elecciones.mezclas es un string[] (MezclaId[]) y
-  // la evaluación añade mezclasFaltaron/mezclasSobraron; van dentro de detalles
-  // sin tocar la API ni el schema.
+  // jsonb libre (la API no valida su forma): { elecciones, evaluacion, intento }.
+  // elecciones.mezclas es string[] (MezclaId[]); la evaluación añade
+  // mezclasFaltaron/mezclasSobraron; e intento (1|2) distingue el 2º intento del
+  // mismo registro (botón "Volver a intentar"). Todo dentro de detalles, sin
+  // tocar la API ni el schema.
   detalles: unknown;
 }
 
