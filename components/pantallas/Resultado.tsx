@@ -156,9 +156,12 @@ function TragoRevelado({
   const imgVasoBase = (vasoElegido && VASOS.find((v) => v.id === vasoElegido)?.img) || receta.imgVaso;
 
   return (
+    // pointer-events-none: el lienzo (con su alpha inferior) se solapa por los
+    // márgenes negativos con los botones de abajo; al ser un elemento
+    // posicionado interceptaba los taps aunque las <img> ya fueran none.
     <div
       ref={revRef}
-      className={`relative aspect-[1536/2752] ${alturaClase}`}
+      className={`pointer-events-none relative aspect-[1536/2752] ${alturaClase}`}
       style={{ ["--rev" as string]: "0%", ...style }}
     >
       {/* Vaso vacío QUE ELIGIÓ el jugador: base siempre visible, sin máscara. */}
@@ -414,7 +417,7 @@ function Casi() {
       </div>
 
       {/* Botones inmediatamente debajo del vaso, antes de la ficha. */}
-      <div className="mt-[4cqh]">
+      <div className="relative z-10 mt-[4cqh]">
         <AccionesPerder />
       </div>
 
