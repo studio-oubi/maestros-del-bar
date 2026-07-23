@@ -63,16 +63,16 @@ export function Intro() {
           referencia de diseño. */}
       <div className="absolute left-1/2 top-[28cqh] flex w-full -translate-x-1/2 flex-col items-center gap-[2.5cqh]">
         <h1 className="font-titulo text-[7.7cqh] font-medium leading-[1.02] uppercase text-white">
-          Arma el mix
+          Prepara el cóctel
           <br />
           Perfecto
         </h1>
         <p className="max-w-[60cqw] font-cuerpo text-[1.6cqh] font-bold uppercase leading-snug tracking-[0.14em] text-oro">
           Recuerda la receta y
           <br />
-          completa tu trago
+          completa tu cóctel
           <br />
-          antes de llegar a cero.
+          en el tiempo establecido.
         </p>
       </div>
 

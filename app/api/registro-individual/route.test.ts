@@ -33,6 +33,9 @@ const base = {
   correo: "",
   ciudad: "Santo Domingo",
   establecimiento: "La Posta Bar",
+  producto: "Brugal XV",
+  tipo: "Botella",
+  cantidad: 2,
   regalo: "Vaso",
 };
 const req = (body: unknown) =>
@@ -44,7 +47,7 @@ beforeEach(() => {
 });
 
 describe("POST /api/registro-individual", () => {
-  it("inserta el registro con regalo y ubicación (201)", async () => {
+  it("inserta el registro con regalo, ubicación y consumo (201)", async () => {
     const res = await POST(req(base));
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: 42 });
@@ -53,12 +56,34 @@ describe("POST /api/registro-individual", () => {
       cedula: "001-1234567-8",
       ciudad: "Santo Domingo",
       establecimiento: "La Posta Bar",
+      producto: "Brugal XV",
+      tipo: "Botella",
+      cantidad: 2,
       regalo: "Vaso",
     });
   });
 
+  it("acepta la cantidad como string numérica (la envía el form)", async () => {
+    expect((await POST(req({ ...base, cantidad: "3" }))).status).toBe(201);
+    expect(bd.insertado).toMatchObject({ cantidad: 3 });
+  });
+
   it("400 si el regalo no está en la lista", async () => {
     expect((await POST(req({ ...base, regalo: "Taza" }))).status).toBe(400);
+  });
+
+  it("400 si el producto no está en la lista", async () => {
+    expect((await POST(req({ ...base, producto: "Brugal Añejo" }))).status).toBe(400);
+  });
+
+  it("400 si el tipo no es Botella ni Trago", async () => {
+    expect((await POST(req({ ...base, tipo: "Copa" }))).status).toBe(400);
+  });
+
+  it("400 si la cantidad no es un entero en rango", async () => {
+    for (const cantidad of [0, -1, 100, 1.5, "", "abc", null]) {
+      expect((await POST(req({ ...base, cantidad }))).status).toBe(400);
+    }
   });
 
   it("400 si falta la ciudad", async () => {

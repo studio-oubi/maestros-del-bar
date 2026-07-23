@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb, registros } from "@/lib/db";
 import { validarRegistro } from "@/lib/validacion";
 import { esRegaloValido } from "@/lib/regalos";
+import { esProductoValido, esTipoValido, normalizarCantidad } from "@/lib/productos";
 
 // Registro INDIVIDUAL (promotor): a diferencia del formulario del kiosko, aquí
 // ciudad/establecimiento y el regalo llegan en el mismo POST y son obligatorios.
@@ -23,12 +24,21 @@ export async function POST(req: Request) {
   const regalo = cuerpo?.regalo;
   if (!esRegaloValido(regalo)) return NextResponse.json({ error: "Regalo inválido" }, { status: 400 });
 
+  const producto = cuerpo?.producto;
+  if (!esProductoValido(producto)) return NextResponse.json({ error: "Producto inválido" }, { status: 400 });
+
+  const tipo = cuerpo?.tipo;
+  if (!esTipoValido(tipo)) return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
+
+  const cantidad = normalizarCantidad(cuerpo?.cantidad);
+  if (cantidad === null) return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
+
   if (!process.env.POSTGRES_URL) return NextResponse.json({ error: "DB no configurada" }, { status: 503 });
 
   try {
     const [fila] = await getDb()
       .insert(registros)
-      .values({ ...v.datos, ciudad, establecimiento, regalo })
+      .values({ ...v.datos, ciudad, establecimiento, regalo, producto, tipo, cantidad })
       .returning({ id: registros.id });
     return NextResponse.json({ id: fila.id }, { status: 201 });
   } catch {

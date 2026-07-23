@@ -28,7 +28,7 @@ export function Listo() {
         <h1 className="max-w-[80cqw] font-titulo text-[7.7cqh] font-medium leading-[1.02] uppercase text-white">
           ¿Listo para
           <br />
-          armar el mix
+          preparar el cóctel
           <br />
           perfecto?
         </h1>

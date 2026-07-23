@@ -17,6 +17,10 @@ async function obtenerFilas(): Promise<FilaRegistro[]> {
     correo: r.correo,
     ciudad: r.ciudad,
     establecimiento: r.establecimiento,
+    producto: r.producto,
+    tipo: r.tipo,
+    // El kiosko no captura consumo (cantidad 0): se muestra vacío.
+    cantidad: r.cantidad > 0 ? String(r.cantidad) : "",
     regalo: r.regalo,
     fecha: formateador.format(r.createdAt),
     resultado: r.resultado,

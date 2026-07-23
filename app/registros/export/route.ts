@@ -20,10 +20,26 @@ export async function GET() {
   const filasRegistros = await obtenerRegistrosConResultado();
 
   const BOM = String.fromCharCode(0xfeff);
-  const encabezado = "Nombre,Cédula,Teléfono,Correo,Ciudad,Establecimiento,Regalo,Fecha,Resultado";
+  const encabezado =
+    "Nombre,Cédula,Teléfono,Correo,Ciudad,Establecimiento,Producto,Tipo,Cantidad,Regalo,Fecha,Resultado";
   const filas = filasRegistros.map((r) => {
     const resultado = r.resultado ? ETIQUETA[r.resultado] ?? r.resultado : "";
-    return [r.nombre, r.cedula, r.telefono, r.correo, r.ciudad, r.establecimiento, r.regalo, formateador.format(r.createdAt), resultado]
+    // Los registros del kiosko no llevan consumo: cantidad 0 se exporta vacía.
+    const cantidad = r.cantidad > 0 ? r.cantidad : "";
+    return [
+      r.nombre,
+      r.cedula,
+      r.telefono,
+      r.correo,
+      r.ciudad,
+      r.establecimiento,
+      r.producto,
+      r.tipo,
+      cantidad,
+      r.regalo,
+      formateador.format(r.createdAt),
+      resultado,
+    ]
       .map((v) => escaparCsv(String(v)))
       .join(",");
   });

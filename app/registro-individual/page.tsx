@@ -7,6 +7,7 @@ import { Check, MapPin } from "lucide-react";
 import { IMG } from "@/lib/asset-manifest";
 import { CIUDADES } from "@/lib/establecimientos";
 import { mascaraCedula, mascaraTelefono } from "@/lib/mascaras";
+import { CANTIDADES, CANTIDAD_MAX, CANTIDAD_MIN, PRODUCTOS, TIPOS, normalizarCantidad } from "@/lib/productos";
 import { REGALOS } from "@/lib/regalos";
 import { validarRegistro } from "@/lib/validacion";
 
@@ -22,10 +23,22 @@ interface Datos {
   cedula: string;
   telefono: string;
   correo: string;
+  producto: string;
+  tipo: string;
+  cantidad: string;
   regalo: string;
 }
 
-const datosVacios: Datos = { nombre: "", cedula: "", telefono: "", correo: "", regalo: "" };
+const datosVacios: Datos = {
+  nombre: "",
+  cedula: "",
+  telefono: "",
+  correo: "",
+  producto: "",
+  tipo: "",
+  cantidad: "",
+  regalo: "",
+};
 
 // Pill de input (mismo estilo que el formulario del kiosko, en tamaños fijos
 // para una página normal scrollable en lugar de container-queries).
@@ -183,6 +196,19 @@ function FormularioIndividual({
       setError(validacion.error);
       return;
     }
+    if (!datos.producto) {
+      setError("Selecciona un producto");
+      return;
+    }
+    if (!datos.tipo) {
+      setError("Selecciona el tipo (botella o trago)");
+      return;
+    }
+    const cantidad = normalizarCantidad(datos.cantidad);
+    if (cantidad === null) {
+      setError(`Cantidad entre ${CANTIDAD_MIN} y ${CANTIDAD_MAX}`);
+      return;
+    }
     if (!datos.regalo) {
       setError("Selecciona un regalo");
       return;
@@ -194,7 +220,14 @@ function FormularioIndividual({
       const res = await fetch("/api/registro-individual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...validacion.datos, ...ubicacion, regalo: datos.regalo }),
+        body: JSON.stringify({
+          ...validacion.datos,
+          ...ubicacion,
+          producto: datos.producto,
+          tipo: datos.tipo,
+          cantidad,
+          regalo: datos.regalo,
+        }),
       });
       if (!res.ok) {
         const cuerpo = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -279,22 +312,24 @@ function FormularioIndividual({
           inputMode="email"
         />
 
-        <label className="block">
-          <span className={ETIQUETA}>Regalo</span>
-          <select
-            value={datos.regalo}
-            onChange={(e) => actualizar("regalo", e.target.value)}
-            className={SELECT}
-            style={ESTILO_FLECHA}
-          >
-            <option value="">Selecciona…</option>
-            {REGALOS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Selector
+          etiqueta="Producto"
+          valor={datos.producto}
+          opciones={PRODUCTOS}
+          onCambio={(v) => actualizar("producto", v)}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <Selector etiqueta="Tipo" valor={datos.tipo} opciones={TIPOS} onCambio={(v) => actualizar("tipo", v)} />
+          <Selector
+            etiqueta="Cantidad"
+            valor={datos.cantidad}
+            opciones={CANTIDADES}
+            onCambio={(v) => actualizar("cantidad", v)}
+          />
+        </div>
+
+        <Selector etiqueta="Regalo" valor={datos.regalo} opciones={REGALOS} onCambio={(v) => actualizar("regalo", v)} />
 
         {error && <p className="text-center text-sm text-[#ff6b6b]">{error}</p>}
 
@@ -307,6 +342,32 @@ function FormularioIndividual({
         </button>
       </form>
     </div>
+  );
+}
+
+function Selector({
+  etiqueta,
+  valor,
+  opciones,
+  onCambio,
+}: {
+  etiqueta: string;
+  valor: string;
+  opciones: readonly string[];
+  onCambio: (valor: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className={ETIQUETA}>{etiqueta}</span>
+      <select value={valor} onChange={(e) => onCambio(e.target.value)} className={SELECT} style={ESTILO_FLECHA}>
+        <option value="">Selecciona…</option>
+        {opciones.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

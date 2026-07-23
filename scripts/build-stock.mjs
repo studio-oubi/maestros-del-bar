@@ -9,14 +9,11 @@
 import sharp from "sharp";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { relabelarBotella, muestrearColor } from "./lib/etiqueta-generica.mjs";
 import { recortarDesde } from "./lib/quitar-fondo.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const LEG = path.join(ROOT, "legacy/assets");
 const STOCK = path.join(ROOT, "stock");
 const GEMINI = path.join(STOCK, "fuentes-gemini");
-const leg = (n) => path.join(LEG, n);
 const out = (n) => path.join(STOCK, n);
 const gemini = (n) => path.join(GEMINI, n);
 
@@ -60,7 +57,8 @@ async function buildBotellasGemini() {
       buf = await recortarDesde(buf, { y: LINEA_APOYO_RESCATE[nombre] });
     }
     await writeFile(out(`mixer-${nombre}.png`), buf);
-    console.log("stock:", `mixer-${nombre}.png`, "(recorte manual de Oscar, alpha respetado tal cual)");
+    const origen = nombre === "agua-gas" ? "botella alta v3, quitarFondoNavy" : "recorte manual de Oscar, alpha respetado tal cual";
+    console.log("stock:", `mixer-${nombre}.png`, `(${origen})`);
   }
 }
 
@@ -128,23 +126,20 @@ async function buildCristaleria() {
   }
 }
 
-// Bonus: ing-demerara (asset legacy YA existente) tiene un óvalo rojo con el
-// logo "Shamrock" impreso en la bolsa. Se despinta con el color crema de la
-// bolsa (muestreado) igual que las bandas del cartón — parche elíptico, sin
-// tocar el texto "Demerara Sugar" (ese describe el ingrediente, no es marca).
-// El óvalo real del logo (medido con máscara de color rojo, no a ojo) es
-// bastante más chico de lo que parecía: x~69-209, y~69-153. Un parche más
-// grande invadía la franja "Quality Ingredients"/"Demerara Sugar" de abajo
-// (que es color distinto al de la bolsa arriba) y se veía pegado/cortando
-// texto — con este tamaño el parche queda contenido en la zona crema de
-// arriba, sin tocar la franja marrón.
-async function buildDemerara() {
-  const src = leg("ing-demerara.png");
-  const crema = await muestrearColor(src, { x: 30, y: 80, w: 6, h: 6 });
-  const rects = [{ x: 63, y: 60, w: 152, h: 100, color: crema, shape: "ellipse" }];
-  const buf = await relabelarBotella(src, rects, { factor: 3 });
+// ing-demerara (nombre de archivo/id sin cambios, ver lib/recetas.ts): el
+// ingrediente pasó de "DEMERARA" a "PIMIENTA NEGRA" a pedido del cliente —
+// la bolsa de azúcar demerara (legacy, con logo "Shamrock" despintado) ya no
+// aplica. Reemplazada por una foto de Gemini (misma familia que las 7
+// botellas: cuchara de madera con pimienta negra, fondo navy #0a1a3a,
+// recorte por distancia de color con quitarFondoNavy — sujeto de silueta
+// simple/lisa a propósito, a diferencia de un montón de granos sueltos, que
+// deja un halo azul alrededor de cada grano al recortar). Ya viene con alpha
+// real en fuentes-gemini/, así que este paso es passthrough puro, igual que
+// buildCascara/buildAlbahaca.
+async function buildPimientaNegra() {
+  const buf = await sharp(gemini("ing-pimienta-negra.png")).png().toBuffer();
   await writeFile(out("ing-demerara.png"), buf);
-  console.log("stock: ing-demerara.png");
+  console.log("stock: ing-demerara.png (pimienta negra, alpha ya recortado)");
 }
 
 const LICENCIAS_MD = `# Licencias de assets en stock/
@@ -165,19 +160,41 @@ la fuente final: no se corre ningún proceso automático encima (ni
 quitarFondoNavy ni recortarDesde), solo se respeta el alpha tal cual llega.
 Reemplazan a los sets automáticos de pasadas anteriores (fondo blanco/
 etiqueta dorada, luego fondo navy con recorte por distancia de color — ese
-método sigue disponible como quitarFondoNavy en scripts/lib/quitar-fondo.mjs
-para una futura entrega que no venga pre-recortada) y a las botellas
-reetiquetadas a mano de la primera pasada (ver commit 692312e para ese
-método, que sigue disponible en scripts/lib/etiqueta-generica.mjs y se usa
-para ing-demerara más abajo).
+método sigue disponible como quitarFondoNavy en scripts/lib/quitar-fondo.mjs,
+y se usó tal cual para ing-demerara/pimienta-negra más abajo) y a las
+botellas reetiquetadas a mano de la primera pasada (ver commit 692312e para
+ese método, disponible en scripts/lib/etiqueta-generica.mjs).
 
 - zumo-limon.png → mixer-zumo-limon.png (ZUMO DE LIMÓN)
 - sirope-albahaca.png → mixer-sirope-albahaca.png (SIROPE DE ALBAHACA)
 - zumo-toronja.png → mixer-zumo-toronja.png (ZUMO DE TORONJA)
 - sirope-simple.png → mixer-sirope-simple.png (SIROPE SIMPLE)
 - bitter-naranja.png → mixer-bitter-naranja.png (BITTER DE NARANJA)
-- agua-gas.png → mixer-agua-gas.png (AGUA CON GAS, forma Perrier)
+- agua-gas.png → mixer-agua-gas.png (AGUA CON GAS, botella alta v3 — ver nota abajo)
 - soda.png → mixer-soda.png (SODA)
+
+### agua-gas: botella alta (v3)
+
+Las pasadas anteriores dieron una botella achatada (proporción alto/ancho 2.01,
+la más ancha del set) con etiqueta de marco dorado y letra crema — fuera del
+patrón de la casa. Esta pasada la regenera a pedido del cliente con la silueta
+alta clásica de agua con gas (proporción 3.02, medida contra su foto de
+referencia: 3.06) y la etiqueta navy LISA con letra blanca condensada, igual
+que las otras seis. Generada con gemini-3-pro-image y recortada con
+quitarFondoNavy — es la única del set que no viene recortada a mano.
+
+Sin marca de ningún tipo: la referencia del cliente era una foto de producto de
+un tercero y NO se usa como asset (rompería el "nada de terceros" de este
+archivo); solo se le pidió al modelo la silueta, sin wordmark, medallón,
+swoosh ni relieve de marca.
+
+REGLA APRENDIDA (no repetir el error): la etiqueta es navy, igual que el fondo
+de estudio, así que debe quedar INSET — con vidrio verde visible a ambos lados
+y sin tocar nunca el contorno de la botella. Si la etiqueta llega al borde,
+queda conectada al fondo y el flood-fill de quitarFondoNavy entra por ahí y se
+come trozos de la silueta (verificado: una versión con etiqueta a todo el ancho
+dejó 685 píxeles de mordidas internas; esta deja 12). Es el mismo motivo por el
+que las otras botellas llevan la etiqueta rodeada de vidrio.
 
 ## stock/fuentes-gemini/ing-{cascara,albahaca,anis}.png → stock/ing-{cascara,albahaca,anis}.png
 
@@ -191,6 +208,13 @@ toronja). En los tres casos el trabajo de nuestro lado es solo empaquetar
 tal cual — sin recorte, sin pad alfa adicional. Reemplazan a los recortes con
 pad transparente de sour.png/basir.png (cascara/albahaca) y al crop de la
 foto de Wikimedia con exposición subida (anís) de pasadas anteriores.
+
+## stock/fuentes-gemini/ing-pimienta-negra.png → stock/ing-demerara.png
+
+Cuchara de madera con pimienta negra, generada con Gemini y recortada con
+quitarFondoNavy (scripts/lib/quitar-fondo.mjs) — reemplaza a la bolsa de
+azúcar demerara legacy (id/nombre de archivo internos sin cambios, ver
+lib/recetas.ts) tras el cambio de ingrediente a "PIMIENTA NEGRA".
 
 ## stock/fuentes-gemini/{vasos,tragos}-*.png → stock/{vaso,trago}-*.png (cristalería)
 
@@ -216,7 +240,7 @@ async function run() {
   await buildAlbahaca();
   await buildAnis();
   await buildCristaleria();
-  await buildDemerara();
+  await buildPimientaNegra();
   await writeFile(path.join(STOCK, "LICENCIAS.md"), LICENCIAS_MD, "utf8");
   console.log("LICENCIAS.md escrito");
 }

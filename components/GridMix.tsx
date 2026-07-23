@@ -72,14 +72,14 @@ export function GridMix({ restante }: { restante: number }) {
 
       <div className="mt-[3.6cqh] flex flex-col items-center gap-[0.8cqh]">
         <span className="font-titulo text-[2.6cqh] font-medium uppercase leading-tight text-white">
-          COMPLETA EL MIX
+          COMPLETA EL CÓCTEL
         </span>
         <span
           className={`font-cuerpo text-[1.5cqh] font-bold uppercase tracking-[0.14em] ${
             completo ? "text-oro" : "text-crema/80"
           }`}
         >
-          {completo ? "MIX LISTO" : contador}
+          {completo ? "CÓCTEL LISTO" : contador}
         </span>
       </div>
 
@@ -143,7 +143,7 @@ export function GridMix({ restante }: { restante: number }) {
 
       {confirmando && (
         <PanelConfirmar
-          titulo="TU MIX ESTÁ LISTO"
+          titulo="TU CÓCTEL ESTÁ LISTO"
           grupos={gruposResumen}
           onConfirmar={onMezclar}
           textoConfirmar="Preparar"

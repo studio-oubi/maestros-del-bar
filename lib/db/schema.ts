@@ -12,6 +12,11 @@ export const registros = pgTable("registros", {
   // asignar. La asignación es única: se garantiza en el servidor con
   // UPDATE ... WHERE regalo = '' (ver app/api/regalo/route.ts).
   regalo: text("regalo").default("").notNull(),
+  // Consumo capturado en /registro-individual (el kiosko no los toca: quedan en
+  // los defaults y el panel/CSV los muestran vacíos). Ver lib/productos.ts.
+  producto: text("producto").default("").notNull(),
+  tipo: text("tipo").default("").notNull(), // 'Botella' | 'Trago'
+  cantidad: integer("cantidad").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

@@ -80,7 +80,7 @@ export const INGREDIENTES: Record<IngredienteId, { nombre: string; img: string }
   frambuesa: { nombre: "FRAMBUESA", img: IMG.ingFrambuesa },
   jengibre: { nombre: "JENGIBRE", img: IMG.ingJengibre },
   cafe: { nombre: "CAFÉ", img: IMG.ingCafe },
-  demerara: { nombre: "DEMERARA", img: IMG.ingDemerara },
+  demerara: { nombre: "PIMIENTA NEGRA", img: IMG.ingDemerara },
 };
 
 // Grid de 12: baraja (Fisher-Yates) los 12 IngredienteId. La receta ya no
