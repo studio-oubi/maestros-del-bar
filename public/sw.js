@@ -4,7 +4,13 @@
 const CACHE = "mix-challenge-v1";
 // Cache propio para el video de lanzamiento (44MB): se prefetchea aparte, en
 // segundo plano, para no cargarlo en el arranque ni mezclarlo con el resto.
-const VIDEO_CACHE = "mc-video-v1";
+// v2 (2026-07-23): la v1 podía quedar corrupta/atascada — el put del prefetch
+// clonaba la respuesta sin consumir el original, y con 44MB ese gemelo sin leer
+// puede estancar la escritura y dejar el Cache Storage del video bloqueado
+// (síntoma real: video con "Format error" al instante o petición colgada, el
+// overlay se cierra y la app arranca sin video). El rename purga la v1 en cada
+// dispositivo vía el barrido del activate.
+const VIDEO_CACHE = "mc-video-v2";
 const VIDEO_URL = "/video-lanzamiento.mp4";
 // Núcleo precacheado en install: shell + manifest e iconos PWA para que la app
 // instalada abra standalone y offline.
@@ -17,7 +23,9 @@ function prefetchVideo() {
       if (hit) return; // ya cacheado
       return fetch(VIDEO_URL, { cache: "no-cache" })
         .then((res) => {
-          if (res && res.ok && res.status === 200) return cache.put(VIDEO_URL, res.clone());
+          // put() consume la respuesta directamente — NUNCA clonar acá: un
+          // clone sin consumir su gemelo de 44MB es lo que atascaba la v1.
+          if (res && res.ok && res.status === 200) return cache.put(VIDEO_URL, res);
         })
         .catch(() => {});
     }),
@@ -29,27 +37,32 @@ function prefetchVideo() {
 // aún: pasa a red (online) y la guarda para la próxima. Con cache: corta el
 // buffer completo y responde el rango pedido.
 async function servirVideo(req) {
-  const cache = await caches.open(VIDEO_CACHE);
-  let res = await cache.match(VIDEO_URL);
-  if (!res) {
-    try {
-      const net = await fetch(req);
-      if (net && net.ok && net.status === 200) {
-        // Guarda una copia COMPLETA (sin Range) para poder cortar luego.
-        fetch(VIDEO_URL, { cache: "no-cache" })
-          .then((full) => {
-            if (full && full.ok && full.status === 200) return cache.put(VIDEO_URL, full.clone());
-          })
-          .catch(() => {});
-      }
-      return net;
-    } catch {
-      return new Response(null, { status: 504 });
+  // Red con 504 de respaldo (offline sin cache): el overlay recibe error y
+  // cierra a Home, sin pantalla negra colgada.
+  const red = () => fetch(req).catch(() => new Response(null, { status: 504 }));
+  let buf, tipo;
+  try {
+    const cache = await caches.open(VIDEO_CACHE);
+    const res = await cache.match(VIDEO_URL);
+    // Sin cache: red directa, sin más. El prefetch (post-precarga) es el ÚNICO
+    // que escribe a VIDEO_CACHE — antes acá se disparaba una segunda descarga
+    // completa en paralelo, complejidad que contribuía al atasco de la v1.
+    if (!res) return red();
+    buf = await res.arrayBuffer();
+    // Entrada corrupta (descarga interrumpida / escritura a medias): el tamaño
+    // real no cuadra con el declarado. Se purga y se sirve de red — nunca
+    // entregar bytes truncados al <video> (da "Format error" y mata el intro).
+    const declarado = parseInt(res.headers.get("Content-Length") || "0", 10);
+    if (declarado > 0 && buf.byteLength !== declarado) {
+      cache.delete(VIDEO_URL).catch(() => {});
+      return red();
     }
+    tipo = res.headers.get("Content-Type") || "video/mp4";
+  } catch {
+    // Cache Storage caído o ilegible: que el video no dependa de él.
+    return red();
   }
-  const buf = await res.arrayBuffer();
   const total = buf.byteLength;
-  const tipo = res.headers.get("Content-Type") || "video/mp4";
   const range = req.headers.get("range");
   if (!range) {
     return new Response(buf, {
@@ -111,7 +124,8 @@ self.addEventListener("message", (evento) => {
               hit ||
               fetch(url, { cache: "no-cache" })
                 .then((res) => {
-                  if (res && res.ok) return cache.put(url, res.clone());
+                  // put() consume la respuesta; sin clone (ver prefetchVideo).
+                  if (res && res.ok) return cache.put(url, res);
                 })
                 .catch(() => {}),
           ),
@@ -135,6 +149,10 @@ self.addEventListener("fetch", (evento) => {
   // (206). Debe ir ANTES del handler genérico, que devolvería un 200 completo
   // a una petición Range y rompería la reproducción en Safari/WebKit.
   if (url.pathname === VIDEO_URL) {
+    // Con query (p.ej. ?red=1, el reintento del overlay tras un error): pasa
+    // DIRECTO a red, sin tocar Cache Storage — vía de escape si el cache del
+    // video quedó en mal estado en el dispositivo.
+    if (url.search) return;
     evento.respondWith(servirVideo(req));
     return;
   }

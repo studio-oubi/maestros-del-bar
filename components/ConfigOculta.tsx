@@ -68,21 +68,61 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<number | null>(null);
   const [controlesVisibles, setControlesVisibles] = useState(false);
+  // Falla de MEDIA (error del elemento o watchdog sin llegar a reproducir): un
+  // único reintento pidiendo el archivo DIRECTO a red con ?red=1 — el SW deja
+  // pasar sin tocar su cache toda URL del video con query (ver public/sw.js) —
+  // porque un cache de video corrupto/atascado en el dispositivo daba "Format
+  // error" instantáneo o petición colgada y el kiosko arrancaba sin el intro.
+  // Distinto de la falla de AUTOPLAY (política del navegador): ahí reintentar
+  // otra src no ayuda y se mantiene la cascada sonido → muted → cerrar.
+  const reintentadoRef = useRef(false);
+  const watchdogRef = useRef<number | null>(null);
+
+  const reproducir = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {
+      v.muted = true;
+      v.play().catch(() => onCerrar());
+    });
+  };
+
+  const armarWatchdog = () => {
+    if (watchdogRef.current) clearTimeout(watchdogRef.current);
+    watchdogRef.current = window.setTimeout(() => {
+      const v = videoRef.current;
+      if (!v || v.currentTime > 0) return; // ya reproduce (o reprodujo algo)
+      manejarFallo();
+    }, 8000);
+  };
+
+  const manejarFallo = () => {
+    const v = videoRef.current;
+    if (!v || reintentadoRef.current) {
+      onCerrar();
+      return;
+    }
+    reintentadoRef.current = true;
+    v.src = `${VIDEO_LANZAMIENTO}?red=1`;
+    v.load();
+    reproducir();
+    armarWatchdog();
+  };
 
   useEffect(() => {
     // Reproducir: intenta con SONIDO; si el navegador lo bloquea (arranque sin
     // gesto), cae a MUTED (attract, loop ambiente). Si ni muted reproduce
     // (p.ej. arranque offline sin caché aún), cierra -> Home, sin pantalla negra.
-    const v = videoRef.current;
-    if (v) {
-      v.play().catch(() => {
-        v.muted = true;
-        v.play().catch(() => onCerrar());
-      });
-    }
+    reproducir();
+    // Watchdog: si en 8s no avanzó ni un frame (petición colgada, sin error ni
+    // playing), trátalo como falla de media — reintento directo a red y, si
+    // tampoco, al Home. Nunca dejar el kiosko en pantalla negra.
+    armarWatchdog();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onCerrar]);
 
   // Muestra la X y programa ocultarla tras 3s sin interacción.
@@ -115,7 +155,7 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
         autoPlay
         loop
         playsInline
-        onError={onCerrar}
+        onError={manejarFallo}
         className="h-full w-full object-contain"
       />
       <button
