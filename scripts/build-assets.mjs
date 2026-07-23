@@ -42,9 +42,13 @@ const JOBS = [
   { out: "home-doble.webp", src: nd("Home Doble.png"), height: 2752, quality: 90 }, // nativo
   { out: "home-extraviejo.webp", src: nd("Home Extra Viejo.png"), height: 2752, quality: 90 }, // nativo
   { out: "home-triple.webp", src: nd("Home Triple Reserva.png"), height: 2754, quality: 90 }, // nativo
-  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 2539, quality: 90 }, // nativo
-  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 2297, quality: 90 }, // nativo
-  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 2077, quality: 90 }, // nativo
+  // Packshots 700ml entregados por el cliente el 2026-07-23 (recortes con
+  // alpha real). OJO: el tercer ron ahora es BRUGAL XV — el archivo conserva
+  // el nombre "Triple reserva.png"/ron-triple.webp para no tocar ids ni
+  // manifiesto (id interno sigue siendo "triple", ver lib/recetas.ts).
+  { out: "ron-doble.webp", src: nd("Doble Reserva.png"), height: 2600, quality: 90 }, // nativo
+  { out: "ron-triple.webp", src: nd("Triple reserva.png"), height: 2805, quality: 90 }, // nativo
+  { out: "ron-extraviejo.webp", src: nd("Extraviejo.png"), height: 2600, quality: 90 }, // nativo
   // Cristalería + tragos (v2, stock/): recorte manual de Oscar (alpha real),
   // ver build-stock.mjs — reemplazan los renders nativos de "New design "/.
   // Cada trago/vaso es el MISMO vidrio calzado píxel a píxel (el reveal del

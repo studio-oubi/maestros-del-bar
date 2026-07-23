@@ -30,11 +30,11 @@ export const RECETAS: Receta[] = [
     ingredientes: ["toronja", "romero", "hielo"],
     lineasReceta: ["2 OZ BRUGAL DOBLE RESERVA", "ZUMO DE LIMÓN", "ZUMO DE TORONJA", "TORONJA + ROMERO + HIELO"],
     imgTrago: IMG.tragoToronja, imgVaso: IMG.vasoToronja },
-  { id: "sour", nombre: "SOUR RESERVA", ron: "triple", ronNombre: "BRUGAL TRIPLE RESERVA",
+  { id: "sour", nombre: "SOUR RESERVA", ron: "triple", ronNombre: "BRUGAL XV",
     vaso: "vaso-sour",
     mezclas: ["zumo-limon", "sirope-simple", "bitter-naranja"],
     ingredientes: ["cascara", "hielo"],
-    lineasReceta: ["2 OZ BRUGAL TRIPLE RESERVA", "ZUMO DE LIMÓN", "SIROPE SIMPLE", "BITTER DE NARANJA", "CÁSCARA DE NARANJA + HIELO"],
+    lineasReceta: ["2 OZ BRUGAL XV", "ZUMO DE LIMÓN", "SIROPE SIMPLE", "BITTER DE NARANJA", "CÁSCARA DE NARANJA + HIELO"],
     imgTrago: IMG.tragoSour, imgVaso: IMG.vasoSour },
   { id: "albahaca", nombre: "LIMÓN ALBAHACA EXTRA VIEJO", ron: "extraviejo", ronNombre: "BRUGAL EXTRA VIEJO",
     vaso: "vaso-albahaca",
@@ -46,7 +46,10 @@ export const RECETAS: Receta[] = [
 
 export const RONES: { id: RonId; nombre: string; img: string }[] = [
   { id: "doble", nombre: "BRUGAL DOBLE RESERVA", img: IMG.ronDoble },
-  { id: "triple", nombre: "BRUGAL TRIPLE RESERVA", img: IMG.ronTriple },
+  // El packshot del cliente (2026-07-23) para este slot es BRUGAL XV; el id
+  // interno sigue siendo "triple" (así se guarda en partidas/BD y en los
+  // nombres de archivo ron-triple.webp) para no migrar datos ni assets.
+  { id: "triple", nombre: "BRUGAL XV", img: IMG.ronTriple },
   { id: "extraviejo", nombre: "BRUGAL EXTRA VIEJO", img: IMG.ronExtraviejo },
 ];
 export const VASOS: { id: VasoId; nombre: string; img: string }[] = [
