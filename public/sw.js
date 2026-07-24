@@ -18,6 +18,10 @@ const NUCLEO = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 // Prefetch del video (no bloqueante): descarga completa una sola vez a VIDEO_CACHE.
 function prefetchVideo() {
+  // Reintenta purgar la v1 dañada en cada sesión (fire-and-forget): si el
+  // borrado del activate se colgó o falló, acá tiene otra oportunidad sin
+  // bloquear nada.
+  caches.delete("mc-video-v1").catch(() => {});
   return caches.open(VIDEO_CACHE).then((cache) =>
     cache.match(VIDEO_URL).then((hit) => {
       if (hit) return; // ya cacheado
@@ -98,16 +102,22 @@ self.addEventListener("install", (evento) => {
 });
 
 self.addEventListener("activate", (evento) => {
-  evento.waitUntil(
-    caches
-      .keys()
-      .then((claves) =>
-        Promise.all(
-          claves.filter((k) => k !== CACHE && k !== VIDEO_CACHE).map((k) => caches.delete(k)),
-        ),
-      )
-      .then(() => self.clients.claim()),
-  );
+  // El barrido de caches viejos NO bloquea el claim: borrar un cache atascado
+  // (la mc-video-v1 dañada por el bug del clone) puede colgarse indefinido, y
+  // si el activate no termina este SW nunca toma control — el dispositivo
+  // queda preso del SW anterior con el cache roto y el kiosko arranca sin
+  // video para siempre. Limpieza en segundo plano; el claim va solo.
+  caches
+    .keys()
+    .then((claves) =>
+      Promise.all(
+        claves
+          .filter((k) => k !== CACHE && k !== VIDEO_CACHE)
+          .map((k) => caches.delete(k).catch(() => {})),
+      ),
+    )
+    .catch(() => {});
+  evento.waitUntil(self.clients.claim());
 });
 
 // El cliente envía la lista de imágenes a precachear justo después de registrar

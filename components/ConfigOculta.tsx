@@ -77,6 +77,10 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
   // otra src no ayuda y se mantiene la cascada sonido → muted → cerrar.
   const reintentadoRef = useRef(false);
   const watchdogRef = useRef<number | null>(null);
+  // src del <video>: null mientras el preflight decide la fuente (cache del SW
+  // vs red directa). El elemento no se monta hasta tener src — así un cache
+  // colgado no deja al <video> esperando bytes que nunca llegan.
+  const [srcVideo, setSrcVideo] = useState<string | null>(null);
 
   const reproducir = () => {
     const v = videoRef.current;
@@ -97,19 +101,43 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
   };
 
   const manejarFallo = () => {
-    const v = videoRef.current;
-    if (!v || reintentadoRef.current) {
+    if (reintentadoRef.current) {
       onCerrar();
       return;
     }
     reintentadoRef.current = true;
-    v.src = `${VIDEO_LANZAMIENTO}?red=1`;
-    v.load();
-    reproducir();
-    armarWatchdog();
+    setSrcVideo(`${VIDEO_LANZAMIENTO}?red=1`);
   };
 
+  // PREFLIGHT: pide 1 byte del video con límite de 2.5s antes de montar el
+  // <video>. Responde rápido (cache sano u origen cercano) → src normal, vía
+  // SW. Cuelga o falla (el cache del video atascado por el bug de la v1, aun
+  // bajo un SW viejo que no suelta el control) → arranca DIRECTO con ?red=1,
+  // sin esperar los 8s del watchdog en pantalla negra.
   useEffect(() => {
+    let vivo = true;
+    const limite = new Promise<null>((res) => {
+      window.setTimeout(() => res(null), 2500);
+    });
+    Promise.race([
+      fetch(VIDEO_LANZAMIENTO, { headers: { range: "bytes=0-0" } }).catch(() => null),
+      limite,
+    ]).then((res) => {
+      if (!vivo) return;
+      if (res && res.ok) {
+        setSrcVideo(VIDEO_LANZAMIENTO);
+      } else {
+        reintentadoRef.current = true; // ya vamos por red: si falla, cerrar
+        setSrcVideo(`${VIDEO_LANZAMIENTO}?red=1`);
+      }
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!srcVideo) return;
     // Reproducir: intenta con SONIDO; si el navegador lo bloquea (arranque sin
     // gesto), cae a MUTED (attract, loop ambiente). Si ni muted reproduce
     // (p.ej. arranque offline sin caché aún), cierra -> Home, sin pantalla negra.
@@ -123,7 +151,7 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
       if (watchdogRef.current) clearTimeout(watchdogRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onCerrar]);
+  }, [srcVideo, onCerrar]);
 
   // Muestra la X y programa ocultarla tras 3s sin interacción.
   const revelarControles = () => {
@@ -148,16 +176,18 @@ export function VideoOverlay({ onCerrar }: { onCerrar: () => void }) {
       onPointerDown={alTocar}
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
     >
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <video
-        ref={videoRef}
-        src={VIDEO_LANZAMIENTO}
-        autoPlay
-        loop
-        playsInline
-        onError={manejarFallo}
-        className="h-full w-full object-contain"
-      />
+      {srcVideo && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video
+          ref={videoRef}
+          src={srcVideo}
+          autoPlay
+          loop
+          playsInline
+          onError={manejarFallo}
+          className="h-full w-full object-contain"
+        />
+      )}
       <button
         type="button"
         aria-label="Cerrar video"
